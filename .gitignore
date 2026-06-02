@@ -1,0 +1,27 @@
+# 二进制产物
+/bin/
+/dist/
+claude
+claude.exe
+
+# Go
+*.exe
+*.test
+*.out
+coverage.txt
+coverage.html
+vendor/
+
+# 环境变量 / 密钥（绝不能进 git）
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 运行时数据
+.claude/
+*.log

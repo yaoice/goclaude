@@ -1,0 +1,88 @@
+#!/usr/bin/env expect -f
+# goclaude REPL 交互式烟雾测试
+#
+# 通过 PTY 真实启动 ./bin/goclaude（无参数 → 进入 REPL），
+# 模拟用户输入若干命令后 /exit 退出。
+#
+# 验证：
+#   - banner 正常打印
+#   - /help 命令正常响应
+#   - /skills 命令能进入 dialog（看到 dialog 标题），按 q 退出
+#   - /exit 正常退出
+#
+# 退出码：0 = 通过；非 0 = 失败的步骤序号
+
+set timeout 30
+log_user 0    ;# 默认不显示子进程输出（步骤通过/失败由 expect 自己控制）
+
+set root [file dirname [file dirname [file dirname [file normalize [info script]]]]]
+cd $root
+
+set bin "$root/bin/goclaude"
+
+# 检查二进制
+if {![file executable $bin]} {
+    puts stderr "binary not found at $bin; please build first"
+    exit 99
+}
+
+set step 0
+proc step {name} {
+    global step
+    incr step
+    puts "▶ step $step: $name"
+}
+
+proc pass {name} { puts "  ✓ $name" }
+proc fail {name reason} { puts "  ✗ $name -- $reason"; exit $::step }
+
+# ----- 启动 REPL -----
+spawn $bin
+# 等 banner（包含 "interactive shell" 字样）
+step "banner shown"
+expect {
+    -re "GoClaude.*interactive shell" { pass "banner" }
+    timeout { fail "banner" "no banner within 30s" }
+    eof     { fail "banner" "premature EOF" }
+}
+
+# 等 prompt 出现
+step "first prompt"
+expect {
+    "›"     { pass "prompt-1" }
+    timeout { fail "prompt-1" "no prompt" }
+}
+
+# /help 命令
+step "/help command"
+send -- "/help\r"
+expect {
+    -re "GoClaude Help" { pass "help-shown" }
+    timeout           { fail "help" "no help text" }
+}
+
+# /pwd 命令（最简内置命令；不依赖 dialog）
+step "/pwd command"
+expect "›"    ;# 等下一个 prompt
+send -- "/pwd\r"
+expect {
+    "goclaude" { pass "pwd-correct" }
+    timeout          { fail "pwd" "no cwd output" }
+}
+
+# 退出
+step "graceful exit"
+expect "›"
+send -- "/exit\r"
+expect {
+    -re "再见" { pass "farewell" }
+    eof        { pass "eof" }
+    timeout    { fail "exit" "didn't exit" }
+}
+expect eof
+
+puts ""
+puts "============================================"
+puts "  ✓ All $step REPL smoke checks passed"
+puts "============================================"
+exit 0

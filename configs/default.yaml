@@ -1,0 +1,168 @@
+# GoClaude 默认配置 —— 单一信息源（Single Source of Truth）
+#
+# 此文件定义所有"参数类"配置的默认值。运行时按以下优先级覆盖（先低后高）：
+#   1) 此文件        configs/default.yaml      (与二进制一同发布的内置默认)
+#   2) 用户级        ~/.goclaude/config.yaml   (个人偏好；可选)
+#   3) 项目级        <project>/.goclaude.yaml  (团队共享或项目特定；可选)
+#   4) CLI flags     --max-turns / --no-mcp ...等   (一次性临时覆盖)
+#
+# 所有"参数类"配置必须从此文件读取，不再使用环境变量。
+# 唯一例外：API Key（凭证）走环境变量，避免进入版本库：
+#   DEEPSEEK_API_KEY        DeepSeek API 密钥
+#   ANTHROPIC_API_KEY       Anthropic API 密钥
+#
+# 修改本文件后无需重启编辑器；下次 `goclaude` 启动即生效。
+
+# ═══════════════════════════════════════════════════════════════
+# AI Provider 与模型参数
+# ═══════════════════════════════════════════════════════════════
+api:
+  provider: deepseek                  # anthropic | deepseek
+  model: deepseek-chat                # 默认模型；按 provider 自动回退
+  max_tokens: 32768                   # 单次最大输出 token
+  temperature: 1.0                    # 采样温度 (0.0 ~ 2.0)
+  top_p: 1.0                          # 核采样
+  stream: true                        # 是否使用流式响应
+
+# 各 Provider 的传输与重试参数
+providers:
+  deepseek:
+    base_url: https://api.deepseek.com   # 切代理 / 私有部署在此修改
+    default_model: deepseek-chat         # deepseek-chat | deepseek-reasoner
+    timeout: 300s
+    max_retries: 3
+    retry_base_delay: 1s
+  anthropic:
+    base_url: https://api.anthropic.com
+    api_version: "2023-06-01"
+    default_model: claude-sonnet-4-20250514
+    timeout: 300s
+    max_retries: 3
+    retry_base_delay: 1s
+
+# ═══════════════════════════════════════════════════════════════
+# 查询引擎参数
+# ═══════════════════════════════════════════════════════════════
+engine:
+  max_turns: 100                      # 单轮查询最大工具循环数
+  token_budget: 200000                # 上下文 token 预算上限
+  auto_compact: true                  # 自动压缩开关
+  max_retries: 3
+  retry_base_delay: 1s
+
+# ═══════════════════════════════════════════════════════════════
+# 工具配置
+# ═══════════════════════════════════════════════════════════════
+tools:
+  max_concurrency: 10                 # 只读工具最大并发数
+  max_result_size: 30000              # 工具结果最大字符数（超限持久化磁盘）
+  timeout: 120s                       # 工具默认超时
+  use_builtin_grep: false             # true=强制纯 Go grep；false=自动检测 rg
+
+# ═══════════════════════════════════════════════════════════════
+# MCP 子系统
+# ═══════════════════════════════════════════════════════════════
+mcp:
+  enabled: true                       # 是否自动连接 MCP servers（--no-mcp 覆盖）
+  connect_timeout: 30s
+  request_timeout: 60s
+
+# ═══════════════════════════════════════════════════════════════
+# Agent-Teams 执行模式开关
+# ═══════════════════════════════════════════════════════════════
+# 控制子任务的执行方式。优先级（高→低）：
+#   CLI --agent-teams > 环境变量 GOCLAUDE_AGENT_TEAMS > 本文件
+#
+# 环境变量 GOCLAUDE_AGENT_TEAMS 接受: true/false/1/0/yes/no（大小写不敏感）
+# 示例: export GOCLAUDE_AGENT_TEAMS=true  # 动态切换到多智能体团队模式
+#
+#   enabled: true   多智能体团队协作（agent-teams）
+#                   注册全部 team 工具（team_create / send_message /
+#                   create_task / auto_assign_task ...），任务可由多个 agent
+#                   组成的团队协同处理，leader 每轮自动同步成员进展。
+#   enabled: false  单一子智能体（subagent）
+#                   不注册任何 team 工具，主 agent 仅通过 Agent 工具把任务
+#                   下发给单一 subagent 独立执行（上下文隔离）。
+agent_teams:
+  enabled: false
+
+# ═══════════════════════════════════════════════════════════════
+# 权限 / 审批策略
+# ═══════════════════════════════════════════════════════════════
+permissions:
+  # default      每次写入前弹 [a]llow / [s]tay / [d]eny
+  # acceptEdits  自动放行编辑类工具（推荐日常）
+  # plan         拒绝所有写入（仅规划，不改文件）
+  # bypass       跳过全部权限检查（极不安全；CI/沙箱专用）
+  mode: bypass
+  auto_approve_read: true             # 只读工具自动放行
+
+# ═══════════════════════════════════════════════════════════════
+# Bash 沙箱配置（Linux: bwrap / macOS: sandbox-exec）
+# ═══════════════════════════════════════════════════════════════
+sandbox:
+  # 是否启用沙箱（默认关闭；需要手动开启）
+  enabled: true
+
+  # 文件系统读取限制
+  filesystem_read:
+    allow:
+      - ./
+      - "~/.claude"
+    deny: []
+
+  # 文件系统写入限制
+  filesystem_write:
+    allow:
+      - ./
+      - "~/.claude/tmp"
+    deny:
+      - "~/.ssh"
+      - "~/.aws"
+      - "~/.config/gcloud"
+
+  # 网络限制
+  network:
+    # 是否禁用网络（true = 完全断网）
+    disable_network: false
+    # 允许的域名（disable_network=false 时生效）
+    allowed_domains: []
+    # 禁止的域名
+    denied_domains: []
+    # 是否允许 Unix socket（默认 false）
+    allow_unix_sockets: false
+    # 是否允许本地端口绑定（默认 true）
+    allow_local_binding: true
+
+  # 是否允许在不使用沙箱的情况下执行命令（默认 true）
+  # 如果设为 false，所有命令必须使用沙箱（类似 fail_if_unavailable）
+  allow_unsandboxed_commands: true
+
+  # 排除在沙箱外的命令模式（前缀匹配，支持 * 通配符）
+  excluded_commands:
+    - "cd *"
+    - "pwd"
+    - "echo *"
+
+  # 高级：允许较弱的嵌套沙箱（默认 false）
+  enable_weaker_nested_sandbox: false
+
+  # 忽略沙箱违规（不推荐，仅用于调试）
+  ignore_violations: false
+
+# ═══════════════════════════════════════════════════════════════
+# 会话与记忆
+# ═══════════════════════════════════════════════════════════════
+session:
+  history_dir: ~/.claude/sessions
+  memory_file: MEMORY.md
+  max_memory_lines: 200
+  max_memory_bytes: 25000
+
+# ═══════════════════════════════════════════════════════════════
+# 终端 UI
+# ═══════════════════════════════════════════════════════════════
+tui:
+  theme: default                      # default | dark | light
+  show_token_count: true
+  show_cost: true
