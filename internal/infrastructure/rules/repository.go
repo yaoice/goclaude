@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 )
 
 // EntrypointName is the memory entrypoint filename
@@ -169,12 +171,12 @@ func (OSFileSystem) MkdirAll(path string) error {
 
 // GetUserMemoryPath gets the user-level memory file path.
 func GetUserMemoryPath(homeDir string) string {
-	return filepath.Join(homeDir, ".claude", EntrypointName)
+	return configdir.JoinPrimary(homeDir, EntrypointName)
 }
 
 // GetProjectMemoryPath gets the project-level memory file path.
 func GetProjectMemoryPath(projectRoot string) string {
-	return filepath.Join(projectRoot, ".claude", EntrypointName)
+	return configdir.JoinPrimary(projectRoot, EntrypointName)
 }
 
 // GetManagedClaudeRulesDir gets the managed rules directory.
@@ -184,7 +186,7 @@ func GetManagedClaudeRulesDir() string {
 
 // GetUserClaudeRulesDir gets the user rules directory.
 func GetUserClaudeRulesDir(homeDir string) string {
-	return filepath.Join(homeDir, ".claude", "rules")
+	return configdir.JoinPrimary(homeDir, "rules")
 }
 
 // DirEntry is a directory entry.

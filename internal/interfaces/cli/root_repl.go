@@ -206,6 +206,7 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	repl.Agents = &agentAdapter{svc: wired.AgentSvc}
 	repl.MCP = &mcpAdapter{svc: wired.MCPSvc}
 	repl.Tools = &toolsAdapter{reg: wired.Registry}
+	repl.Teams = &teamAdapter{svc: wired.TeamSvc}
 
 	// Shift+Tab 循环切换 permission mode（对齐 src 的 cycleMode 顺序）
 	// default → acceptEdits → plan → bypass → default

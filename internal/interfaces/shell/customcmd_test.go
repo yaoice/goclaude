@@ -49,7 +49,7 @@ func TestHistorySearchPrev(t *testing.T) {
 
 func TestCustomCommands_LoadAndRender(t *testing.T) {
 	dir := t.TempDir()
-	cmdDir := filepath.Join(dir, ".claude", "commands")
+	cmdDir := filepath.Join(dir, ".goclaude", "commands")
 	if err := os.MkdirAll(cmdDir, 0o755); err != nil {
 		t.Fatal(err)
 	}

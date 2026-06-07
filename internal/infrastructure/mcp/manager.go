@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/anthropics/goclaude/internal/domain/mcp"
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 )
 
 // ReconnectPolicy 重连策略
@@ -420,22 +421,30 @@ func LoadConfigFile(path string) ([]*mcp.ServerConfig, error) {
 //
 // 优先级（按加载顺序，后加载者覆盖前者）：
 //
-//	~/.claude/settings.json            (user 全局)
-//	<projectRoot>/.mcp.json            (legacy 项目根；保持向后兼容)
-//	<projectRoot>/.claude/settings.json (project 专用 settings)
-//	<projectRoot>/.claude/.mcp.json    (项目级 MCP，主路径，覆盖 legacy)
+//	~/.goclaude/settings.json            (user 全局，优先)
+//	~/.claude/settings.json              (user 全局，兜底)
+//	<projectRoot>/.mcp.json              (legacy 项目根；保持向后兼容)
+//	<projectRoot>/.goclaude/settings.json (project 专用，优先)
+//	<projectRoot>/.claude/settings.json  (project 专用，兜底)
+//	<projectRoot>/.goclaude/.mcp.json    (项目级 MCP，优先)
+//	<projectRoot>/.claude/.mcp.json      (项目级 MCP，兜底)
 //
 // 同名按后加载者覆盖。
 func LoadDefault(projectRoot string) ([]*mcp.ServerConfig, error) {
 	var paths []string
 	if home, err := os.UserHomeDir(); err == nil {
-		paths = append(paths, filepath.Join(home, ".claude", "settings.json"))
+		paths = append(paths,
+			configdir.JoinLegacy(home, "settings.json"),
+			configdir.JoinPrimary(home, "settings.json"),
+		)
 	}
 	if projectRoot != "" {
 		paths = append(paths,
 			filepath.Join(projectRoot, ".mcp.json"),
-			filepath.Join(projectRoot, ".claude", "settings.json"),
-			filepath.Join(projectRoot, ".claude", ".mcp.json"),
+			configdir.JoinLegacy(projectRoot, "settings.json"),
+			configdir.JoinPrimary(projectRoot, "settings.json"),
+			configdir.JoinLegacy(projectRoot, ".mcp.json"),
+			configdir.JoinPrimary(projectRoot, ".mcp.json"),
 		)
 	}
 	merged := make(map[string]*mcp.ServerConfig)
@@ -490,7 +499,7 @@ func rawToConfigs(raw map[string]ServerConfigRaw, scope string) []*mcp.ServerCon
 func scopeFromPath(path string) string {
 	dir := filepath.Dir(path)
 	base := filepath.Base(dir)
-	if base == ".claude" {
+	if base == configdir.PrimaryConfigDir || base == configdir.LegacyConfigDir {
 		parent := filepath.Dir(dir)
 		if home, err := os.UserHomeDir(); err == nil && parent == home {
 			return "user"

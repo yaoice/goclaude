@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 	"os"
-	"path/filepath"
 
 	"github.com/anthropics/goclaude/internal/domain/config"
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 	"github.com/anthropics/goclaude/internal/infrastructure/persistence"
 )
 
@@ -34,25 +34,31 @@ func NewConfigService(homeDir, projectRoot string, logger *slog.Logger) *ConfigS
 func (s *ConfigService) LoadAll(ctx context.Context) (map[string]interface{}, error) {
 	merger := config.NewMerger()
 
-	// 加载用户设置
-	userPath := filepath.Join(s.homeDir, ".claude", "settings.json")
-	userData, err := s.store.LoadSettings(config.SourceUser, userPath)
-	if err == nil {
-		merger.AddLayer(*userData)
+	// 加载用户设置（优先 .goclaude/，兜底 .claude/）
+	for _, p := range configdir.AllReadDirs(s.homeDir, "settings.json") {
+		userData, err := s.store.LoadSettings(config.SourceUser, p)
+		if err == nil && len(userData.Data) > 0 {
+			merger.AddLayer(*userData)
+			break
+		}
 	}
 
-	// 加载项目设置
-	projectPath := filepath.Join(s.projectRoot, ".claude", "settings.json")
-	projectData, err := s.store.LoadSettings(config.SourceProject, projectPath)
-	if err == nil {
-		merger.AddLayer(*projectData)
+	// 加载项目设置（优先 .goclaude/，兜底 .claude/）
+	for _, p := range configdir.AllReadDirs(s.projectRoot, "settings.json") {
+		projectData, err := s.store.LoadSettings(config.SourceProject, p)
+		if err == nil && len(projectData.Data) > 0 {
+			merger.AddLayer(*projectData)
+			break
+		}
 	}
 
-	// 加载本地设置（不提交到git）
-	localPath := filepath.Join(s.projectRoot, ".claude", "settings.local.json")
-	localData, err := s.store.LoadSettings(config.SourceLocal, localPath)
-	if err == nil {
-		merger.AddLayer(*localData)
+	// 加载本地设置（不提交到git，优先 .goclaude/，兜底 .claude/）
+	for _, p := range configdir.AllReadDirs(s.projectRoot, "settings.local.json") {
+		localData, err := s.store.LoadSettings(config.SourceLocal, p)
+		if err == nil && len(localData.Data) > 0 {
+			merger.AddLayer(*localData)
+			break
+		}
 	}
 
 	return merger.Merge(), nil

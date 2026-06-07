@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/anthropics/goclaude/internal/domain/config"
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 )
 
 // ConfigStore 配置文件存储
@@ -21,30 +22,31 @@ func NewConfigStore(homeDir string) *ConfigStore {
 	return &ConfigStore{homeDir: homeDir}
 }
 
-// globalConfigPath 全局配置文件路径
+// globalConfigPath 返回写入路径（仅 .goclaude/）
 func (s *ConfigStore) globalConfigPath() string {
-	return filepath.Join(s.homeDir, ".claude", "config.json")
+	return configdir.JoinPrimary(s.homeDir, "config.json")
 }
 
-// LoadGlobal 加载全局配置
+// LoadGlobal 加载全局配置（优先 .goclaude/，兜底 .claude/）
 func (s *ConfigStore) LoadGlobal() (*config.GlobalConfig, error) {
-	path := s.globalConfigPath()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return &config.GlobalConfig{}, nil
+	for _, p := range configdir.AllReadDirs(s.homeDir, "config.json") {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, fmt.Errorf("read global config: %w", err)
 		}
-		return nil, fmt.Errorf("read global config: %w", err)
+		var cfg config.GlobalConfig
+		if err := json.Unmarshal(data, &cfg); err != nil {
+			return nil, fmt.Errorf("parse global config: %w", err)
+		}
+		return &cfg, nil
 	}
-
-	var cfg config.GlobalConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("parse global config: %w", err)
-	}
-	return &cfg, nil
+	return &config.GlobalConfig{}, nil
 }
 
-// SaveGlobal 保存全局配置
+// SaveGlobal 保存全局配置（写入 .goclaude/）
 func (s *ConfigStore) SaveGlobal(cfg *config.GlobalConfig) error {
 	path := s.globalConfigPath()
 	dir := filepath.Dir(path)
@@ -59,27 +61,28 @@ func (s *ConfigStore) SaveGlobal(cfg *config.GlobalConfig) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-// LoadProject 加载项目配置
+// LoadProject 加载项目配置（优先 .goclaude/，兜底 .claude/）
 func (s *ConfigStore) LoadProject(projectPath string) (*config.ProjectConfig, error) {
-	path := filepath.Join(projectPath, ".claude", "config.json")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return &config.ProjectConfig{}, nil
+	for _, p := range configdir.AllReadDirs(projectPath, "config.json") {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, err
 		}
-		return nil, err
+		var cfg config.ProjectConfig
+		if err := json.Unmarshal(data, &cfg); err != nil {
+			return nil, err
+		}
+		return &cfg, nil
 	}
-
-	var cfg config.ProjectConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
+	return &config.ProjectConfig{}, nil
 }
 
-// SaveProject 保存项目配置
+// SaveProject 保存项目配置（写入 .goclaude/）
 func (s *ConfigStore) SaveProject(projectPath string, cfg *config.ProjectConfig) error {
-	path := filepath.Join(projectPath, ".claude", "config.json")
+	path := configdir.JoinPrimary(projectPath, "config.json")
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err

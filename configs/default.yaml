@@ -108,14 +108,14 @@ sandbox:
   filesystem_read:
     allow:
       - ./
-      - "~/.claude"
+      - "~/.goclaude"
     deny: []
 
   # 文件系统写入限制
   filesystem_write:
     allow:
       - ./
-      - "~/.claude/tmp"
+      - "~/.goclaude/tmp"
     deny:
       - "~/.ssh"
       - "~/.aws"
@@ -154,7 +154,7 @@ sandbox:
 # 会话与记忆
 # ═══════════════════════════════════════════════════════════════
 session:
-  history_dir: ~/.claude/sessions
+  history_dir: ~/.goclaude/sessions
   memory_file: MEMORY.md
   max_memory_lines: 200
   max_memory_bytes: 25000

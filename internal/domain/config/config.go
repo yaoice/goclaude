@@ -68,9 +68,9 @@ type SettingsSource string
 
 const (
 	SourcePlugin  SettingsSource = "plugin"   // 最低优先级
-	SourceUser    SettingsSource = "user"     // ~/.claude/settings.json
-	SourceProject SettingsSource = "project"  // .claude/settings.json
-	SourceLocal   SettingsSource = "local"    // .claude/settings.local.json
+	SourceUser    SettingsSource = "user"     // ~/.goclaude/settings.json
+	SourceProject SettingsSource = "project"  // .goclaude/settings.json
+	SourceLocal   SettingsSource = "local"    // .goclaude/settings.local.json
 	SourceFlag    SettingsSource = "flag"     // SDK inline / file
 	SourcePolicy  SettingsSource = "policy"   // 最高优先级
 )

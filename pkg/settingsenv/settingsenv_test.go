@@ -157,15 +157,15 @@ func TestLoadDefaults_LoadOrderUserFirst(t *testing.T) {
 	proj := t.TempDir()
 
 	writeJSON(t,
-		filepath.Join(home, ".claude", "settings.json"),
+		filepath.Join(home, ".goclaude", "settings.json"),
 		`{"env": {"GOCLAUDE_PERMISSION_MODE": "from-user"}}`,
 	)
 	writeJSON(t,
-		filepath.Join(proj, ".claude", "settings.json"),
+		filepath.Join(proj, ".goclaude", "settings.json"),
 		`{"env": {"GOCLAUDE_PERMISSION_MODE": "from-project"}}`,
 	)
 	writeJSON(t,
-		filepath.Join(proj, ".claude", "settings.local.json"),
+		filepath.Join(proj, ".goclaude", "settings.local.json"),
 		`{"env": {"GOCLAUDE_PERMISSION_MODE": "from-local"}}`,
 	)
 
@@ -187,11 +187,11 @@ func TestLoadDefaults_NonOverlappingKeysCoexist(t *testing.T) {
 	proj := t.TempDir()
 
 	writeJSON(t,
-		filepath.Join(home, ".claude", "settings.json"),
+		filepath.Join(home, ".goclaude", "settings.json"),
 		`{"env": {"A": "user-a"}}`,
 	)
 	writeJSON(t,
-		filepath.Join(proj, ".claude", "settings.json"),
+		filepath.Join(proj, ".goclaude", "settings.json"),
 		`{"env": {"B": "project-b"}}`,
 	)
 

@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 )
 
 const (
@@ -48,13 +50,13 @@ func NewHistory(path string, max int) *History {
 	return h
 }
 
-// DefaultHistoryPath 返回默认历史文件路径 ~/.claude/shell_history
+// DefaultHistoryPath 返回默认历史文件路径 ~/.goclaude/shell_history（兼容读取 ~/.claude/shell_history）
 func DefaultHistoryPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".claude", defaultHistoryFile)
+	return configdir.JoinPrimary(home, defaultHistoryFile)
 }
 
 // Load 从磁盘加载历史（不存在时返回 nil 而非错误）

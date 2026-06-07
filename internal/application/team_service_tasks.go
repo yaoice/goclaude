@@ -1,7 +1,6 @@
 package application
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -344,10 +343,9 @@ func (s *TeamService) AutoSetupTeam(input AutoSetupTeamInput) error {
 		}
 		_, _, err := s.JoinTeam(joinInput)
 		if err != nil {
-			// 如果成员已存在，继续
-			if !errors.Is(err, ErrMemberNotFound) {
-				return fmt.Errorf("add member %s: %w", name, err)
-			}
+			// JoinTeam 内部已处理"成员已存在"的 re-activate 逻辑，
+			// 此处任何 error 均为真正的失败（Team 不存在/IO 错误等）。
+			return fmt.Errorf("add member %s: %w", name, err)
 		}
 	}
 

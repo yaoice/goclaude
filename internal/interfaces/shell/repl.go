@@ -66,11 +66,12 @@ type REPL struct {
 	// fn 执行期间，shell 不会读键盘；fn 结束自动恢复
 	pauseInputMu sync.Mutex
 
-	// 管理服务（可选）：注入后才能使用 /skills /agents /mcp /tools
+	// 管理服务（可选）：注入后才能使用 /skills /agents /mcp /tools /teams
 	Skills SkillManager
 	Agents AgentManager
 	MCP    MCPManager
 	Tools  ToolRegistryView
+	Teams  TeamManager
 
 	// CustomCommands 用户/项目自定义 prompt-类 slash 命令注册表
 	// 由 NewREPL 自动从 ~/.claude/commands/ 与 <cwd>/.claude/commands/ 加载

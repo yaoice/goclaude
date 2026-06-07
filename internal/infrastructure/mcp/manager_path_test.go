@@ -6,21 +6,31 @@ import (
 	"testing"
 )
 
-// 同时存在 .claude/.mcp.json 与根 .mcp.json 时，后加载者覆盖（即 .claude/.mcp.json 主目录）。
-// 这条测试锁定 .mcp.json 的标准位置已迁移到 .claude/ 下。
+// 同时存在 .goclaude/.mcp.json、.claude/.mcp.json 与根 .mcp.json 时，
+// 加载顺序为 .goclaude/.mcp.json 最后 → 优先级最高。
 func TestLoadDefault_PrefersClaudeDirOverProjectRoot(t *testing.T) {
 	tmp := t.TempDir()
 
 	rootCfg := filepath.Join(tmp, ".mcp.json")
-	if err := os.WriteFile(rootCfg, []byte(`{"mcpServers":{"echo":{"type":"stdio","command":"legacy"}}}`), 0o644); err != nil {
+	if err := os.WriteFile(rootCfg, []byte(`{"mcpServers":{"echo":{"type":"stdio","command":"root"}}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	claudeDir := filepath.Join(tmp, ".claude")
-	if err := os.MkdirAll(claudeDir, 0o755); err != nil {
+	// .claude (legacy)
+	legacyDir := filepath.Join(tmp, ".claude")
+	if err := os.MkdirAll(legacyDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	claudeCfg := filepath.Join(claudeDir, ".mcp.json")
-	if err := os.WriteFile(claudeCfg, []byte(`{"mcpServers":{"echo":{"type":"stdio","command":"new"}}}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(legacyDir, ".mcp.json"),
+		[]byte(`{"mcpServers":{"echo":{"type":"stdio","command":"legacy"}}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// .goclaude (primary)
+	primaryDir := filepath.Join(tmp, ".goclaude")
+	if err := os.MkdirAll(primaryDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(primaryDir, ".mcp.json"),
+		[]byte(`{"mcpServers":{"echo":{"type":"stdio","command":"new"}}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -35,18 +45,18 @@ func TestLoadDefault_PrefersClaudeDirOverProjectRoot(t *testing.T) {
 		}
 	}
 	if got != "new" {
-		t.Fatalf("expected .claude/.mcp.json to win, got command=%q", got)
+		t.Fatalf("expected .goclaude/.mcp.json to win, got command=%q", got)
 	}
 }
 
-// 仅有 .claude/.mcp.json 也能正常加载（新项目骨架）。
+// 仅有 .goclaude/.mcp.json 也能正常加载（新项目骨架）。
 func TestLoadDefault_LoadsFromClaudeDirOnly(t *testing.T) {
 	tmp := t.TempDir()
-	claudeDir := filepath.Join(tmp, ".claude")
-	if err := os.MkdirAll(claudeDir, 0o755); err != nil {
+	primaryDir := filepath.Join(tmp, ".goclaude")
+	if err := os.MkdirAll(primaryDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	cfg := filepath.Join(claudeDir, ".mcp.json")
+	cfg := filepath.Join(primaryDir, ".mcp.json")
 	if err := os.WriteFile(cfg, []byte(`{"mcpServers":{"alpha":{"type":"stdio","command":"alpha"}}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}

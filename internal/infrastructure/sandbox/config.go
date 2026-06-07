@@ -49,11 +49,11 @@ func DefaultConfig() *Config {
 	return &Config{
 		Enabled: false,
 		FSRead: FsReadConfig{
-			Allow: []string{".", "~/.claude"},
+			Allow: []string{".", "~/.goclaude", "~/.claude"},
 			Deny:  []string{},
 		},
 		FSWrite: FsWriteConfig{
-			Allow: []string{".", "~/.claude/tmp"},
+			Allow: []string{".", "~/.goclaude/tmp"},
 			Deny:  []string{"~/.ssh", "~/.aws", "~/.config/gcloud"},
 		},
 		Network: NetworkConfig{

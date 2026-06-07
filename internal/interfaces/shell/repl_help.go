@@ -60,6 +60,7 @@ var builtinCommands = []helpCommand{
 	{name: "/agents", argHint: "[type]", desc: "Open agents dialog; with type shows agent prompt"},
 	{name: "/mcp", argHint: "[tools|status]", desc: "Open MCP dialog; with arg shows servers/tools"},
 	{name: "/tools", argHint: "[name]", desc: "List registered tools; with name shows schema"},
+	{name: "/teams", argHint: "[name]", desc: "List agent teams; with name shows team detail"},
 }
 
 // helpShortcut 描述 /help 中一条快捷键。

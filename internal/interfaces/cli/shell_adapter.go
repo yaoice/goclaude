@@ -117,6 +117,46 @@ func (a *mcpAdapter) Reconnect(ctx context.Context, name string) error {
 // 这样如果未来接口签名变化，会立刻在此处编译失败，避免 dialog `r` 键被悄悄退化为 no-op
 var _ shell.MCPReconnector = (*mcpAdapter)(nil)
 
+// ----- Team 适配 -----
+
+type teamAdapter struct{ svc *application.TeamService }
+
+func (a *teamAdapter) List() []shell.TeamInfo {
+	names, err := a.svc.ListTeams()
+	if err != nil {
+		return nil
+	}
+	out := make([]shell.TeamInfo, 0, len(names))
+	for _, n := range names {
+		f, err := a.svc.GetTeam(n)
+		if err != nil || f == nil {
+			continue
+		}
+		out = append(out, shell.TeamInfo{
+			Name:        f.Name,
+			Description: f.Description,
+			MemberCount: len(f.Members),
+			TaskCount:   len(f.Tasks),
+			CreatedAt:   f.CreatedAt,
+		})
+	}
+	return out
+}
+
+func (a *teamAdapter) Get(name string) (shell.TeamInfo, bool) {
+	f, err := a.svc.GetTeam(name)
+	if err != nil || f == nil {
+		return shell.TeamInfo{}, false
+	}
+	return shell.TeamInfo{
+		Name:        f.Name,
+		Description: f.Description,
+		MemberCount: len(f.Members),
+		TaskCount:   len(f.Tasks),
+		CreatedAt:   f.CreatedAt,
+	}, true
+}
+
 // ----- Tool Registry 适配 -----
 
 type toolsAdapter struct{ reg *tool.Registry }

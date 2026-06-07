@@ -95,6 +95,8 @@ func (r *REPL) handleLocalCommand(line string) (exit bool, expandedPrompt string
 		}
 	case "/tools":
 		r.handleToolsCmd(strings.Fields(args))
+	case "/teams":
+		r.handleTeamsCmd(strings.Fields(args))
 	default:
 		// 尝试自定义 prompt-类命令
 		if r.CustomCommands != nil {
@@ -271,5 +273,43 @@ func (r *REPL) renderToolsCmd(args []string) string {
 	if info.Description != "" {
 		sb.WriteString(strings.ReplaceAll(strings.TrimRight(info.Description, "\n"), "\n", "\r\n") + "\r\n")
 	}
+	return sb.String()
+}
+
+// handleTeamsCmd 处理 `/teams [name]`：无参列出所有 teams；带名显示指定 team 详情。
+func (r *REPL) handleTeamsCmd(args []string) { r.writeOut(r.renderTeamsCmd(args)) }
+
+// renderTeamsCmd 是 handleTeamsCmd 的纯函数实现，便于单测。
+func (r *REPL) renderTeamsCmd(args []string) string {
+	if r.Teams == nil {
+		return r.colorize("（team 服务未启用）\r\n", colorYellow)
+	}
+	var sb strings.Builder
+	if len(args) == 0 {
+		teams := r.Teams.List()
+		if len(teams) == 0 {
+			return r.colorize("（暂无团队）\r\n", colorDim)
+		}
+		for _, t := range teams {
+			info := fmt.Sprintf("%d members", t.MemberCount)
+			if t.TaskCount > 0 {
+				info += fmt.Sprintf(" · %d tasks", t.TaskCount)
+			}
+			sb.WriteString("  " + r.colorize(t.Name, colorCyan) + "  " +
+				r.colorize(info, colorDim) + "\r\n")
+		}
+		return sb.String()
+	}
+	name := args[0]
+	t, ok := r.Teams.Get(name)
+	if !ok {
+		return r.colorize(fmt.Sprintf("未找到 team：%s\r\n", name), colorYellow)
+	}
+	sb.WriteString(r.colorize(fmt.Sprintf("team:        %s\r\n", t.Name), colorCyan))
+	if t.Description != "" {
+		sb.WriteString(r.colorize(fmt.Sprintf("description: %s\r\n", t.Description), colorDim))
+	}
+	sb.WriteString(r.colorize(fmt.Sprintf("members:     %d\r\n", t.MemberCount), colorDim))
+	sb.WriteString(r.colorize(fmt.Sprintf("tasks:       %d\r\n", t.TaskCount), colorDim))
 	return sb.String()
 }

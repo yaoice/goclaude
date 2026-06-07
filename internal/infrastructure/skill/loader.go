@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/anthropics/goclaude/internal/domain/skill"
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 	"github.com/anthropics/goclaude/pkg/frontmatter"
 )
 
@@ -125,21 +126,18 @@ func (l *Loader) LoadAll(
 	return out, nil
 }
 
-// DefaultUserSkillsDir 默认用户 skills 目录：~/.claude/skills
+// DefaultUserSkillsDir 默认用户 skills 目录：~/.goclaude/skills（优先），~/.claude/skills（兜底）
 func (l *Loader) DefaultUserSkillsDir() string {
 	if l.HomeDir == "" {
 		return ""
 	}
-	return filepath.Join(l.HomeDir, ".claude", "skills")
+	return configdir.JoinPrimary(l.HomeDir, "skills")
 }
 
-// ProjectSkillsDirs 从 cwd 向上查找到 home 的所有 .claude/skills 目录（最近的在前）。
-// ProjectSkillsDirs 从 cwd 向上查找到 home 的所有 .claude/skills 目录（最近的在前）。
+// ProjectSkillsDirs 从 cwd 向上查找到 home 的所有 skills 目录（最近的在前，新老目录各一份）。
 //
-// 对齐 src/utils/markdownConfigLoader.getProjectDirsUpToHome 的语义：
-// 在每层目录下拼接 .claude/skills/。
-//
-// 当 cwd 不在 home 之下时，最多向上 maxProjectDirsDepth 层避免 stat 系统级路径。
+// 对齐 src/utils/markdownConfigLoader.getProjectDirsUpToHome 的语义。
+// 当 cwd 不在 home 之下时，最多向上 16 层避免 stat 系统级路径。
 func (l *Loader) ProjectSkillsDirs(cwd string) []string {
 	var dirs []string
 	current := filepath.Clean(cwd)
@@ -149,7 +147,10 @@ func (l *Loader) ProjectSkillsDirs(cwd string) []string {
 	}
 	const maxDepth = 16
 	for i := 0; i < maxDepth; i++ {
-		dirs = append(dirs, filepath.Join(current, ".claude", "skills"))
+		dirs = append(dirs,
+			configdir.JoinPrimary(current, "skills"),
+			configdir.JoinLegacy(current, "skills"),
+		)
 		if home != "" && current == home {
 			break
 		}

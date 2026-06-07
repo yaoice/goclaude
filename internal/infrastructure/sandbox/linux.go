@@ -131,11 +131,13 @@ func (s *Sandbox) buildBwrapArgs() []string {
 	workDir, _ := filepath.Abs(s.workDir)
 	args = append(args, "--bind", workDir, workDir)
 
-	// Create ~/.claude as tmpfs (writable inside sandbox only)
+	// Create ~/.goclaude and ~/.claude as tmpfs (writable inside sandbox only)
 	home, _ := os.UserHomeDir()
 	if home != "" {
-		claudeDir := filepath.Join(home, ".claude")
-		args = append(args, "--tmpfs", claudeDir)
+		for _, dn := range []string{".goclaude", ".claude"} {
+			cfgDir := filepath.Join(home, dn)
+			args = append(args, "--tmpfs", cfgDir)
+		}
 
 		// ~/.cache is needed by browser tools (e.g. agent-browser stores
 		// Playwright browser binaries under ~/.cache/ms-playwright).

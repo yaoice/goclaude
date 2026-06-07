@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 	"github.com/anthropics/goclaude/internal/interfaces/cli"
 	"github.com/anthropics/goclaude/pkg/dotenv"
 	"github.com/anthropics/goclaude/pkg/settingsenv"
@@ -84,9 +85,10 @@ func loadDotEnvFiles() {
 	_ = dotenv.Load(".env")
 	// 3. 向上查找
 	_ = dotenv.LoadFromWorkdir()
-	// 4. 用户主目录
+	// 4. 用户主目录（优先 .goclaude/.env，兜底 .claude/.env）
 	if home, err := os.UserHomeDir(); err == nil {
-		_ = dotenv.Load(home + "/.claude/.env")
+		_ = dotenv.Load(configdir.JoinPrimary(home, ".env"))
+		_ = dotenv.Load(configdir.JoinLegacy(home, ".env"))
 	}
 }
 

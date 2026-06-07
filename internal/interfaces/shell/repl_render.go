@@ -28,7 +28,7 @@ func (r *REPL) makePrompt() string {
 	case "acceptEdits":
 		tag = colorWarn + "✎" + colorReset + " "
 	case "bypass":
-		tag = colorError + "∅" + colorReset + " "
+		tag = colorError + "🙋" + colorReset + " "
 	case "plan":
 		tag = colorMagenta + "◇" + colorReset + " "
 	}
@@ -114,7 +114,7 @@ func gitBranch(cwd string) string {
 
 func (r *REPL) printAssistantHeader() {
 	r.writeOut("\r\n")
-	r.writeOut(r.colorize("  ◈ ", colorBrand) + r.colorize("Claude", colorAssistantName) + "\r\n")
+	r.writeOut(r.colorize("🤖 ", colorBrand) + r.colorize("GoClaude", colorAssistantName) + "\r\n")
 }
 
 func (r *REPL) writeOut(s string) {

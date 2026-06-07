@@ -11,9 +11,12 @@
 //
 // 加载顺序（先加载者优先；后来者不覆盖已有 env）：
 //   1. 进程已有 env（含 shell export / pkg/dotenv 已加载的 .env 链）  ← 永不覆盖
-//   2. 项目 .claude/settings.local.json   ← 个人本地覆盖
-//   3. 项目 .claude/settings.json         ← 团队共享
-//   4. 用户 ~/.claude/settings.json       ← 个人全局
+//   2. 项目 .goclaude/settings.local.json   ← 个人本地覆盖
+//   3. 项目 .claude/settings.local.json     ← 旧目录兜底
+//   4. 项目 .goclaude/settings.json         ← 团队共享
+//   5. 项目 .claude/settings.json           ← 旧目录兜底
+//   6. 用户 ~/.goclaude/settings.json       ← 个人全局
+//   7. 用户 ~/.claude/settings.json         ← 旧目录兜底
 //
 // 该顺序与 dotenv 链保持一致（user 最低 / 进程已有最高），让"shell flag"始终
 // 拥有最高可控权，避免配置文件意外锁住用户。
@@ -25,9 +28,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"sync"
+
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 )
 
 // LoadRecord 描述一次成功加载——给 `goclaude doctor` / -v 启动诊断用。
@@ -71,16 +75,18 @@ func LoadDefaults(homeDir, projectCwd string) error {
 	}
 	var entries []entry
 	if homeDir != "" {
-		entries = append(entries, entry{
-			path: filepath.Join(homeDir, ".claude", "settings.json"),
-			desc: "user settings",
-		})
+		entries = append(entries,
+			entry{path: configdir.JoinPrimary(homeDir, "settings.json"), desc: "user settings"},
+			entry{path: configdir.JoinLegacy(homeDir, "settings.json"), desc: "user settings (legacy)"},
+		)
 	}
 	if projectCwd != "" {
-		entries = append(entries,
-			entry{path: filepath.Join(projectCwd, ".claude", "settings.json"), desc: "project settings"},
-			entry{path: filepath.Join(projectCwd, ".claude", "settings.local.json"), desc: "project local settings"},
-		)
+		for _, sp := range []string{"settings.json", "settings.local.json"} {
+			entries = append(entries,
+				entry{path: configdir.JoinPrimary(projectCwd, sp), desc: "project " + sp},
+				entry{path: configdir.JoinLegacy(projectCwd, sp), desc: "project " + sp + " (legacy)"},
+			)
+		}
 	}
 	for _, e := range entries {
 		if err := LoadFile(e.path); err != nil {

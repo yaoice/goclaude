@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/anthropics/goclaude/internal/domain/agent"
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 	"github.com/anthropics/goclaude/pkg/frontmatter"
 )
 
@@ -99,15 +100,15 @@ func (l *Loader) LoadAll(
 	return all, nil
 }
 
-// DefaultUserAgentsDir 默认用户级目录：~/.claude/agents
+// DefaultUserAgentsDir 默认用户级目录：~/.goclaude/agents（优先），~/.claude/agents（兜底）
 func (l *Loader) DefaultUserAgentsDir() string {
 	if l.HomeDir == "" {
 		return ""
 	}
-	return filepath.Join(l.HomeDir, ".claude", "agents")
+	return configdir.JoinPrimary(l.HomeDir, "agents")
 }
 
-// ProjectAgentsDirs 从 cwd 向上到 home 的 .claude/agents 链（最近的在前）
+// ProjectAgentsDirs 从 cwd 向上到 home 的 agents 目录链（最近的在前，新老目录各一份）
 //
 // 当 cwd 不在 home 之下时，最多向上 16 层避免 stat 系统级路径。
 func (l *Loader) ProjectAgentsDirs(cwd string) []string {
@@ -119,7 +120,10 @@ func (l *Loader) ProjectAgentsDirs(cwd string) []string {
 	}
 	const maxDepth = 16
 	for i := 0; i < maxDepth; i++ {
-		dirs = append(dirs, filepath.Join(current, ".claude", "agents"))
+		dirs = append(dirs,
+			configdir.JoinPrimary(current, "agents"),
+			configdir.JoinLegacy(current, "agents"),
+		)
 		if home != "" && current == home {
 			break
 		}

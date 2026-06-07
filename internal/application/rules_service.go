@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 	rules "github.com/anthropics/goclaude/internal/domain/rules"
 )
 
@@ -48,8 +49,8 @@ func (s *RulesService) GetMemoryFiles(ctx context.Context, forceIncludeExternal 
 	opts := rules.LoadOptions{
 		ManagedClaudeMdPath:   filepath.Join("/etc", "claude-code", "CLAUDE.md"),
 		ManagedClaudeRulesDir: filepath.Join("/etc", "claude-code", "rules"),
-		UserClaudeMdPath:     filepath.Join(homeDir, ".claude", "CLAUDE.md"),
-		UserClaudeRulesDir:    filepath.Join(homeDir, ".claude", "rules"),
+		UserClaudeMdPath:     configdir.JoinPrimary(homeDir, "CLAUDE.md"),
+		UserClaudeRulesDir:    configdir.JoinPrimary(homeDir, "rules"),
 		OriginalCwd:           cwd,
 		IncludeExternal:        forceIncludeExternal,
 		UserSettingsEnabled:    true,
@@ -57,8 +58,8 @@ func (s *RulesService) GetMemoryFiles(ctx context.Context, forceIncludeExternal 
 		LocalSettingsEnabled:    true,
 		AutoMemoryEnabled:      true,
 		TeamMemoryEnabled:      false,
-		AutoMemDir:            filepath.Join(homeDir, ".claude", "projects", "memory"),
-		TeamMemDir:            filepath.Join(homeDir, ".claude", "projects", "memory", "team"),
+		AutoMemDir:            configdir.JoinPrimary(homeDir, "projects", "memory"),
+		TeamMemDir:            configdir.JoinPrimary(homeDir, "projects", "memory", "team"),
 	}
 
 	return s.LoadRules(ctx, opts)

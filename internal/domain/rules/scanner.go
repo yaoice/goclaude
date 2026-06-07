@@ -6,6 +6,8 @@ import (
 	"context"
 	"path/filepath"
 	"strings"
+
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 )
 
 // Scanner 规则文件扫描器
@@ -67,16 +69,26 @@ func (s *Scanner) LoadMemoryFiles(ctx context.Context, opts LoadOptions) ([]Memo
 				result = append(result, projectFiles...)
 			}
 
-			dotClaudePath := filepath.Join(dir, ".claude", "CLAUDE.md")
-			dotClaudeFiles, err := s.ProcessMemoryFile(ctx, dotClaudePath, MemoryTypeProject, processedPaths, opts.IncludeExternal, 0, "", opts)
-			if err == nil {
-				result = append(result, dotClaudeFiles...)
+			// 优先 .goclaude/CLAUDE.md，兜底 .claude/CLAUDE.md
+			for _, cd := range []string{"CLAUDE.md"} {
+				for _, cfgDir := range configdir.DirNames() {
+					dotClaudePath := filepath.Join(dir, cfgDir, cd)
+					dotClaudeFiles, err := s.ProcessMemoryFile(ctx, dotClaudePath, MemoryTypeProject, processedPaths, opts.IncludeExternal, 0, "", opts)
+					if err == nil && len(dotClaudeFiles) > 0 {
+						result = append(result, dotClaudeFiles...)
+						break
+					}
+				}
 			}
 
-			rulesDir := filepath.Join(dir, ".claude", "rules")
-			ruleFiles, err := s.ProcessMdRules(ctx, rulesDir, MemoryTypeProject, processedPaths, opts.IncludeExternal, false, opts)
-			if err == nil {
-				result = append(result, ruleFiles...)
+			// 优先 .goclaude/rules，兜底 .claude/rules
+			for _, cfgDir := range configdir.DirNames() {
+				rulesDir := filepath.Join(dir, cfgDir, "rules")
+				ruleFiles, err := s.ProcessMdRules(ctx, rulesDir, MemoryTypeProject, processedPaths, opts.IncludeExternal, false, opts)
+				if err == nil && len(ruleFiles) > 0 {
+					result = append(result, ruleFiles...)
+					break
+				}
 			}
 		}
 

@@ -147,16 +147,24 @@ content
 	}
 }
 
+// TestProjectSkillsDirs 验证从 cwd 向上的 skills 目录（新老目录各一份）。
 func TestProjectSkillsDirs(t *testing.T) {
 	l := &Loader{HomeDir: "/home/test"}
 	got := l.ProjectSkillsDirs("/home/test/proj/subdir")
 
-	// 期望从最近向上：/home/test/proj/subdir, /home/test/proj, /home/test
-	if len(got) < 3 {
-		t.Fatalf("got %v", got)
+	// 期望从最近向上，每层新老各一份：
+	// /home/test/proj/subdir/.goclaude/skills, .../subdir/.claude/skills,
+	// /home/test/proj/.goclaude/skills,       .../proj/.claude/skills,
+	// /home/test/.goclaude/skills,            .../test/.claude/skills
+	if len(got) < 6 {
+		t.Fatalf("expected at least 6 entries, got %d: %v", len(got), got)
 	}
-	want0 := filepath.Join("/home/test/proj/subdir", ".claude", "skills")
+	want0 := filepath.Join("/home/test/proj/subdir", ".goclaude", "skills")
 	if got[0] != want0 {
 		t.Errorf("got[0] = %s want %s", got[0], want0)
+	}
+	want1 := filepath.Join("/home/test/proj/subdir", ".claude", "skills")
+	if got[1] != want1 {
+		t.Errorf("got[1] = %s want %s", got[1], want1)
 	}
 }

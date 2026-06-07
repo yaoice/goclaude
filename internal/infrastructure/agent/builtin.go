@@ -57,7 +57,7 @@ Complete the user's search request efficiently and report your findings clearly.
 			"file_edit",
 			"file_write",
 		},
-		Model:        "haiku",
+		Model:        "inherit",
 		SystemPrompt: prompt,
 		Source:       agent.SourceBuiltIn,
 		BaseDir:      "built-in",

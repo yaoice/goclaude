@@ -85,6 +85,21 @@ type AgentDetailProvider interface {
 	Detail(agentType string) (AgentInfo, string /*filePath*/, bool)
 }
 
+// TeamInfo shell 显示用的 team 摘要
+type TeamInfo struct {
+	Name        string
+	Description string
+	MemberCount int
+	TaskCount   int
+	CreatedAt   int64
+}
+
+// TeamManager 提供 team 列表/详情查询
+type TeamManager interface {
+	List() []TeamInfo
+	Get(name string) (TeamInfo, bool)
+}
+
 // ToolRegistryView 提供已注册的所有工具
 type ToolRegistryView interface {
 	Names() []string

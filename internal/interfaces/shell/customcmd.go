@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
 	"github.com/anthropics/goclaude/pkg/frontmatter"
 )
 
@@ -67,13 +68,21 @@ func (c *CustomCommands) LoadDefaults(projectCwd string) {
 		dirs = append(dirs, struct {
 			dir    string
 			source string
-		}{dir: filepath.Join(home, ".claude", "commands"), source: "user"})
+		}{dir: configdir.JoinPrimary(home, "commands"), source: "user"})
+		dirs = append(dirs, struct {
+			dir    string
+			source string
+		}{dir: configdir.JoinLegacy(home, "commands"), source: "user"})
 	}
 	if projectCwd != "" {
 		dirs = append(dirs, struct {
 			dir    string
 			source string
-		}{dir: filepath.Join(projectCwd, ".claude", "commands"), source: "project"})
+		}{dir: configdir.JoinPrimary(projectCwd, "commands"), source: "project"})
+		dirs = append(dirs, struct {
+			dir    string
+			source string
+		}{dir: configdir.JoinLegacy(projectCwd, "commands"), source: "project"})
 	}
 	for _, d := range dirs {
 		c.loadFromDir(d.dir, d.source)
