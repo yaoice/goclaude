@@ -165,7 +165,7 @@ test-race:
 
 e2e: build
 	$(call ECHO,运行 E2E 端到端测试...)
-	bash scripts/e2e/run_e2e.sh
+	bash tests/e2e/run_e2e.sh
 
 # ============================================================================
 # 代码质量

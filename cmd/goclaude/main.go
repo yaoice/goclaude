@@ -9,10 +9,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/anthropics/goclaude/internal/infrastructure/configdir"
-	"github.com/anthropics/goclaude/internal/interfaces/cli"
-	"github.com/anthropics/goclaude/pkg/dotenv"
-	"github.com/anthropics/goclaude/pkg/settingsenv"
+	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
+	"github.com/anthropics/goclaude/pkg/interfaces/cli"
+	"github.com/anthropics/goclaude/pkg/util/dotenv"
+	"github.com/anthropics/goclaude/pkg/util/settingsenv"
 )
 
 // version 通过编译时 ldflags 注入

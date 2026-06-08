@@ -12,7 +12,7 @@ make all          # Full pipeline: fmt → vet → lint → test → build
 ```bash
 make test                    # Run all tests with -race and -cover
 make test-verbose            # Same with verbose output
-go test ./internal/domain/query/...  # Run tests for a specific package
+go test ./pkg/domain/query/...  # Run tests for a specific package
 go test -run TestName ./path/to/pkg  # Run a single test by name
 make e2e                     # End-to-end tests (requires expect + python3)
 ```
@@ -50,7 +50,7 @@ interfaces → application → domain ← infrastructure
 - **Application** orchestrates domain logic into use cases
 - **Interfaces** adapts external input (CLI, Shell REPL, TUI) to application services
 
-### Domain Layer (`internal/domain/`)
+### Domain Layer (`pkg/domain/`)
 
 The core business logic, entirely free of external dependencies:
 
@@ -63,7 +63,7 @@ The core business logic, entirely free of external dependencies:
 - **`permission/`** — Permission system with modes (allow/deny/ask) and path-based rule matching.
 - **`agent/`**, **`team/`**, **`skill/`**, **`rules/`**, **`hook/`**, **`memory/`**, **`session/`** — Sub-agent definitions, multi-agent team coordination, skills activation, rule loading, hook lifecycle, memory persistence model, and session model.
 
-### Application Layer (`internal/application/`)
+### Application Layer (`pkg/application/`)
 
 Each service file orchestrates one domain concern:
 
@@ -74,7 +74,7 @@ Each service file orchestrates one domain concern:
 - **`skill_service.go`** — Skill loading with conditional activation.
 - **`config_service.go`**, **`session_service.go`**, **`memory_service.go`**, **`rules_service.go`**, **`command_service.go`**, **`task_service.go`** — Corresponding domain orchestrations.
 
-### Infrastructure Layer (`internal/infrastructure/`)
+### Infrastructure Layer (`pkg/infrastructure/`)
 
 Implements domain interfaces with real I/O:
 
@@ -90,20 +90,20 @@ Implements domain interfaces with real I/O:
 - **`worktree/`** — Git worktree isolation for parallel agent work.
 - **`persistence/`**, **`state/`**, **`appconfig/`** — Config/session persistence, in-memory state store, YAML config loading.
 
-### Interfaces Layer (`internal/interfaces/`)
+### Interfaces Layer (`pkg/interfaces/`)
 
 - **`cli/`** — Cobra command definitions (17 files): `root`, `chat`, `doctor`, `run`, `config`, `mcp`, `skill`, `agent`, `team`, etc.
 - **`shell/`** — Interactive REPL (49 files): line editor, markdown rendering with syntax highlighting, dialog system, tab completion, input handling, conversation display.
 - **`tui/`** — Bubbletea-based terminal UI models and views.
 
-### Tools (`internal/tools/`)
+### Tools (`pkg/tools/`)
 
 Concrete tool implementations registered with the domain `Registry`:
 `file_read`, `file_write`, `file_edit`, `bash`, `glob`, `grep`, `agent_tool`, `mcp_tool`, `skill_tool`, `team_tools`, `ask_user`, `todo_write`, `web_search`, `web_fetch`.
 
-### Public Packages (`pkg/`)
+### Utility Packages (`pkg/util/`)
 
-Reusable libraries independent of goclaude internals:
+Reusable libraries internal to goclaude:
 - **`dotenv/`** — `.env` file parser with override/load modes.
 - **`frontmatter/`** — Markdown YAML frontmatter extraction.
 - **`settingsenv/`** — Bridges `settings.json` values to environment variables.
