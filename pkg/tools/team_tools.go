@@ -27,7 +27,6 @@ import (
 	"github.com/anthropics/goclaude/pkg/application"
 	"github.com/anthropics/goclaude/pkg/domain/team"
 	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
 )
 
 // ----- 共用 -----
@@ -135,26 +134,15 @@ func (t *TeamCreateTool) Call(_ context.Context, input tool.Input, uc *tool.UseC
 	if err != nil {
 		return tool.NewErrorResult("create team: " + err.Error()), nil
 	}
-	// 为 team 创建专属 workspace 目录（与 session workspace 同级），便于识别团队产物。
-	teamWorkspace := ""
-	if uc != nil && uc.ProjectRoot != "" {
-		cfg := appconfig.DefaultConfig()
-		ws, wsErr := cfg.EnsureTaskWorkspaceKind(uc.ProjectRoot, appconfig.TaskKindTeam, name)
-		if wsErr == nil {
-			teamWorkspace = ws
-		}
-	}
 	// 登记"本会话是该 team 的 leader"，让上层每轮自动处理 leader inbox。
+	// SetLeader 异步触发 OnTeamCreated → TeamEngine.SpawnMembers，
+	// 由 TeamEngine 负责创建 team workspace（稳定路径，无时间戳）。
 	t.session.SetLeader(f.Name)
-	out := map[string]interface{}{
+	return tool.NewResult(jsonOut(map[string]interface{}{
 		"team_name":     f.Name,
 		"lead_agent_id": f.LeadAgentID,
 		"members":       len(f.Members),
-	}
-	if teamWorkspace != "" {
-		out["workspace"] = teamWorkspace
-	}
-	return tool.NewResult(jsonOut(out)), nil
+	})), nil
 }
 
 // ----- TeamDelete -----

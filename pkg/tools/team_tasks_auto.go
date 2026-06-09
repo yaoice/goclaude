@@ -9,12 +9,10 @@ package tools
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/anthropics/goclaude/pkg/application"
 	"github.com/anthropics/goclaude/pkg/domain/team"
 	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
 )
 
 // =============================================================================
@@ -144,17 +142,9 @@ func (t *AutoSetupTeamTool) Call(_ context.Context, input tool.Input, uc *tool.U
 		return tool.NewErrorResult("auto_setup_team: " + err.Error()), nil
 	}
 
-	// 为 team 创建专属 workspace 目录，便于识别团队产物。
-	teamWorkspace := ""
-	if uc != nil && uc.ProjectRoot != "" {
-		cfg := appconfig.DefaultConfig()
-		ws, wsErr := cfg.EnsureTaskWorkspaceKind(uc.ProjectRoot, appconfig.TaskKindTeam, setupInput.TeamName)
-		if wsErr == nil {
-			teamWorkspace = ws
-		}
-	}
-
 	// 登记 leader 身份，使上层 REPL 能为这个动态创建的 team 自动处理 inbox。
+	// SetLeader 会异步触发 OnTeamCreated → TeamEngine.SpawnMembers，
+	// 由 TeamEngine 负责创建 team workspace。
 	t.session.SetLeader(setupInput.TeamName)
 
 	out := map[string]interface{}{
@@ -162,10 +152,7 @@ func (t *AutoSetupTeamTool) Call(_ context.Context, input tool.Input, uc *tool.U
 		"team_name": setupInput.TeamName,
 		"members":   len(setupInput.Members),
 		"tasks":     len(setupInput.Tasks),
-		"message":   "Team set up successfully. Use list_peers and list_tasks to verify.",
-	}
-	if teamWorkspace != "" {
-		out["workspace"] = fmt.Sprintf("%s (team output directory)", teamWorkspace)
+		"message":   "Team set up successfully. Members are starting in the background. Use list_peers and list_tasks to verify.",
 	}
 	return tool.NewResult(jsonOut(out)), nil
 }

@@ -130,11 +130,11 @@ func (t *AgentTool) Call(ctx context.Context, input tool.Input, uc *tool.UseCont
 
 	workspaceRoot := t.defaults.WorkspaceRoot
 
-	// 若父 workspace 已配置，则在其中创建 subagent-<type>-<timestamp> 子目录
-	// 使 subagent 输出与主 agent 输出隔离，目录前缀 subagent 一眼可识别
+	// 若父 workspace 已配置，则在其中创建 subagent-<type> 子目录（无时间戳）
+	// 父 session 目录已包含时间戳，subagent 用稳定名即可
 	if workspaceRoot != "" {
 		cfg := appconfig.DefaultConfig()
-		subDir, err := cfg.EnsureSubWorkspace(workspaceRoot, appconfig.TaskKindSubagent, subagentType)
+		subDir, err := cfg.EnsureStableSubWorkspace(workspaceRoot, appconfig.TaskKindSubagent, subagentType)
 		if err != nil {
 			// 创建失败不阻塞 subagent 执行，回退到父目录
 			subDir = workspaceRoot

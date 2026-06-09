@@ -74,6 +74,20 @@ type Definition struct {
 	// 仅当用户明确知道在做"调度型 subagent"分发工作（且自行接受失去观察性的
 	// 代价）时，才在 Definition frontmatter 中显式置 true。
 	AllowSubagentChaining bool
+
+	// IsTeamMember 标记此 subagent 是 team worker 成员。
+	//
+	// 设置为 true 时，FilterTools 会放行以下"团队通信"工具：
+	//   - send_message / read_inbox（worker 间互相发消息）
+	//   - list_peers / get_team_status / set_status / heartbeat
+	//   - claim_task / update_task / list_tasks / get_task
+	//
+	// 但仍然会禁止 Agent/Task/team_create/team_delete——worker 不能递归
+	// spawn 孙 agent，也不能修改 team 结构。
+	//
+	// 此字段仅供内部（built-in "team-worker" agent）使用，用户自定义
+	// agent 不应手动设置。
+	IsTeamMember bool
 }
 
 // ResolvedSystemPrompt 返回 GetSystemPrompt（若存在）或 SystemPrompt

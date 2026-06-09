@@ -418,12 +418,13 @@ func previewFirstLine(s string, max int) string {
 // 这些工具一旦让 subagent 持有：
 //   - "Agent"/"Task"/"agent"：subagent 又能启动 subagent → 二级 fan-out 无法被 UI 跟踪、
 //     深度不受控；同时违反"子 ↔ 子不直接通信"的设计约束。
-//   - "team_create"/"team_delete"/"send_message"：team 工具组允许 subagent 之间发消息，
-//     直接打破"主进程是唯一调度者"的核心契约。
+//   - "team_create"/"team_delete"：只应由主进程（leader）持有的结构修改工具。
+//   - "send_message"：普通 subagent 不应持有；但 team member (IsTeamMember=true)
+//     需通过此工具与其他 worker 协调 → 见 teamMemberAllowedTools 的白名单例外。
 //
 // 默认情况下，subagent 的工具集会移除这些条目（即使 Definition.Tools 显式列出也无效）。
 // 仅当 Definition 显式设置 `AllowSubagentChaining=true`（极少数高阶编排场景，比如
-// 主 agent 想让某个"调度型 subagent"分发工作）时，才允许保留。
+// 主 agent 想让某个"调度型 subagent"分发工作）时，才允许全部保留。
 //
 // 注：所有比对均按工具 Name() 做精确匹配；MCP 工具命名为 mcp__<server>__<tool>，
 // 不会落入此集合。
@@ -436,24 +437,44 @@ var reservedSubagentTools = map[string]struct{}{
 	"send_message": {},
 }
 
+// teamMemberAllowedTools 列出 Defition.IsTeamMember=true 时可从
+// reservedSubagentTools 中获得豁免的工具。
+//
+// 设计原则：
+//   - send_message：worker 之间需要互相协调（如 alice 让 bob 帮忙提供接口）。
+//   - Agent / Task / team_create / team_delete 仍然不放行——worker 不能递归
+//     spawn 也不能修改 team 结构。
+var teamMemberAllowedTools = map[string]bool{
+	"send_message": true,
+}
+
 // IsReservedSubagentTool 暴露给外部（如自定义 Factory）做对齐检查。
 func IsReservedSubagentTool(name string) bool {
 	_, ok := reservedSubagentTools[name]
 	return ok
 }
 
+// IsReservedToolAllowedForTeamMember 判断 reserved 工具是否对 team member 豁免。
+func IsReservedToolAllowedForTeamMember(name string) bool {
+	return teamMemberAllowedTools[name]
+}
+
 // FilterTools 按 subagent 的 Tools / DisallowedTools 过滤可用工具
 //
 // 规则（与 src resolveAgentTools 对齐，并叠加隔离保留集）：
 //  1. 隔离保留集（reservedSubagentTools）默认硬剔除——不论 Definition.Tools 是否
-//     显式列出。仅当 def.AllowSubagentChaining == true 时跳过此剔除，
-//     用于极少数"主 agent 想让 subagent 再分发"的高阶编排。
+//     显式列出。例外：
+//     a) def.AllowSubagentChaining == true 时全部放行（高阶编排）。
+//     b) def.IsTeamMember == true 时，teamMemberAllowedTools 中的工具豁免放行，
+//        其余保留工具（Agent/Task/team_create/team_delete）仍剔除。
 //  2. Definition.DisallowedTools 在保留集之后再做一次剔除。
 //  3. 若 Definition.Tools 非空 → 取白名单交集；为 nil → 继承父全部工具。
 //
 // 设计动机：上下文隔离的核心是"子 ↔ 子不通信、不递归调度"。在工具层强制移除
 // Agent/Task/team_*/send_message，比依赖 Definition 显式列举 DisallowedTools 更安全，
 // 也对齐文章中"权限过松：审查代理意外修改代码 → 规避方法：严格配置 tools 白名单"的最佳实践。
+// team member 对 send_message 的豁免则是 agent-teams 重构的关键：worker 间
+// 协调通过 inbox 文件完成，send_message 是通信的唯一入口。
 func FilterTools(parent []tool.Tool, def *agent.Definition) []tool.Tool {
 	if def == nil {
 		return parent
@@ -477,7 +498,12 @@ func FilterTools(parent []tool.Tool, def *agent.Definition) []tool.Tool {
 		// 隔离保留集硬剔除（默认）
 		if !def.AllowSubagentChaining {
 			if _, reserved := reservedSubagentTools[name]; reserved {
-				continue
+				// team member 对白名单内工具豁免放行
+				if def.IsTeamMember && teamMemberAllowedTools[name] {
+					// allow — 见 teamMemberAllowedTools 文档
+				} else {
+					continue
+				}
 			}
 		}
 		if deniedSet[name] {

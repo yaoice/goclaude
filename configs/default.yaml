@@ -44,7 +44,7 @@ providers:
 # 查询引擎参数
 # ═══════════════════════════════════════════════════════════════
 engine:
-  max_turns: 200                      # 单轮查询最大工具循环数
+  max_turns: 300                      # 单轮查询最大工具循环数
   token_budget: 200000                # 上下文 token 预算上限
   auto_compact: true                  # 自动压缩开关
   max_retries: 3
@@ -85,6 +85,20 @@ mcp:
 #                   下发给单一 subagent 独立执行（上下文隔离）。
 agent_teams:
   enabled: true
+
+  # Team Engine — member worker goroutine 的运行时配置
+  team_engine:
+    # 单个任务最大工具循环轮数（0 表示用 agent 定义或引擎默认值 200）
+    # team 任务可能涉及多文件操作和跨 worker 通信，推荐 >= 200
+    max_turns: 0
+    # inbox 轮询间隔（秒）
+    poll_interval_sec: 5
+    # 单个任务执行超时（分钟），0 表示不限制
+    task_timeout_min: 5
+    # 关闭 member 时等待退出的超时（秒）
+    shutdown_timeout_sec: 30
+    # member 最大并行任务数（当前固定为 1：串行执行）
+    max_concurrent_tasks: 1
 
 # ═══════════════════════════════════════════════════════════════
 # 工作区 — 任务产物统一输出目录

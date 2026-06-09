@@ -19,20 +19,34 @@ type TeamSession struct {
 	mu       sync.RWMutex
 	teamName string
 	isLeader bool
+
+	// OnTeamCreated 在 team_create / auto_setup_team 成功创建 team
+	// 并登记 leader 身份后触发。调用方（REPL 装配层）通过它接入
+	// TeamEngine.SpawnMembers，实现在 team 创建时自动启动 member
+	// worker goroutine。
+	//
+	// 回调以异步方式调用（go fn(teamName)），不阻塞工具返回。
+	OnTeamCreated func(teamName string)
 }
 
 // NewTeamSession 构造一个空会话（尚未加入任何 team）。
 func NewTeamSession() *TeamSession { return &TeamSession{} }
 
 // SetLeader 标记本会话为某 team 的 leader（由 team_create / auto_setup_team 调用）。
+// 若注册了 OnTeamCreated 回调，则在登记完成后异步触发。
 func (s *TeamSession) SetLeader(teamName string) {
 	if s == nil || teamName == "" {
 		return
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.teamName = teamName
 	s.isLeader = true
+	cb := s.OnTeamCreated
+	s.mu.Unlock()
+
+	if cb != nil {
+		go cb(teamName)
+	}
 }
 
 // SetMember 标记本会话以非 leader 身份加入某 team（由 lifecycle 自动 join 时调用）。

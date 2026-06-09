@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -181,6 +182,36 @@ func runREPL(cmd *cobra.Command, args []string) error {
 				teamRT.Session.SetMember(flagTeamName)
 			}
 		}
+
+		// TeamEngine：管理 team member worker goroutine 的 spawn/stop 生命周期。
+		// 在 team_create / auto_setup_team 成功创建 team 并添加 members 后，
+		// 通过 TeamSession.OnTeamCreated 回调自动 spawn worker goroutine。
+		teamEngine := application.NewTeamEngine(
+			wired.AgentSvc,
+			wired.TeamSvc,
+			factory,
+			application.TeamEngineConfig{
+				DefaultModel:   modelName,
+				ProjectRoot:    cwd,
+				PollInterval:   5 * time.Second,
+				TaskTimeout:    5 * time.Minute,
+			},
+			logger,
+		)
+
+		// 注入到 AgentService，供 team 工具（通过 agentSvc.TeamEngine()）访问
+		wired.AgentSvc.EnableTeamEngine(teamEngine)
+
+		// team 创建后自动 spawn member workers
+		teamRT.Session.OnTeamCreated = func(teamName string) {
+			if err := teamEngine.SpawnMembers(context.Background(), teamName); err != nil {
+				logger.Warn("auto-spawn team members failed",
+					"team", teamName,
+					"error", err,
+				)
+			}
+		}
+
 		tools.RegisterTeamTools(wired.Registry, wired.TeamSvc, teamRT)
 
 		// 若指定了 (team, agent)：启动时自动 JoinTeam，并起一个心跳 goroutine；
@@ -192,6 +223,8 @@ func runREPL(cmd *cobra.Command, args []string) error {
 			teamLifecycleCancel()
 			teamCleanup()
 		}()
+		// REPL 退出时关闭所有 team member worker
+		defer teamEngine.ShutdownAllTeams(context.Background())
 	} else {
 		// 单一 subagent 模式：不注册任何 team 工具，主 agent 只能通过 Agent 工具
 		// 把任务下发给单一 subagent 独立执行。team 工具仅由 RegisterTeamTools 注入，

@@ -18,8 +18,9 @@ import (
 //
 // 编排 Registry / Loader / 执行：
 //   - 启动时合并内置 + 文件系统 agents
-//   - 提供执行单个 subagent 的 RunAgent（与 query.Engine 集成）
+//   - 提供执行单个 subagent 的 Run（与 query.Engine 集成）
 //   - 可选的 Memory / Worktree 子系统按 Definition 字段触发
+//   - 可选 TeamEngine 支持 agent-teams 的 member worker 管理
 //
 // 对齐 src/tools/AgentTool/runAgent.ts 的核心语义。
 type AgentService struct {
@@ -33,6 +34,9 @@ type AgentService struct {
 
 	listenerMu sync.RWMutex
 	listener   SubagentEventListener
+
+	// teamEngine 可选，由 REPL 装配层在 agent-teams 模式下注入
+	teamEngine *TeamEngine
 }
 
 // SubagentPhase subagent 生命周期阶段。
@@ -144,6 +148,13 @@ func (s *AgentService) EnableSkills(svc *SkillService) { s.skillSvc = svc }
 
 // EnableHooks 注入 hook 注册表；subagent 启动/退出会触发对应事件
 func (s *AgentService) EnableHooks(reg *hook.Registry) { s.hooks = reg }
+
+// EnableTeamEngine 注入 TeamEngine；agent-teams 模式下启用后，
+// team_create / auto_setup_team 会自动 spawn member worker goroutine。
+func (s *AgentService) EnableTeamEngine(te *TeamEngine) { s.teamEngine = te }
+
+// TeamEngine 返回 TeamEngine 实例；未注入时返回 nil。
+func (s *AgentService) TeamEngine() *TeamEngine { return s.teamEngine }
 
 // Registry 暴露底层注册表
 func (s *AgentService) Registry() *agent.Registry {

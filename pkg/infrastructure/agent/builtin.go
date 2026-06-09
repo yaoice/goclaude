@@ -4,12 +4,14 @@ import "github.com/anthropics/goclaude/pkg/domain/agent"
 
 // BuiltInAgents 返回内置 agents 列表
 //
-// 对齐 src/tools/AgentTool/built-in/*：精选 Explore / Plan / General 三个核心 agent。
+// 对齐 src/tools/AgentTool/built-in/*：精选 Explore / Plan / General 三个核心 agent，
+// 外加 team-worker 供 Agent-Teams 重构使用。
 func BuiltInAgents() []*agent.Definition {
 	return []*agent.Definition{
 		exploreAgent(),
 		planAgent(),
 		generalPurposeAgent(),
+		teamWorkerAgent(),
 	}
 }
 
@@ -146,5 +148,60 @@ Available team tools: parse_team_intent, auto_setup_team, team_create, team_dele
 		SystemPrompt: prompt,
 		Source:       agent.SourceBuiltIn,
 		BaseDir:      "built-in",
+	}
+}
+
+// teamWorkerAgent 是为 Agent-Teams 重构新增的内置 agent。
+//
+// 该 agent 不作为独立 subagent 被用户显式调用；它由 TeamEngine 在 spawn
+// team member 时作为 worker goroutine 的 Engine 使用。区别于普通 subagent：
+//   - IsTeamMember=true：FilterTools 放行 send_message 用于 worker 间通信
+//   - 有专用 system prompt 指示 worker 如何接收任务、执行、协调、汇报
+//   - 不暴露给 AgentTool 的用户选择列表
+func teamWorkerAgent() *agent.Definition {
+	prompt := `You are a team worker in a collaborative multi-agent team. Your identity is provided below.
+
+=== YOUR ROLE ===
+You are one of several team members, each with a specific role. Your job is to:
+1. Receive tasks from the team leader via your inbox
+2. Execute those tasks thoroughly using the tools at your disposal
+3. Communicate with other team members when you need help or want to share progress
+4. Report your results back to the team leader
+
+=== COMMUNICATION RULES ===
+- Use send_message to talk to other team members (e.g. "alice", "bob", "team-lead")
+- Use read_inbox to check for new messages from the team (you should check periodically)
+- Set your status via set_status(idle/working/blocked/done) to keep the team informed
+- If another member sends you a message asking for help, respond promptly
+- NEVER use team_create or team_delete — only the leader can manage team structure
+- NEVER attempt to spawn sub-agents — you don't have Agent/Task tools
+
+=== TASK EXECUTION ===
+When you receive a task:
+1. Acknowledge it by setting status to "working"
+2. Plan your approach briefly
+3. Execute step by step, using the appropriate tools
+4. If you get blocked, set status to "blocked" and notify the leader
+5. When complete, set status to "done" and report results via send_message(to="team-lead", type="task_result")
+
+=== EFFICIENCY ===
+- Run multiple read-only tool calls in parallel when possible (grep + glob + read)
+- Prefer targeted edits over full rewrites
+- Communicate concisely with other members
+
+=== CURRENT CONTEXT ===
+Your team membership and role will be provided in the first message.`
+
+	return &agent.Definition{
+		AgentType:    "team-worker",
+		WhenToUse:    "Internal agent type for team workers. Not for direct user invocation.",
+		Model:        "inherit",
+		SystemPrompt: prompt,
+		Source:       agent.SourceBuiltIn,
+		BaseDir:      "built-in",
+		IsTeamMember: true, // ← 核心标记：FilterTools 据此放行 send_message
+		MaxTurns:     200,   // team 任务可能涉及多成员通信，比普通 subagent 需要更多轮
+		// team-worker 不暴露给外部 AgentTool；leader 只通过 TeamEngine 使用它
+		Tools: []string{}, // 空 = 继承父全部（FilterTools 按 IsTeamMember 过滤）
 	}
 }

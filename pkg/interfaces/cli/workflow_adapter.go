@@ -229,9 +229,9 @@ func (a *workflowAdapter) executeWorkflow(ctx context.Context, w *wf.Workflow) (
 		return nil, fmt.Errorf("parse workflow %q: %w", w.Name, err)
 	}
 
-	// 为 workflow 创建专属 workspace 目录，便于识别工作流产物。
+	// 为 workflow 创建专属 workspace 目录（无时间戳，稳定命名）
 	defaults := a.defaults
-	if ws, wsErr := appconfig.DefaultConfig().EnsureTaskWorkspaceKind(a.project, appconfig.TaskKindWorkflow, w.Name); wsErr == nil {
+	if ws, wsErr := appconfig.DefaultConfig().EnsureStableTaskWorkspace(a.project, appconfig.TaskKindWorkflow, w.Name); wsErr == nil {
 		defaults.WorkspaceRoot = ws
 	}
 

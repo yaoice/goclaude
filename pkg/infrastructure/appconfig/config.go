@@ -391,6 +391,33 @@ func (c *Config) EnsureSubWorkspace(parentDir string, kind TaskKind, subName str
 	return dir, nil
 }
 
+// EnsureStableSubWorkspace 在父目录下创建稳定命名的子 workspace（无时间戳）。
+// 用于 subagent（父目录已带 session 时间戳，子代理不需要再重复）。
+// 格式：<parentDir>/<kind>-<name>/
+func (c *Config) EnsureStableSubWorkspace(parentDir string, kind TaskKind, subName string) (string, error) {
+	sanitized := sanitizeTaskName(subName)
+	dir := filepath.Join(parentDir, fmt.Sprintf("%s-%s", string(kind), sanitized))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", fmt.Errorf("create stable sub-workspace %s: %w", dir, err)
+	}
+	return dir, nil
+}
+
+// EnsureStableTaskWorkspace 创建稳定命名的 task workspace（无时间戳）。
+// 用于 workflow 等希望复用同一目录的场景。
+// 格式：<WorkspaceRoot>/<kind>-<name>/
+func (c *Config) EnsureStableTaskWorkspace(projectRoot string, kind TaskKind, taskName string) (string, error) {
+	if _, err := c.EnsureWorkspace(projectRoot); err != nil {
+		return "", err
+	}
+	sanitized := sanitizeTaskName(taskName)
+	dir := filepath.Join(c.WorkspaceRoot(projectRoot), fmt.Sprintf("%s-%s", string(kind), sanitized))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", fmt.Errorf("create stable task workspace %s: %w", dir, err)
+	}
+	return dir, nil
+}
+
 // EnsureTaskWorkspace 创建并返回具体任务的 workspace 子目录。
 //
 // 等价于 EnsureWorkspace + WorkspaceDir + MkdirAll。
