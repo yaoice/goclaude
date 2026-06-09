@@ -74,6 +74,11 @@ type REPL struct {
 	// 回调返回切换后的新模式名（用于显示）；nil 时不允许切换
 	OnPermissionModeChange func() string
 
+	// OnWorkspaceSet 用户输入 /workspace <path> 时回调。
+	// 回调负责解析路径、确保目录存在、更新底层 config/executor。
+	// 返回解析后的绝对路径；nil 表示不支持（输出提示）。
+	OnWorkspaceSet func(newPath string) (resolvedPath string, err error)
+
 	// PauseInput 临时离开原始模式（如 AskUser 工具需要从 stdin 读一行）
 	// fn 执行期间，shell 不会读键盘；fn 结束自动恢复
 	pauseInputMu sync.Mutex
@@ -482,8 +487,12 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 	toolUseIDToMeta := map[string]*toolMeta{} // ToolUseID → *toolMeta 快速查找
 	tools := map[int]*toolMeta{}
 
-	// 思考块状态：默认折叠为一行；verbose 时实时打印 thinking 文本
+	// 思考块状态：默认折叠为一行；verbose 时按行打印 thinking 文本
 	thinkingShown := false
+	var thinkingLineBuf strings.Builder // 累积未完成行的缓冲区
+
+	// 文本块状态：用于在 thinking → text 切换时插入视觉分隔
+	textAfterThinking := false
 
 	// 工具步骤计数器（用于显示 [1] [2] [3] ...）
 	toolStepCount := 0
@@ -525,6 +534,16 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 					r.colorize("  …", colorMuted) + "\r\n")
 				meta.summaryFlushed = true
 				meta.stepNum = toolStepCount
+
+			case query.ContentTypeThinking:
+				flushFmt()
+				if !thinkingShown {
+					thinkingShown = true
+					// 非 verbose：一行提示
+					if !r.Verbose {
+						r.writeOut(r.colorize("  "+r.gl().minor+"thinking…\r\n", colorMuted))
+					}
+				}
 
 			case query.ContentTypeToolResult:
 				flushFmt()
@@ -632,6 +651,13 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 			switch ev.Delta.Type {
 			case query.ContentTypeText:
 				if ev.Delta.Text != "" {
+					// thinking → text 切换：插入空行分隔
+					if textAfterThinking {
+						textAfterThinking = false
+						if r.Verbose {
+							r.writeOut("\r\n")
+						}
+					}
 					formatter.Write(buf, ev.Delta.Text)
 					assistantText.WriteString(ev.Delta.Text)
 					formatter.FlushIncomplete(buf)
@@ -649,10 +675,19 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 				if ev.Delta.Thinking == "" {
 					continue
 				}
+				textAfterThinking = true
 				if r.Verbose {
-					flushFmt()
-					line := strings.ReplaceAll(ev.Delta.Thinking, "\n", "\r\n")
-					r.writeOut(r.colorize(line, colorMuted))
+					// 按行累积输出，浅色缩进
+					thinkingLineBuf.WriteString(ev.Delta.Thinking)
+					for {
+						line, rest, hasNewline := strings.Cut(thinkingLineBuf.String(), "\n")
+						if !hasNewline {
+							break
+						}
+						thinkingLineBuf.Reset()
+						thinkingLineBuf.WriteString(rest)
+						r.writeOut(r.colorize("  "+line, colorDim) + "\r\n")
+					}
 				} else if !thinkingShown {
 					thinkingShown = true
 					flushFmt()
@@ -660,6 +695,11 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 				}
 			}
 		case query.EventContentBlockStop:
+			// 思考块结束：flush 未完成的行（浅色缩进）
+			if thinkingLineBuf.Len() > 0 {
+				r.writeOut(r.colorize("  "+thinkingLineBuf.String(), colorDim) + "\r\n")
+				thinkingLineBuf.Reset()
+			}
 			if m, ok := tools[ev.Index]; ok && m.partial != "" && !m.collapsed {
 				// 清理流式输出状态
 				if isFileWriteTool(m.name) {

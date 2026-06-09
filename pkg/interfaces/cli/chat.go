@@ -184,6 +184,10 @@ func buildProvider(name string) (query.AIProvider, string, error) {
 		if pc, ok := cfg.Providers[providerAnthropic]; ok && pc.DefaultModel != "" {
 			defaultModel = pc.DefaultModel
 		}
+		// 全局 api.model 覆盖 provider 默认
+		if cfg.API.Model != "" {
+			defaultModel = cfg.API.Model
+		}
 		return anthropic.NewClient(ccfg), defaultModel, nil
 
 	case providerDeepSeek:
@@ -209,6 +213,10 @@ func buildProvider(name string) (query.AIProvider, string, error) {
 		defaultModel := deepseek.ModelChat
 		if pc, ok := cfg.Providers[providerDeepSeek]; ok && pc.DefaultModel != "" {
 			defaultModel = pc.DefaultModel
+		}
+		// 全局 api.model 覆盖 provider 默认（支持 deepseek-reasoner 等）
+		if cfg.API.Model != "" {
+			defaultModel = cfg.API.Model
 		}
 		return deepseek.NewClient(ccfg), defaultModel, nil
 

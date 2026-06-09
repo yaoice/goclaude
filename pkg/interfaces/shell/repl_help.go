@@ -52,6 +52,7 @@ var builtinCommands = []helpCommand{
 	{name: "/messages", argHint: "", desc: "Show current conversation messages"},
 	{name: "/model", argHint: "[name]", desc: "Show or set model label (engine model is fixed per session)"},
 	{name: "/pwd", argHint: "", desc: "Print working directory"},
+	{name: "/workspace", argHint: "[path]", desc: "Show or set workspace output directory"},
 	{name: "/cost", argHint: "", desc: "Show token usage summary (also: /usage)"},
 	{name: "/compact", argHint: "", desc: "Auto-compact status (managed by engine)"},
 	{name: "/permissions", argHint: "", desc: "Show / cycle permission mode (Shift-Tab)"},

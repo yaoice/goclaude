@@ -51,6 +51,12 @@ func applyMap(cfg *Config, m map[string]interface{}) {
 	if tui, ok := getMap(m, "tui"); ok {
 		applyTUI(&cfg.TUI, tui)
 	}
+	if sp, ok := getMap(m, "system_prompt"); ok {
+		applySystemPrompt(&cfg.SystemPrompt, sp)
+	}
+	if ws, ok := getMap(m, "workspace"); ok {
+		applyWorkspace(&cfg.Workspace, ws)
+	}
 }
 
 func applyAPI(c *APIConfig, m map[string]interface{}) {
@@ -233,6 +239,30 @@ func applyTUI(c *TUIConfig, m map[string]interface{}) {
 	}
 	if v, ok := getBool(m, "show_cost"); ok {
 		c.ShowCost = v
+	}
+}
+
+func applySystemPrompt(c *SystemPromptConfig, m map[string]interface{}) {
+	if v, ok := getString(m, "guidelines"); ok {
+		c.Guidelines = v
+	}
+	if v, ok := getString(m, "subagent_mode"); ok {
+		c.SubagentMode = v
+	}
+	if v, ok := getString(m, "team_mode"); ok {
+		c.TeamMode = v
+	}
+	if v, ok := getString(m, "extra"); ok {
+		c.Extra = v
+	}
+}
+
+func applyWorkspace(c *WorkspaceConfig, m map[string]interface{}) {
+	if v, ok := getString(m, "dir"); ok {
+		c.Dir = v
+	}
+	if v, ok := getBool(m, "auto_create"); ok {
+		c.AutoCreate = v
 	}
 }
 

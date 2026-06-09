@@ -186,18 +186,18 @@ type SystemPromptConfig struct {
 
 // WorkspaceConfig 任务工作区配置。
 //
-// 所有任务（agent / workflow / team）生成的产物统一输出到此工作区目录，
-// 避免文件散落在项目各处。
+// 所有任务（agent / workflow / team）生成的产物统一输出到此目录，
+// 避免文件散落在项目各处。无子目录，产物直接写入该目录下。
 //
 // 路径规则（优先级从高到低）：
 //   - 绝对路径 → 直接使用
 //   - 以 ~/ 开头 → 相对于用户 HOME
 //   - 相对路径（默认）→ 相对于 projectRoot
 //
-// 默认值：<projectRoot>/.goclaude/workspaces/
+// 默认值：<projectRoot>/workspaces/
 type WorkspaceConfig struct {
-	// Root 工作区根目录，支持 ~/ 和相对路径
-	Root string `yaml:"root"`
+	// Dir 工作区路径，支持 ~/ 和相对路径
+	Dir string `yaml:"dir"`
 	// AutoCreate 目录不存在时是否自动创建
 	AutoCreate bool `yaml:"auto_create"`
 }
@@ -281,7 +281,7 @@ func DefaultConfig() *Config {
 			ShowCost:       true,
 		},
 		Workspace: WorkspaceConfig{
-			Root:       ".goclaude/workspaces",
+			Dir:        "./workspaces/",
 			AutoCreate: true,
 		},
 	}
@@ -296,20 +296,20 @@ func DefaultConfig() *Config {
 //
 // projectRoot 通常为当前工作目录（cwd）。
 func (c *Config) WorkspaceRoot(projectRoot string) string {
-	root := c.Workspace.Root
-	if root == "" {
-		root = ".goclaude/workspaces"
+	dir := c.Workspace.Dir
+	if dir == "" {
+		dir = "./workspaces/"
 	}
-	if filepath.IsAbs(root) {
-		return root
+	if filepath.IsAbs(dir) {
+		return dir
 	}
-	if strings.HasPrefix(root, "~/") {
+	if strings.HasPrefix(dir, "~/") {
 		home, err := os.UserHomeDir()
 		if err == nil {
-			return filepath.Join(home, root[2:])
+			return filepath.Join(home, dir[2:])
 		}
 	}
-	return filepath.Join(projectRoot, root)
+	return filepath.Join(projectRoot, dir)
 }
 
 // EnsureWorkspace 确保工作区根目录存在（若配置允许自动创建）。
@@ -328,143 +328,6 @@ func (c *Config) EnsureWorkspace(projectRoot string) (string, error) {
 		}
 	}
 	return root, nil
-}
-
-// TaskKind 标识任务类型，用于 workspace 子目录命名。
-//
-// 每个类型有对应的全英文前缀，使目录名一眼可识别：
-//
-//	main     — 主 agent 直接模型输出
-//	subagent — SubAgent（子代理）
-//	workflow — Workflow（工作流）
-//	team     — Agent Team（代理团队）
-//	plan     — Plan Agent（规划代理）
-type TaskKind string
-
-const (
-	TaskKindTeam     TaskKind = "team"     // agent team
-	TaskKindSubagent TaskKind = "subagent" // subagent (AgentTool)
-	TaskKindWorkflow TaskKind = "workflow" // workflow
-	TaskKindTask     TaskKind = "main"     // 主 agent 直接执行
-	TaskKindPlan     TaskKind = "plan"     // plan agent
-)
-
-// WorkspaceDir 返回指定任务的工作区子目录路径。
-//
-// 命名规范：<WorkspaceRoot>/<name>-<YYYYMMDDHHMMSS>/
-//
-//	explore-20260608021800/
-//	code-review-20260608021600/
-//	api-setup-20260608021700/
-//	tank-game-dev-20260608021500/
-//	project-init-20260608021900/
-func (c *Config) WorkspaceDir(projectRoot, taskName string) string {
-	sanitized := sanitizeTaskName(taskName)
-	timestamp := time.Now().UTC().Format("20060102150405")
-	return filepath.Join(c.WorkspaceRoot(projectRoot), timestamp+"-"+sanitized)
-}
-
-// TaskWorkspaceDir 返回带类型前缀标签的任务 workspace 子目录路径。
-// 格式：<WorkspaceRoot>/<主/子/团队/工作流/规划 等标识>-<name>-<timestamp>/
-func (c *Config) TaskWorkspaceDir(projectRoot string, kind TaskKind, taskName string) string {
-	sanitized := sanitizeTaskName(taskName)
-	timestamp := time.Now().UTC().Format("20060102150405")
-	return filepath.Join(c.WorkspaceRoot(projectRoot),
-		fmt.Sprintf("%s-%s-%s", string(kind), sanitized, timestamp))
-}
-
-// SubWorkspaceDir 在父 workspace 下创建子 workspace 子目录。
-// 用于 subagent/workflow/team 在父工作区下创建自己的隔离目录。
-// 格式：<parentDir>/<subagent|workflow|team|plan>-<name>-<timestamp>/
-func (c *Config) SubWorkspaceDir(parentDir string, kind TaskKind, subName string) string {
-	sanitized := sanitizeTaskName(subName)
-	timestamp := time.Now().UTC().Format("20060102150405")
-	return filepath.Join(parentDir, fmt.Sprintf("%s-%s-%s", string(kind), sanitized, timestamp))
-}
-
-// EnsureSubWorkspace 在父目录下创建子 workspace 目录。
-func (c *Config) EnsureSubWorkspace(parentDir string, kind TaskKind, subName string) (string, error) {
-	dir := c.SubWorkspaceDir(parentDir, kind, subName)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("create sub-workspace %s: %w", dir, err)
-	}
-	return dir, nil
-}
-
-// EnsureStableSubWorkspace 在父目录下创建稳定命名的子 workspace（无时间戳）。
-// 用于 subagent（父目录已带 session 时间戳，子代理不需要再重复）。
-// 格式：<parentDir>/<kind>-<name>/
-func (c *Config) EnsureStableSubWorkspace(parentDir string, kind TaskKind, subName string) (string, error) {
-	sanitized := sanitizeTaskName(subName)
-	dir := filepath.Join(parentDir, fmt.Sprintf("%s-%s", string(kind), sanitized))
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("create stable sub-workspace %s: %w", dir, err)
-	}
-	return dir, nil
-}
-
-// EnsureStableTaskWorkspace 创建稳定命名的 task workspace（无时间戳）。
-// 用于 workflow 等希望复用同一目录的场景。
-// 格式：<WorkspaceRoot>/<kind>-<name>/
-func (c *Config) EnsureStableTaskWorkspace(projectRoot string, kind TaskKind, taskName string) (string, error) {
-	if _, err := c.EnsureWorkspace(projectRoot); err != nil {
-		return "", err
-	}
-	sanitized := sanitizeTaskName(taskName)
-	dir := filepath.Join(c.WorkspaceRoot(projectRoot), fmt.Sprintf("%s-%s", string(kind), sanitized))
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("create stable task workspace %s: %w", dir, err)
-	}
-	return dir, nil
-}
-
-// EnsureTaskWorkspace 创建并返回具体任务的 workspace 子目录。
-//
-// 等价于 EnsureWorkspace + WorkspaceDir + MkdirAll。
-func (c *Config) EnsureTaskWorkspace(projectRoot, taskName string) (string, error) {
-	if _, err := c.EnsureWorkspace(projectRoot); err != nil {
-		return "", err
-	}
-	dir := c.WorkspaceDir(projectRoot, taskName)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("create task workspace %s: %w", dir, err)
-	}
-	return dir, nil
-}
-
-// EnsureTaskWorkspaceKind 创建并返回带类型前缀的任务 workspace 子目录。
-func (c *Config) EnsureTaskWorkspaceKind(projectRoot string, kind TaskKind, taskName string) (string, error) {
-	if _, err := c.EnsureWorkspace(projectRoot); err != nil {
-		return "", err
-	}
-	dir := c.TaskWorkspaceDir(projectRoot, kind, taskName)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("create task workspace %s: %w", dir, err)
-	}
-	return dir, nil
-}
-
-// sanitizeTaskName 将 task 名称转为安全的目录名。
-func sanitizeTaskName(name string) string {
-	if name == "" {
-		return "task"
-	}
-	// 替换不安全字符为 -
-	replacer := strings.NewReplacer(
-		" ", "-", "/", "-", "\\", "-", ":", "-",
-		"*", "-", "?", "-", "\"", "-", "<", "-",
-		">", "-", "|", "-", "&", "-", ";", "-",
-	)
-	safe := replacer.Replace(name)
-	// 压缩连续的 -
-	for strings.Contains(safe, "--") {
-		safe = strings.ReplaceAll(safe, "--", "-")
-	}
-	safe = strings.Trim(safe, "-")
-	if safe == "" {
-		safe = "task"
-	}
-	return safe
 }
 
 // Load 按文档优先级链路加载配置

@@ -18,7 +18,7 @@
 # ═══════════════════════════════════════════════════════════════
 api:
   provider: deepseek                  # anthropic | deepseek
-  model: deepseek-chat                # 默认模型；按 provider 自动回退
+  model: deepseek-reasoner            # 默认模型；按 provider 自动回退
   max_tokens: 32768                   # 单次最大输出 token
   temperature: 1.0                    # 采样温度 (0.0 ~ 2.0)
   top_p: 1.0                          # 核采样
@@ -111,8 +111,9 @@ agent_teams:
 #   - ~/ 开头 → 相对于用户 HOME
 #   - 相对路径 → 相对于工作目录（cwd / projectRoot）
 workspace:
-  # 默认：项目 .goclaude/workspaces/ 目录
-  root: .goclaude/workspaces
+  # 默认：项目 ./workspaces/ 目录（相对于工作目录/项目根）
+  # 所有产物文件直接写入此目录，无子目录
+  dir: ./.goclaude/workspaces/
   # 自动创建目录（如不存在）
   auto_create: true
 

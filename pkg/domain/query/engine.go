@@ -233,16 +233,15 @@ func (e *Engine) Execute(ctx context.Context, messages []Message, events chan<- 
 	}
 }
 
-// processStream 处理流式响应，组装完整消息
+// processStream 处理流式响应，组装完整消息。
+//
+// 单层 for/select 循环，将各事件类型分派给细粒度 handler 方法，
+// 减少深层嵌套 switch 并提高可读性。
 func (e *Engine) processStream(ctx context.Context, streamCh <-chan StreamEvent, events chan<- StreamEvent) (*Message, *Usage, StopReason, error) {
-	response := &Message{
-		Role:    RoleAssistant,
-		Content: []ContentBlock{},
-	}
+	resp := &Message{Role: RoleAssistant, Content: []ContentBlock{}}
 	var usage *Usage
-	var stopReason StopReason
-
-	// 当前正在构建的内容块
+	var sr StopReason
+	// currentBlocks: index → 正在构建的 ContentBlock 快照
 	currentBlocks := make(map[int]*ContentBlock)
 
 	for {
@@ -251,11 +250,10 @@ func (e *Engine) processStream(ctx context.Context, streamCh <-chan StreamEvent,
 			return nil, nil, "", ctx.Err()
 		case event, ok := <-streamCh:
 			if !ok {
-				// 流结束
-				return response, usage, stopReason, nil
+				return resp, usage, sr, nil // 流正常结束
 			}
 
-			// 转发事件到TUI
+			// 非阻塞转发到 TUI / 探针管道
 			if events != nil {
 				select {
 				case events <- event:
@@ -264,64 +262,79 @@ func (e *Engine) processStream(ctx context.Context, streamCh <-chan StreamEvent,
 				}
 			}
 
-			// 处理事件
 			switch event.Type {
 			case EventContentBlockStart:
-				if event.ContentBlock != nil {
-					currentBlocks[event.Index] = event.ContentBlock
-				}
-
+				e.handleBlockStart(event, currentBlocks)
 			case EventContentBlockDelta:
-				if block, ok := currentBlocks[event.Index]; ok && event.Delta != nil {
-					switch event.Delta.Type {
-					case ContentTypeText:
-						block.Text += event.Delta.Text
-					case ContentTypeToolUse:
-						block.Text += event.Delta.PartialJSON
-					case ContentTypeThinking:
-						block.Thinking += event.Delta.Thinking
-					}
-				}
-
+				e.handleBlockDelta(event, currentBlocks)
 			case EventContentBlockStop:
-				if block, ok := currentBlocks[event.Index]; ok {
-					// 对 ToolUse 块：累积期使用 block.Text 作为 partial_json 缓冲；
-					// 在结束时一次性反序列化为 block.Input，避免下游 executeTools
-					// 拿到空入参（这是流式工具调用的必要收尾步骤）。
-					if block.Type == ContentTypeToolUse && block.Text != "" {
-						var input interface{}
-						if err := json.Unmarshal([]byte(block.Text), &input); err == nil {
-							block.Input = input
-						} else {
-							e.logger.Warn("解析 tool_use 流式 input 失败",
-								"tool", block.ToolName,
-								"id", block.ToolUseID,
-								"raw", block.Text,
-								"error", err,
-							)
-						}
-						block.Text = "" // 清掉用作累积缓冲的脏字段
-					}
-					response.Content = append(response.Content, *block)
-					delete(currentBlocks, event.Index)
-				}
-
+				e.handleBlockStop(event, currentBlocks, resp)
 			case EventMessageDelta:
-				stopReason = event.StopReason
 				if event.Usage != nil {
 					usage = event.Usage
 				}
-
+				sr = event.StopReason
 			case EventMessageStart:
 				if event.Usage != nil {
 					usage = event.Usage
 				}
-
 			case EventError:
 				return nil, nil, "", event.Error
 			}
 		}
 	}
+}
+
+// handleBlockStart 记录新内容块。
+func (e *Engine) handleBlockStart(event StreamEvent, blocks map[int]*ContentBlock) {
+	if event.ContentBlock != nil {
+		blocks[event.Index] = event.ContentBlock
+	}
+}
+
+// handleBlockDelta 将增量追加到对应内容块。
+func (e *Engine) handleBlockDelta(event StreamEvent, blocks map[int]*ContentBlock) {
+	block, ok := blocks[event.Index]
+	if !ok || event.Delta == nil {
+		return
+	}
+	switch event.Delta.Type {
+	case ContentTypeText:
+		block.Text += event.Delta.Text
+	case ContentTypeToolUse:
+		block.Text += event.Delta.PartialJSON // 流式工具入参用 Text 字段做累积缓冲
+	case ContentTypeThinking:
+		block.Thinking += event.Delta.Thinking
+	}
+}
+
+// handleBlockStop 内容块收尾：反序列化 tool_use 入参，追加到响应并清理跟踪。
+func (e *Engine) handleBlockStop(event StreamEvent, blocks map[int]*ContentBlock, resp *Message) {
+	block, ok := blocks[event.Index]
+	if !ok {
+		return
+	}
+	// ToolUse 块：将累积的 partial_json 缓冲反序列化为 Input
+	if block.Type == ContentTypeToolUse && block.Text != "" {
+		e.finalizeToolUseBlock(block)
+	}
+	resp.Content = append(resp.Content, *block)
+	delete(blocks, event.Index)
+}
+
+// finalizeToolUseBlock 将流式累积的 partial JSON 反序列化为 block.Input 并清空缓冲。
+func (e *Engine) finalizeToolUseBlock(block *ContentBlock) {
+	var input interface{}
+	if err := json.Unmarshal([]byte(block.Text), &input); err != nil {
+		e.logger.Warn("解析 tool_use 流式 input 失败",
+			"tool", block.ToolName,
+			"id", block.ToolUseID,
+			"error", err,
+		)
+	} else {
+		block.Input = input
+	}
+	block.Text = "" // 清掉用作累积缓冲的脏字段，避免下游误读
 }
 
 // executeTools 执行工具调用列表
@@ -376,7 +389,9 @@ func (e *Engine) executeTools(ctx context.Context, toolUseBlocks []ContentBlock,
 	return contentBlocks, nil
 }
 
-// getToolDefinitions 获取所有已启用工具的API定义
+// getToolDefinitions 获取所有已启用工具的 API 定义。
+//
+// 将 tool.Executor 的原始 map 切片转换为引擎内部使用的 ToolDefinition 切片。
 func (e *Engine) getToolDefinitions() []ToolDefinition {
 	if e.toolExecutor == nil {
 		return nil

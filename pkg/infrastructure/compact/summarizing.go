@@ -50,57 +50,33 @@ func NewSummarizingCompactor() *SummarizingCompactor {
 
 // Compact 实现 query.Compactor
 func (c *SummarizingCompactor) Compact(ctx context.Context, messages []query.Message, provider query.AIProvider) ([]query.Message, error) {
-	logger := c.Logger
-	if logger == nil {
-		logger = slog.Default()
-	}
+	logger := c.logger()
+
 	if len(messages) < MinMessagesToCompact {
 		return messages, nil
 	}
 
 	head, mid, tail := c.partition(messages)
 	if len(mid) < MinMidToCompact {
-		// mid 太短：压缩开销 > 节省，直接放弃
-		return messages, nil
+		return messages, nil // 压缩开销 > 节省
 	}
-	// 若 mid 末尾把某 tool_use 切走但 result 留在 tail，会留下孤立 tool_use 在摘要 LLM 输入中。
-	// 修正：把孤立 tool_use 所在 assistant 消息也吃进 mid → result 跟随；如果 result 在 tail 则把 tail 末端往后扩。
+	// 修正 tool_use/tool_result 切分：避免孤立 tool_use 在 LLM 输入中
 	head, mid, tail = balanceToolPairs(head, mid, tail)
 
 	summary, err := c.requestSummary(ctx, provider, mid)
 	if err != nil {
 		logger.Warn("LLM 摘要失败，回退 truncating 压缩", "error", err)
-		fallback := c.Fallback
-		if fallback == nil {
-			// 用与本压缩器相同的 head/tail 设置构造 fallback，保持行为一致
-			fallback = &TruncatingCompactor{
-				HeadKeep: c.HeadKeep,
-				TailKeep: c.TailKeep,
-				Logger:   logger,
-			}
-		}
-		return fallback.Compact(ctx, messages, provider)
+		return c.fallbackCompactor(logger).Compact(ctx, messages, provider)
 	}
 
-	out := make([]query.Message, 0, len(head)+2+len(tail))
-	out = append(out, head...)
-	out = append(out, boundaryMessage(fmt.Sprintf("LLM summary of %d middle messages", len(mid))))
-	out = append(out, summaryMessage(summary))
-	out = append(out, tail...)
+	out := assembleCompactResult(head, mid, summary, tail)
 
-	// 安全网：压缩后再次检查孤立 tool_use（理论不可能，但防御）
+	// 安全网：防御性检查孤立 tool_use
 	if hasOpenToolUse(out) {
 		logger.Warn("压缩后仍有孤立 tool_use，回退 truncating 压缩")
-		fallback := c.Fallback
-		if fallback == nil {
-			fallback = &TruncatingCompactor{
-				HeadKeep: c.HeadKeep,
-				TailKeep: c.TailKeep,
-				Logger:   logger,
-			}
-		}
-		return fallback.Compact(ctx, messages, provider)
+		return c.fallbackCompactor(logger).Compact(ctx, messages, provider)
 	}
+
 	logger.Debug("LLM 摘要压缩完成",
 		"input_messages", len(messages),
 		"compacted_messages", len(mid),
@@ -108,6 +84,36 @@ func (c *SummarizingCompactor) Compact(ctx context.Context, messages []query.Mes
 		"summary_chars", len(summary),
 	)
 	return out, nil
+}
+
+// logger 返回已解析的 logger（nil 时用 slog.Default()）。
+func (c *SummarizingCompactor) logger() *slog.Logger {
+	if c.Logger != nil {
+		return c.Logger
+	}
+	return slog.Default()
+}
+
+// fallbackCompactor 返回降级用的 TruncatingCompactor，复用相同的 head/tail 设置。
+func (c *SummarizingCompactor) fallbackCompactor(logger *slog.Logger) query.Compactor {
+	if c.Fallback != nil {
+		return c.Fallback
+	}
+	return &TruncatingCompactor{
+		HeadKeep: c.HeadKeep,
+		TailKeep: c.TailKeep,
+		Logger:   logger,
+	}
+}
+
+// assembleCompactResult 组合压缩结果：[head] + [boundary] + [summary] + [tail]
+func assembleCompactResult(head []query.Message, mid []query.Message, summary string, tail []query.Message) []query.Message {
+	out := make([]query.Message, 0, len(head)+2+len(tail))
+	out = append(out, head...)
+	out = append(out, boundaryMessage(fmt.Sprintf("LLM summary of %d middle messages", len(mid))))
+	out = append(out, summaryMessage(summary))
+	out = append(out, tail...)
+	return out
 }
 
 // partition 切分为 head / mid / tail（独立切片，避免共享底层数组）

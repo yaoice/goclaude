@@ -111,7 +111,7 @@ func (h *prettyHandler) Handle(_ context.Context, r slog.Record) error {
 			b.WriteString(prettyReset)
 		}
 	}
-	b.WriteString("\n")
+	b.WriteString("\r\n")
 
 	h.mu.Lock()
 	defer h.mu.Unlock()

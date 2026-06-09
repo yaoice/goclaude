@@ -20,18 +20,18 @@ type TeamRuntime struct {
 	Session *TeamSession
 }
 
-// RegisterTeamTools 把 21 个 team 工具注册到 registry。
+// RegisterTeamTools 把 27 个 team 工具注册到 registry。
 //
 // 调用顺序无关；如果 svc 为 nil 则跳过（不会 panic），上层日志告警即可。
 // 使用 Unregister + Register 模式以便重复注册时覆盖（与 SkillTool/AgentTool 注入风格一致）。
 //
-// 工具清单（基础 7 + 进阶 5 + 任务 9 = 共 21 个）：
+// 工具清单（基础 7 + 进阶 5 + 任务 9 + 规划 6 = 共 27 个）：
 //   - team_create / team_delete       leader 创建 / 清理 team
-//   - send_message                    通用消息发送（含 7 种协议消息类型）
+//   - send_message                    通用消息发送（含 10 种协议消息类型）
 //   - list_peers                      列出成员（含 status / heartbeat）
 //   - read_inbox                      拉取未读（支持 since 游标 / limit 截断）
 //   - get_team_status                 获取团队整体状态摘要
-//   - parse_team_intent              解析自然语言中的团队创建意图（新增）
+//   - parse_team_intent              解析自然语言中的团队创建意图
 //   - assign_task / report_task       消息式任务分配 / 结果汇报（兼容旧流程）
 //   - wait_for_message                阻塞等待未读消息（替代轮询）
 //   - set_status                      声明 idle/working/blocked/error/done
@@ -47,6 +47,14 @@ type TeamRuntime struct {
 //   【自动化工具】
 //   - auto_setup_team                 一键创建团队、添加成员、创建任务
 //   - auto_assign_task                自动将 pending 任务分配给空闲成员
+//   【Plan-then-Execute 工具】
+//   - initiate_planning               启动 Planning Phase，广播目标给成员
+//   - collect_proposal                成员提交任务提案
+//   - approve_plan                    leader 审批计划，转入 Executing Phase
+//   - reject_plan                     leader 驳回计划，反馈给成员
+//   - start_execution                 向成员派发已审批任务
+//   - initiate_replan                 任务失败后暂停执行，返回 Planning Phase
+//   - get_plan                        获取当前执行计划及验证摘要
 func RegisterTeamTools(reg *tool.Registry, svc *application.TeamService, rt TeamRuntime) {
 	if reg == nil || svc == nil {
 		return
@@ -84,9 +92,21 @@ func RegisterTeamTools(reg *tool.Registry, svc *application.TeamService, rt Team
 		NewAutoSetupTeamTool(svc, rt.TeamName, rt.AgentName),
 		NewAutoAssignTaskTool(svc, rt.TeamName, rt.AgentName),
 	}
-	
+
+	// 规划 6 个工具（Plan-then-Execute 架构）
+	planTools := []tool.Tool{
+		NewInitiatePlanningTool(svc, rt.TeamName, rt.AgentName),
+		NewCollectProposalTool(svc, rt.TeamName, rt.AgentName),
+		NewApprovePlanTool(svc, rt.TeamName, rt.AgentName),
+		NewRejectPlanTool(svc, rt.TeamName, rt.AgentName),
+		NewStartExecutionTool(svc, rt.TeamName, rt.AgentName),
+		NewInitiateReplanTool(svc, rt.TeamName, rt.AgentName),
+		NewGetPlanTool(svc, rt.TeamName, rt.AgentName),
+	}
+
 	// 注册所有工具
 	allTools := append(append(baseTools, advancedTools...), taskTools...)
+	allTools = append(allTools, planTools...)
 	for _, t := range allTools {
 		// 注入共享会话追踪器（若提供），让 team_create / auto_setup_team 能登记
 		// leader 身份。工具均内嵌 teamToolBase，故都实现 sessionAttacher。

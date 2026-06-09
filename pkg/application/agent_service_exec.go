@@ -293,77 +293,59 @@ func (s *AgentService) Run(
 	return result, nil
 }
 
+// progressProbeState 进度探针的内部状态，随流事件更新。
+type progressProbeState struct {
+	lastTool       string
+	lastToolDetail string
+	partial        string // 当前工具块累积的 partial JSON
+	blockIdx       int    // 正在追踪的 tool_use block index
+}
+
+// reset 进入新一轮时清空上一轮的工具追踪状态。
+func (p *progressProbeState) reset() {
+	p.lastTool = ""
+	p.lastToolDetail = ""
+	p.partial = ""
+	p.blockIdx = -1
+}
+
 // installProgressProbe 包一层 EventSink 用于探测 subagent 每轮节拍。
 //
 // 返回：
-//   - wrapped: 替代 Engine.Execute 使用的 chan，转发到原 sink 同时被探针观测；
-//     若调用方传入了 nil sink，仍会返回一个非 nil 内部 chan，让 Engine 正常工作。
-//   - done: 转发 goroutine 退出信号；由 closeProgressProbe 触发 close(wrapped) 后被关闭。
+//   - wrapped: 替代 Engine.Execute 使用的 chan；调用方传 nil sink 时仍返回内部 chan
+//   - done: 转发 goroutine 退出信号
 //
 // 探针语义：
-//   - 看到 ContentTypeToolUse 的 BlockStart → 记录为本轮 LastTool（覆盖式）
-//   - 看到 ContentTypeToolUse 的 BlockDelta → 累积 partial JSON，解析参数摘要
-//   - 看到 EventMessageDelta + 非空 StopReason → 一轮完成，发 Progress；
-//     Turns 由探针自己累加（每收到一个 MessageDelta+StopReason 自增 1）
-//   - 看到 EventError → 静默吞掉（Engine 自己会把 err 通过返回值上抛）
+//   - BlockStart(tool_use) → 记录工具名
+//   - BlockDelta(tool_use) → 累积 partial JSON
+//   - BlockStop(tool_use) → 解析参数摘要
+//   - MessageDelta + StopReason → 轮次推进，publish Progress
 func (s *AgentService) installProgressProbe(
 	caller chan<- query.StreamEvent,
 	base SubagentEvent,
 ) (chan query.StreamEvent, chan struct{}) {
-	// 缓冲足够大：Engine 一轮平均几十个 delta，64 已留余量；
-	// 进一步的背压由调用方 sink 处理（若 caller=nil 则丢弃，不阻塞）。
 	wrapped := make(chan query.StreamEvent, 64)
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		var lastTool string
-		var lastToolPartial string   // 当前轮次最后工具的累积 partial JSON
-		var lastToolDetail string    // 从 partial JSON 提取的参数摘要
-		currentToolIdx := -1        // 正在追踪的工具 block index
+		var state progressProbeState
+		state.blockIdx = -1
 		turn := 0
 		for ev := range wrapped {
-			// 1) 探测：tool_use 开始 → 记下工具名，重置 partial
-			if ev.Type == query.EventContentBlockStart &&
-				ev.ContentBlock != nil &&
-				ev.ContentBlock.Type == query.ContentTypeToolUse {
-				lastTool = ev.ContentBlock.ToolName
-				lastToolPartial = ""
-				lastToolDetail = ""
-				currentToolIdx = ev.Index
-			}
-			// 2) 探测：tool_use delta → 累积 partial JSON
-			if ev.Type == query.EventContentBlockDelta &&
-				ev.Delta != nil &&
-				ev.Delta.Type == query.ContentTypeToolUse &&
-				ev.Index == currentToolIdx &&
-				ev.Delta.PartialJSON != "" {
-				lastToolPartial += ev.Delta.PartialJSON
-			}
-			// 3) 探测：tool_use block 结束 → 解析参数摘要
-			if ev.Type == query.EventContentBlockStop &&
-				ev.Index == currentToolIdx &&
-				lastTool != "" &&
-				lastToolPartial != "" {
-				lastToolDetail = extractAgentToolSummary(lastTool, lastToolPartial, 60)
-			}
-			// 4) 探测：一轮 stop_reason 到达 → publish Progress
+			state.processEvent(ev)
+			// 每轮结束时推送 Progress
 			if ev.Type == query.EventMessageDelta && ev.StopReason != "" {
 				turn++
 				e := base
 				e.Phase = SubagentPhaseProgress
 				e.Turns = turn
-				e.LastTool = lastTool
-				e.LastToolDetail = lastToolDetail
+				e.LastTool = state.lastTool
+				e.LastToolDetail = state.lastToolDetail
 				s.publishSubagent(e)
-				// 进入下一轮，清空 LastTool（避免上一轮的工具残留到没有工具调用的轮次）
-				lastTool = ""
-				lastToolPartial = ""
-				lastToolDetail = ""
-				currentToolIdx = -1
+				state.reset()
 			}
-			// 5) 透传给调用方（若有）
+			// 非阻塞转发给调用方
 			if caller != nil {
-				// 非阻塞转发：调用方堵了不让 subagent 也堵
 				select {
 				case caller <- ev:
 				default:
@@ -372,6 +354,32 @@ func (s *AgentService) installProgressProbe(
 		}
 	}()
 	return wrapped, done
+}
+
+// processEvent 更新探针状态以追踪当前轮次的工具调用情况。
+func (p *progressProbeState) processEvent(ev query.StreamEvent) {
+	switch {
+	case ev.Type == query.EventContentBlockStart &&
+		ev.ContentBlock != nil &&
+		ev.ContentBlock.Type == query.ContentTypeToolUse:
+		p.lastTool = ev.ContentBlock.ToolName
+		p.partial = ""
+		p.lastToolDetail = ""
+		p.blockIdx = ev.Index
+
+	case ev.Type == query.EventContentBlockDelta &&
+		ev.Delta != nil &&
+		ev.Delta.Type == query.ContentTypeToolUse &&
+		ev.Index == p.blockIdx &&
+		ev.Delta.PartialJSON != "":
+		p.partial += ev.Delta.PartialJSON
+
+	case ev.Type == query.EventContentBlockStop &&
+		ev.Index == p.blockIdx &&
+		p.lastTool != "" &&
+		p.partial != "":
+		p.lastToolDetail = extractAgentToolSummary(p.lastTool, p.partial, 60)
+	}
 }
 
 // closeProgressProbe 安全关闭探针；nil-safe 且只关闭一次。

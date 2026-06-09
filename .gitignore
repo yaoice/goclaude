@@ -1,6 +1,6 @@
 # 二进制产物
-/bin/
-/dist/
+bin/
+dist/
 claude
 claude.exe
 

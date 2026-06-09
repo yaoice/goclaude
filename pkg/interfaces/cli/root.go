@@ -38,6 +38,10 @@ var (
 	//   false → 单一 subagent：不注册 team 工具，任务只走 Agent 工具下发给单一子代理
 	// 未在命令行显式传入时回退到 YAML 的 agent_teams.enabled（默认 true）。
 	flagAgentTeams bool
+
+	// flagWorkspace 覆盖任务产物输出目录（覆盖 YAML workspace.dir）。
+	// 支持绝对路径、~/ 和相对路径。未设置时使用 YAML 配置的默认值 ./workspaces/。
+	flagWorkspace string
 )
 
 // NewRootCmd 创建根命令
@@ -87,6 +91,11 @@ func NewRootCmd(version string) *cobra.Command {
 	//   不传时依次检查 env GOCLAUDE_AGENT_TEAMS → YAML agent_teams.enabled
 	rootCmd.PersistentFlags().BoolVar(&flagAgentTeams, "agent-teams", true,
 		"启用多智能体团队协作（agent-teams）；=false 时任务只下发给单一 subagent。env: GOCLAUDE_AGENT_TEAMS；默认随 YAML agent_teams.enabled")
+
+	// Workspace 产物输出路径（PersistentFlag → REPL/run 子命令共享）
+	//   可指定自定义目录；默认使用 YAML workspace.dir（./workspaces/）。
+	rootCmd.PersistentFlags().StringVar(&flagWorkspace, "workspace", "",
+		"任务产物统一输出目录。支持绝对路径、~/ 和相对路径。默认: ./workspaces/")
 
 	// 子命令
 	rootCmd.AddCommand(newDoctorCmd())

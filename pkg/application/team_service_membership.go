@@ -50,6 +50,8 @@ func (s *TeamService) CreateTeam(in CreateTeamInput) (*team.File, error) {
 		CreatedAt:     now,
 		LeadAgentID:   leadID,
 		LeadSessionID: in.LeadSessionID,
+		Phase:         team.PhasePlanning, // Plan-then-Execute: start in Planning
+		MaxReplanAttempts: 3,              // default: max 3 replans
 		Members: []team.Member{
 			{
 				AgentID:         leadID,
@@ -69,10 +71,7 @@ func (s *TeamService) CreateTeam(in CreateTeamInput) (*team.File, error) {
 		s.logger.Error("create_team: write failed", slog.String("team", in.Name), slog.Any("err", err))
 		return nil, err
 	}
-	s.logger.Info("team created",
-		slog.String("team", in.Name),
-		slog.String("lead_agent_id", leadID),
-	)
+	s.logger.Info("team created", slog.String("team", in.Name), slog.String("lead_agent_id", leadID))
 	return f, nil
 }
 
@@ -97,40 +96,31 @@ func (s *TeamService) JoinTeam(in JoinTeamInput) (*team.File, *team.Member, erro
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f, err := s.Store.Read(in.TeamName)
+	f, err := s.requireTeam(in.TeamName)
 	if err != nil {
 		return nil, nil, err
 	}
-	if f == nil {
-		return nil, nil, ErrTeamNotFound
-	}
+
 	now := time.Now().UnixMilli()
+
+	// 已存在 → 重新激活
 	if existing := f.FindMemberByName(in.AgentName); existing != nil {
 		existing.IsActive = true
 		existing.Status = team.StatusWorking
 		existing.JoinedAt = now
 		existing.LastHeartbeatAt = now
-		if in.Cwd != "" {
-			existing.Cwd = in.Cwd
-		}
-		if in.Model != "" {
-			existing.Model = in.Model
-		}
-		if in.AgentType != "" {
-			existing.AgentType = in.AgentType
-		}
-		if in.SessionID != "" {
-			existing.SessionID = in.SessionID
-		}
+		applyNonEmpty(&existing.Cwd, in.Cwd)
+		applyNonEmpty(&existing.Model, in.Model)
+		applyNonEmpty(&existing.AgentType, in.AgentType)
+		applyNonEmpty(&existing.SessionID, in.SessionID)
 		if err := s.Store.Write(f); err != nil {
 			return nil, nil, err
 		}
-		s.logger.Info("agent rejoined team",
-			slog.String("team", in.TeamName),
-			slog.String("agent", in.AgentName),
-		)
+		s.logger.Info("agent rejoined team", slog.String("team", in.TeamName), slog.String("agent", in.AgentName))
 		return f, existing, nil
 	}
+
+	// 新成员
 	m := team.Member{
 		AgentID:         team.FormatAgentID(in.AgentName, in.TeamName),
 		Name:            in.AgentName,
@@ -148,10 +138,7 @@ func (s *TeamService) JoinTeam(in JoinTeamInput) (*team.File, *team.Member, erro
 		return nil, nil, err
 	}
 	s.logger.Info("agent joined team",
-		slog.String("team", in.TeamName),
-		slog.String("agent", in.AgentName),
-		slog.String("agent_type", in.AgentType),
-	)
+		slog.String("team", in.TeamName), slog.String("agent", in.AgentName), slog.String("agent_type", in.AgentType))
 	return f, &m, nil
 }
 
@@ -162,21 +149,15 @@ func (s *TeamService) SetMemberActive(teamName, memberName string, active bool) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f, err := s.Store.Read(teamName)
+	f, m, err := s.requireTeamAndMember(teamName, memberName)
 	if err != nil {
 		return err
-	}
-	if f == nil {
-		return ErrTeamNotFound
-	}
-	m := f.FindMemberByName(memberName)
-	if m == nil {
-		return ErrMemberNotFound
 	}
 	if m.IsActive == active {
 		return nil
 	}
 	m.IsActive = active
+	// active ↔ idle 联动
 	if !active && (m.Status == "" || m.Status == team.StatusWorking) {
 		m.Status = team.StatusIdle
 	} else if active && m.Status == team.StatusIdle {
@@ -187,10 +168,7 @@ func (s *TeamService) SetMemberActive(teamName, memberName string, active bool) 
 		return err
 	}
 	s.logger.Debug("member active toggled",
-		slog.String("team", teamName),
-		slog.String("agent", memberName),
-		slog.Bool("active", active),
-	)
+		slog.String("team", teamName), slog.String("agent", memberName), slog.Bool("active", active))
 	return nil
 }
 
@@ -204,16 +182,9 @@ func (s *TeamService) SetMemberStatus(teamName, memberName string, status team.M
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f, err := s.Store.Read(teamName)
+	f, m, err := s.requireTeamAndMember(teamName, memberName)
 	if err != nil {
 		return err
-	}
-	if f == nil {
-		return ErrTeamNotFound
-	}
-	m := f.FindMemberByName(memberName)
-	if m == nil {
-		return ErrMemberNotFound
 	}
 	m.Status = status
 	m.IsActive = status == team.StatusWorking || status == team.StatusBlocked
@@ -222,10 +193,7 @@ func (s *TeamService) SetMemberStatus(teamName, memberName string, status team.M
 		return err
 	}
 	s.logger.Debug("member status set",
-		slog.String("team", teamName),
-		slog.String("agent", memberName),
-		slog.String("status", string(status)),
-	)
+		slog.String("team", teamName), slog.String("agent", memberName), slog.String("status", string(status)))
 	return nil
 }
 
@@ -237,16 +205,9 @@ func (s *TeamService) Heartbeat(teamName, memberName string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f, err := s.Store.Read(teamName)
+	f, m, err := s.requireTeamAndMember(teamName, memberName)
 	if err != nil {
 		return err
-	}
-	if f == nil {
-		return ErrTeamNotFound
-	}
-	m := f.FindMemberByName(memberName)
-	if m == nil {
-		return ErrMemberNotFound
 	}
 	m.LastHeartbeatAt = time.Now().UnixMilli()
 	return s.Store.Write(f)
@@ -257,31 +218,23 @@ func (s *TeamService) LeaveTeam(teamName, memberName string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f, err := s.Store.Read(teamName)
+	_, _, err := s.requireTeamAndMember(teamName, memberName)
 	if err != nil {
 		return err
 	}
-	if f == nil {
-		return ErrTeamNotFound
-	}
-	idx := -1
+	// 从 Members 切片中移除；requireTeamAndMember 已确认 member 存在
+	f, _ := s.Store.Read(teamName)
 	for i, m := range f.Members {
 		if m.Name == memberName {
-			idx = i
+			f.Members = append(f.Members[:i], f.Members[i+1:]...)
 			break
 		}
 	}
-	if idx < 0 {
-		return ErrMemberNotFound
-	}
-	f.Members = append(f.Members[:idx], f.Members[idx+1:]...)
 	if err := s.Store.Write(f); err != nil {
 		return err
 	}
 	s.logger.Info("member left team",
-		slog.String("team", teamName),
-		slog.String("agent", memberName),
-	)
+		slog.String("team", teamName), slog.String("agent", memberName))
 	return nil
 }
 
@@ -313,13 +266,11 @@ func (s *TeamService) DeleteTeam(teamName string, opt DeleteTeamOptions) (delete
 	}
 	deleted, err = s.Store.Delete(teamName)
 	if err != nil {
-		s.logger.Error("delete team failed",
-			slog.String("team", teamName), slog.Any("err", err))
+		s.logger.Error("delete team failed", slog.String("team", teamName), slog.Any("err", err))
 		return deleted, err
 	}
 	if deleted {
-		s.logger.Info("team deleted",
-			slog.String("team", teamName), slog.Bool("force", opt.Force))
+		s.logger.Info("team deleted", slog.String("team", teamName), slog.Bool("force", opt.Force))
 	}
 	return deleted, nil
 }
@@ -332,4 +283,38 @@ func (s *TeamService) ListTeams() ([]string, error) {
 // GetTeam 读取 team file。team 不存在返回 (nil, nil)。
 func (s *TeamService) GetTeam(teamName string) (*team.File, error) {
 	return s.Store.Read(teamName)
+}
+
+// --- 内部 helpers ---
+
+// requireTeam 读取 team file，不存在则返回 ErrTeamNotFound。
+func (s *TeamService) requireTeam(name string) (*team.File, error) {
+	f, err := s.Store.Read(name)
+	if err != nil {
+		return nil, err
+	}
+	if f == nil {
+		return nil, ErrTeamNotFound
+	}
+	return f, nil
+}
+
+// requireTeamAndMember 读取 team 并查找指定成员；不存在时返回对应哨兵错误。
+func (s *TeamService) requireTeamAndMember(teamName, memberName string) (*team.File, *team.Member, error) {
+	f, err := s.requireTeam(teamName)
+	if err != nil {
+		return nil, nil, err
+	}
+	m := f.FindMemberByName(memberName)
+	if m == nil {
+		return nil, nil, ErrMemberNotFound
+	}
+	return f, m, nil
+}
+
+// applyNonEmpty 仅在 val 非空时更新 target。
+func applyNonEmpty(target *string, val string) {
+	if val != "" {
+		*target = val
+	}
 }

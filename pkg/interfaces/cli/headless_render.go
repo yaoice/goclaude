@@ -286,7 +286,7 @@ func (h *headlessRender) tint(s, color string) string {
 func (h *headlessRender) writeLine(s string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	_, _ = io.WriteString(h.out, s+"\n")
+	_, _ = io.WriteString(h.out, s+"\r\n")
 }
 
 // formatHeadlessElapsed 耗时格式化。

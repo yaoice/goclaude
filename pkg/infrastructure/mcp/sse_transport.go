@@ -143,41 +143,17 @@ func (t *SSETransport) getPostURL(ctx context.Context) (string, error) {
 	}
 }
 
-// parseSSE 解析 SSE 流，处理 endpoint 事件与 message 事件
+// parseSSE 解析 SSE 流，处理 endpoint 事件与 message 事件。
 //
 // 流结束（连接断开 / EOF）时会主动 Close transport，让 Recv() 立即返回 io.EOF，
 // 避免上层 readLoop 永远阻塞读取 queue。
 func (t *SSETransport) parseSSE(body io.ReadCloser) {
 	defer body.Close()
-	defer func() {
-		// 进入此函数说明流已结束；通知 Recv 释放阻塞
-		t.mu.Lock()
-		if !t.closed {
-			t.closed = true
-			close(t.closeCh)
-		}
-		t.mu.Unlock()
-	}()
-	reader := bufio.NewReaderSize(body, 64*1024)
-
-	var (
-		eventName string
-		dataBuf   bytes.Buffer
-	)
-	flush := func() {
-		defer func() {
-			eventName = ""
-			dataBuf.Reset()
-		}()
-		data := strings.TrimRight(dataBuf.String(), "\n")
-		if data == "" {
-			return
-		}
-		switch eventName {
-		case "endpoint":
+	defer t.closeOnStreamEnd() // 流结束时通知 Recv 释放阻塞
+	readSSEStream(body, func(eventName, data string) {
+		if eventName == "endpoint" {
 			// SSE 协议下首条事件提供 POST endpoint
 			endpoint := strings.TrimSpace(data)
-			// 支持相对路径
 			if strings.HasPrefix(endpoint, "/") {
 				endpoint = resolveURL(t.url, endpoint)
 			}
@@ -185,46 +161,41 @@ func (t *SSETransport) parseSSE(body io.ReadCloser) {
 			case t.postURLCh <- endpoint:
 			default:
 			}
-		default:
-			// 默认 "message" 事件：负载是 JSON-RPC
-			var rpc mcp.JSONRPCMessage
-			if err := json.Unmarshal([]byte(data), &rpc); err == nil {
-				t.tryPush(&rpc)
-			}
-		}
-	}
-
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil && line == "" {
 			return
 		}
-		line = strings.TrimRight(line, "\r\n")
+		// 默认 "message" 事件：负载是 JSON-RPC
+		var rpc mcp.JSONRPCMessage
+		if err := json.Unmarshal([]byte(data), &rpc); err == nil {
+			t.tryPush(&rpc)
+		}
+	})
+}
 
-		// 空行表示事件结束
-		if line == "" {
-			flush()
-			continue
-		}
-		// 注释
-		if strings.HasPrefix(line, ":") {
-			continue
-		}
-		if strings.HasPrefix(line, "event:") {
-			eventName = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
-			continue
-		}
-		if strings.HasPrefix(line, "data:") {
-			d := strings.TrimPrefix(line, "data:")
-			d = strings.TrimPrefix(d, " ")
-			dataBuf.WriteString(d)
-			dataBuf.WriteByte('\n')
-			continue
-		}
-		// 其它字段（id:/retry: 等）忽略
+// closeOnStreamEnd 在流结束时关闭 transport 信号通道。
+func (t *SSETransport) closeOnStreamEnd() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if !t.closed {
+		t.closed = true
+		close(t.closeCh)
 	}
 }
 
+// parseSSE 供 HTTPTransport 使用的 SSE 流解析，忽略 endpoint 事件。
+func (t *HTTPTransport) parseSSE(body io.ReadCloser) {
+	defer body.Close()
+	readSSEStream(body, func(eventName, data string) {
+		if eventName == "endpoint" {
+			return // HTTPTransport 不使用 endpoint 事件
+		}
+		var rpc mcp.JSONRPCMessage
+		if err := json.Unmarshal([]byte(data), &rpc); err == nil {
+			t.tryPush(&rpc)
+		}
+	})
+}
+
+// tryPush 非阻塞地向消息队列推送一条 JSON-RPC 消息。
 func (t *SSETransport) tryPush(msg *mcp.JSONRPCMessage) {
 	select {
 	case <-t.closeCh:
@@ -233,13 +204,12 @@ func (t *SSETransport) tryPush(msg *mcp.JSONRPCMessage) {
 	}
 }
 
-// resolveURL 把相对路径拼接到 baseURL 的 host
+// resolveURL 把相对路径拼接到 baseURL 的 host。
 func resolveURL(baseURL, rel string) string {
 	idx := strings.Index(baseURL, "://")
 	if idx < 0 {
 		return rel
 	}
-	// 找到 host 后的第一个 /
 	hostStart := idx + 3
 	pathStart := strings.Index(baseURL[hostStart:], "/")
 	if pathStart < 0 {
@@ -248,54 +218,48 @@ func resolveURL(baseURL, rel string) string {
 	return baseURL[:hostStart+pathStart] + rel
 }
 
-// parseSSE 也供 HTTPTransport 使用（包级辅助）
-func (t *HTTPTransport) parseSSE(body io.ReadCloser) {
-	defer body.Close()
-	reader := bufio.NewReaderSize(body, 64*1024)
-	var (
-		eventName string
-		dataBuf   bytes.Buffer
-	)
+// sseEventHandler 处理单个 SSE 事件的回调。
+type sseEventHandler func(eventName, data string)
+
+// readSSEStream 从 io.Reader 读取 SSE 流，每遇到一个完成事件（空行）调用 handler。
+//
+// 这是 SSETransport 和 HTTPTransport 共享的 SSE 行读取 + 事件组装逻辑。
+func readSSEStream(r io.Reader, handler sseEventHandler) {
+	reader := bufio.NewReaderSize(r, 64*1024)
+	var eventName string
+	var dataBuf bytes.Buffer
+
 	flush := func() {
-		defer func() {
-			eventName = ""
-			dataBuf.Reset()
-		}()
+		defer func() { eventName = ""; dataBuf.Reset() }()
 		data := strings.TrimRight(dataBuf.String(), "\n")
 		if data == "" {
 			return
 		}
-		if eventName == "endpoint" {
-			return // HTTPTransport 不使用 endpoint 事件
-		}
-		var rpc mcp.JSONRPCMessage
-		if err := json.Unmarshal([]byte(data), &rpc); err == nil {
-			t.tryPush(&rpc)
-		}
+		handler(eventName, data)
 	}
+
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil && line == "" {
 			return
 		}
 		line = strings.TrimRight(line, "\r\n")
+
 		if line == "" {
 			flush()
 			continue
 		}
-		if strings.HasPrefix(line, ":") {
-			continue
-		}
-		if strings.HasPrefix(line, "event:") {
+		switch {
+		case strings.HasPrefix(line, ":"):
+			continue // 注释行
+		case strings.HasPrefix(line, "event:"):
 			eventName = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
-			continue
-		}
-		if strings.HasPrefix(line, "data:") {
+		case strings.HasPrefix(line, "data:"):
 			d := strings.TrimPrefix(line, "data:")
-			d = strings.TrimPrefix(d, " ")
+			d = strings.TrimPrefix(d, " ") // SSE 规范允许 data: 后带空格
 			dataBuf.WriteString(d)
 			dataBuf.WriteByte('\n')
-			continue
 		}
+		// 其它字段（id:/retry: 等）按 SSE 规范忽略
 	}
 }

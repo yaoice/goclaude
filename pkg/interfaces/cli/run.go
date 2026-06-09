@@ -28,9 +28,18 @@ import (
 var sanitizePathRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
 // sanitizeProjectKey 将项目路径转换为文件系统安全名称。
-// 非字母数字字符替换为 `-`，对齐上游 src/utils/sessionStoragePortable.ts:sanitizePath。
+// 非字母数字字符替换为 `-`，去除首尾 `-`，压缩连续 `-`，
+// 对齐上游 src/utils/sessionStoragePortable.ts:sanitizePath。
 func sanitizeProjectKey(cwd string) string {
-	return sanitizePathRe.ReplaceAllString(cwd, "-")
+	s := sanitizePathRe.ReplaceAllString(cwd, "-")
+	s = strings.Trim(s, "-")
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	if s == "" {
+		return "default"
+	}
+	return s
 }
 
 var (
@@ -79,20 +88,21 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 	// 解析 agent-teams 执行模式开关（供 system prompt 与工具注册共用）。
 	teamsEnabled := resolveAgentTeamsEnabled(cmd)
 
-	// 初始化默认工作区目录，产物统一存放于此。
-	// 注：team/workflow/subagent 各自的专属 workspace 在操作触发时按需创建，
-	// session 级始终用 main 前缀，避免与操作级 team-xxx/workflow-xxx 重复。
-	workspaceDir := cwd
-	runID := fmt.Sprintf("run-%d", os.Getpid())
-	if wsRoot, err := app.EnsureWorkspace(cwd); err == nil {
-		workspaceDir = app.TaskWorkspaceDir(cwd, appconfig.TaskKindTask, runID)
-		if err2 := os.MkdirAll(workspaceDir, 0755); err2 != nil {
-			workspaceDir = wsRoot
-		}
-		logger.Debug("workspace initialized", "root", workspaceDir)
-	} else {
-		logger.Warn("workspace init failed (continuing)", "err", err)
+	// --workspace flag 覆盖 YAML workspace.dir
+	if cmd.Flags().Changed("workspace") && flagWorkspace != "" {
+		app.Workspace.Dir = flagWorkspace
 	}
+	// 确保 workspace 目录存在（auto_create 默认开启）
+	if _, err := app.EnsureWorkspace(cwd); err != nil {
+		logger.Warn("ensure workspace dir", "error", err)
+	}
+
+	// 工作区产物路径：直接使用 workspace 根目录，不创建子目录
+	workspaceDir := app.WorkspaceRoot(cwd)
+	if workspaceDir == "" {
+		workspaceDir = cwd
+	}
+	logger.Debug("workspace path resolved", "dir", workspaceDir)
 
 	// 用户未显式传 flag 时，回退到 yaml 配置
 	if !cmd.Flags().Changed("max-turns") && app.Engine.MaxTurns > 0 {
@@ -416,13 +426,6 @@ func buildMainSystemPrompt(app *AppContext, teamsEnabled bool, cfg *appconfig.Co
 	if workspaceDir != "" {
 		sb.WriteString(fmt.Sprintf("CRITICAL: All generated code and files MUST be written inside the workspace directory:\n  %s\n", workspaceDir))
 		sb.WriteString("Do NOT create files outside this directory. When using file_write/file_edit/bash, use relative paths (e.g., src/game.go) — they will be resolved relative to the workspace.\n\n")
-
-		sb.WriteString("Workspace directory naming convention:\n")
-		sb.WriteString("  main-<name>-<ts>     — Main agent output (direct agent session)\n")
-		sb.WriteString("  subagent-<name>-<ts> — SubAgent output (child agents)\n")
-		sb.WriteString("  workflow-<name>-<ts> — Workflow output (multi-step flows)\n")
-		sb.WriteString("  team-<name>-<ts>     — Agent Team output (team collaboration)\n")
-		sb.WriteString("  plan-<name>-<ts>     — Plan Agent output (planning results)\n\n")
 	}
 
 	// === 身份声明（固定，不可配置） ===

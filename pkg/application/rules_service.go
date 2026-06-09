@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/anthropics/goclaude/pkg/domain/memory"
 	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
@@ -15,9 +16,18 @@ import (
 var sanitizePathRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
 // sanitizeProjectKey 将项目路径转换为文件系统安全名称。
-// 非字母数字字符替换为 `-`，对齐上游 src/utils/sessionStoragePortable.ts:sanitizePath。
+// 非字母数字字符替换为 `-`，去除首尾 `-`，压缩连续 `-`，
+// 对齐上游 src/utils/sessionStoragePortable.ts:sanitizePath。
 func sanitizeProjectKey(cwd string) string {
-	return sanitizePathRe.ReplaceAllString(cwd, "-")
+	s := sanitizePathRe.ReplaceAllString(cwd, "-")
+	s = strings.Trim(s, "-")
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	if s == "" {
+		return "default"
+	}
+	return s
 }
 
 // RulesService 规则应用服务

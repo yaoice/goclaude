@@ -4,14 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/anthropics/goclaude/pkg/domain/team"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
 )
 
 // TeamEngine 管理 team member 的 spawn/stop 生命周期。
@@ -38,20 +34,24 @@ type TeamEngine struct {
 	teamWorkspaces map[string]string
 
 	// 默认配置
-	defaultModel      string
-	defaultProjectRoot string
-	defaultMaxTurns   int
-	pollInterval      time.Duration
-	taskTimeout       time.Duration
-	shutdownTimeout   time.Duration
+	defaultModel       string
+	defaultProjectRoot  string
+	workspaceRootFn     func() string // 动态获取 workspace 根目录（支持 /workspace 切换）
+	defaultMaxTurns    int
+	pollInterval       time.Duration
+	taskTimeout        time.Duration
+	shutdownTimeout    time.Duration
 }
 
 // TeamEngineConfig 配置 TeamEngine 的可选参数。
 type TeamEngineConfig struct {
 	// DefaultModel team member 默认使用的模型；为空则继承
 	DefaultModel string
-	// ProjectRoot 项目根目录，用于计算 team workspace 路径
+	// ProjectRoot 项目根目录
 	ProjectRoot string
+	// WorkspaceRootFn 动态获取 workspace 根目录的回调（支持 /workspace 切换）。
+	// 每次 spawn member 时调用，返回当前 workspace 绝对路径。
+	WorkspaceRootFn func() string
 	// MaxTurns 单个任务最大轮数（0 表示用 agent 定义或引擎默认值）
 	MaxTurns int
 	// PollInterval inbox 轮询间隔
@@ -106,6 +106,7 @@ func NewTeamEngine(
 		teamWorkspaces:    make(map[string]string),
 		defaultModel:      cfg.DefaultModel,
 		defaultProjectRoot: cfg.ProjectRoot,
+		workspaceRootFn:   cfg.WorkspaceRootFn,
 		pollInterval:      cfg.PollInterval,
 		taskTimeout:       cfg.TaskTimeout,
 		shutdownTimeout:   cfg.ShutdownTimeout,
@@ -214,82 +215,39 @@ func (e *TeamEngine) SpawnMember(ctx context.Context, teamName, memberName, agen
 	return nil
 }
 
-// getOrCreateTeamWorkspace 获取或创建 team 的产物输出目录。
+// getOrCreateTeamWorkspace 获取 team 的产物输出目录。
 //
-// 路径规则：<projectRoot>/.goclaude/workspaces/team-<sanitized_name>/
-// 不包含时间戳，同一 team 多次启动复用同一目录。
+// 直接使用配置的 workspace 根目录，不创建子目录。
 //
-// 返回 (workspaceRoot, workingDir, projectRoot).
-//   - workspaceRoot: team 专属目录，所有 member 共享
+// 返回 (workspaceRoot, workingDir, projectRoot)：
+//   - workspaceRoot: 统一产物输出目录
 //   - workingDir: 项目根目录
-//   - projectRoot: 项目根目录
 //
-// projectRoot 为空时，workspaceRoot 也为空（不限制产物路径）。
+// projectRoot 为空时直接返回空值（不限制产物路径），跳过 IO。
 func (e *TeamEngine) getOrCreateTeamWorkspace(teamName string) (workspaceRoot, workingDir, projectRoot string) {
-	projectRoot = e.defaultProjectRoot
-	if projectRoot == "" {
+	if projectRoot = e.defaultProjectRoot; projectRoot == "" {
 		return "", "", ""
 	}
 
-	// 检查缓存
 	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	// 缓存命中直接返回
 	if ws, ok := e.teamWorkspaces[teamName]; ok {
-		e.mu.Unlock()
 		return ws, projectRoot, projectRoot
 	}
-	e.mu.Unlock()
 
-	// 稳定路径：<workspace_root>/team-<sanitized_name>/
-	// 去时间戳，同级目录清晰可辨
-	cfg := appconfig.DefaultConfig()
-	wsRoot := cfg.WorkspaceRoot(projectRoot)
-	sanitized := sanitizeTeamName(teamName)
-	ws := filepath.Join(wsRoot, "team-"+sanitized)
-
-	if err := os.MkdirAll(ws, 0755); err != nil {
-		e.logger.Warn("failed to create team workspace",
-			"team", teamName,
-			"path", ws,
-			"error", err,
-		)
-		ws = projectRoot
-	}
-
-	// 写入 .identity 标记该目录身份
-	_ = os.WriteFile(filepath.Join(ws, ".identity"),
-		[]byte(fmt.Sprintf("team:%s\ncreated:%s\n", teamName, time.Now().Format(time.RFC3339))),
-		0644)
-
-	// 缓存
-	e.mu.Lock()
-	e.teamWorkspaces[teamName] = ws
-	e.mu.Unlock()
-
-	e.logger.Info("team workspace ready",
-		"team", teamName,
-		"path", ws,
-	)
-	return ws, projectRoot, projectRoot
-}
-
-// sanitizeTeamName 规范化 team 名为安全目录名
-func sanitizeTeamName(name string) string {
-	s := strings.ToLower(name)
-	s = strings.Map(func(r rune) rune {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			return r
+	// 动态获取 workspace 根目录（支持 /workspace 切换）
+	ws := projectRoot
+	if e.workspaceRootFn != nil {
+		if root := e.workspaceRootFn(); root != "" {
+			ws = root
 		}
-		return '-'
-	}, s)
-	// 去除连续和首尾的 '-'
-	s = strings.Trim(s, "-")
-	for strings.Contains(s, "--") {
-		s = strings.ReplaceAll(s, "--", "-")
 	}
-	if s == "" {
-		s = "team"
-	}
-	return s
+
+	e.teamWorkspaces[teamName] = ws
+	e.logger.Info("team workspace ready", "team", teamName, "path", ws)
+	return ws, projectRoot, projectRoot
 }
 
 // ShutdownMember 向指定 member 发送 shutdown 信号并等待退出。
@@ -339,80 +297,57 @@ func (e *TeamEngine) ShutdownMember(ctx context.Context, teamName, memberName st
 	return nil
 }
 
+// memberRef 统一描述一个 team member 的定位信息，用于 batch shutdown 等场景
+// 避免 ShutdownAll / ShutdownAllTeams 各自定义匿名 struct。
+type memberRef struct {
+	teamName   string
+	memberName string
+}
+
 // ShutdownAll 关闭指定 team 的所有 member。
 func (e *TeamEngine) ShutdownAll(ctx context.Context, teamName string) {
-	e.mu.Lock()
-	type workItem struct {
-		key        string
-		memberName string
-	}
-	var items []workItem
-	for key, w := range e.workers {
-		if w.teamName == teamName {
-			items = append(items, workItem{key: key, memberName: w.memberName})
-		}
-	}
-	e.mu.Unlock()
-
+	items := e.collectMembers(func(w *memberWorker) bool { return w.teamName == teamName })
 	if len(items) == 0 {
 		return
 	}
-
-	e.logger.Info("shutting down all team members",
-		"team", teamName,
-		"count", len(items),
-	)
-
-	var wg sync.WaitGroup
-	for _, item := range items {
-		wg.Add(1)
-		go func(item workItem) {
-			defer wg.Done()
-			if err := e.ShutdownMember(ctx, teamName, item.memberName); err != nil {
-				e.logger.Warn("shutdown member failed",
-					"key", item.key,
-					"error", err,
-				)
-			}
-		}(item)
-	}
-	wg.Wait()
+	e.logger.Info("shutting down all team members", "team", teamName, "count", len(items))
+	e.shutdownBatch(ctx, items)
 }
 
 // ShutdownAllTeams 关闭所有 team 的所有 member。
 func (e *TeamEngine) ShutdownAllTeams(ctx context.Context) {
-	e.mu.Lock()
-	type workItem struct {
-		teamName   string
-		memberName string
-	}
-	var items []workItem
-	for key, w := range e.workers {
-		items = append(items, workItem{
-			teamName:   w.teamName,
-			memberName: w.memberName,
-		})
-		_ = key
-	}
-	e.mu.Unlock()
-
+	items := e.collectMembers(func(w *memberWorker) bool { return true }) // 收集全部 member
 	if len(items) == 0 {
 		return
 	}
+	e.logger.Info("shutting down all team members across all teams", "count", len(items))
+	e.shutdownBatch(ctx, items)
+}
 
-	e.logger.Info("shutting down all team members across all teams",
-		"count", len(items),
-	)
+// collectMembers 线程安全地收集满足 filter 的 member 引用。
+func (e *TeamEngine) collectMembers(filter func(*memberWorker) bool) []memberRef {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	items := make([]memberRef, 0, len(e.workers))
+	for _, w := range e.workers {
+		if filter(w) {
+			items = append(items, memberRef{teamName: w.teamName, memberName: w.memberName})
+		}
+	}
+	return items
+}
 
+// shutdownBatch 并发关闭一批 member，统一日志与错误处理。
+func (e *TeamEngine) shutdownBatch(ctx context.Context, items []memberRef) {
 	var wg sync.WaitGroup
 	for _, item := range items {
 		wg.Add(1)
-		go func(item workItem) {
+		go func(ref memberRef) {
 			defer wg.Done()
-			if err := e.ShutdownMember(ctx, item.teamName, item.memberName); err != nil {
+			if err := e.ShutdownMember(ctx, ref.teamName, ref.memberName); err != nil {
 				e.logger.Warn("shutdown member failed",
-					"team", item.teamName,
-					"member", item.memberName,
+					"team", ref.teamName,
+					"member", ref.memberName,
 					"error", err,
 				)
 			}

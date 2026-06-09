@@ -13,7 +13,6 @@ import (
 	"github.com/anthropics/goclaude/pkg/domain/query"
 	teamdomain "github.com/anthropics/goclaude/pkg/domain/team"
 	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
 	"github.com/anthropics/goclaude/pkg/infrastructure/compact"
 	"github.com/anthropics/goclaude/pkg/infrastructure/todo"
 	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
@@ -36,21 +35,22 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	// 解析 agent-teams 执行模式开关（供 system prompt 与工具注册共用）。
 	teamsEnabled := resolveAgentTeamsEnabled(cmd)
 
-	// 初始化默认工作区目录，产物（agent 输出 / workflow 结果等）统一存放于此。
-	// 注：team/workflow/subagent 各自的专属 workspace 在操作触发时按需创建，
-	// session 级始终用 main 前缀，避免与操作级 team-xxx/workflow-xxx 重复。
-	workspaceDir := cwd // fallback
-	sessionID := fmt.Sprintf("repl-%d", os.Getpid())
-	if wsRoot, err := app.EnsureWorkspace(cwd); err == nil {
-		// 为当前 REPL 会话创建带类型前缀的子目录
-		workspaceDir = app.TaskWorkspaceDir(cwd, appconfig.TaskKindTask, sessionID)
-		if err2 := os.MkdirAll(workspaceDir, 0755); err2 != nil {
-			workspaceDir = wsRoot // 回退到根目录
-		}
-		logger.Debug("workspace initialized", "root", workspaceDir)
-	} else {
-		logger.Warn("workspace init failed (continuing)", "err", err)
+	// --workspace flag 覆盖 YAML workspace.dir
+	if cmd.Flags().Changed("workspace") && flagWorkspace != "" {
+		app.Workspace.Dir = flagWorkspace
 	}
+	// 确保 workspace 目录存在（auto_create 默认开启）
+	if _, err := app.EnsureWorkspace(cwd); err != nil {
+		logger.Warn("ensure workspace dir", "error", err)
+	}
+
+	// 工作区产物路径：直接使用 workspace 根目录，不创建子目录
+	sessionID := fmt.Sprintf("repl-%d", os.Getpid())
+	workspaceDir := app.WorkspaceRoot(cwd)
+	if workspaceDir == "" {
+		workspaceDir = cwd
+	}
+	logger.Debug("workspace path resolved", "dir", workspaceDir, "session", sessionID)
 
 	// 未显式传 flag 时回退到 yaml
 	if !cmd.Flags().Changed("provider") && app.API.Provider != "" {
@@ -191,10 +191,11 @@ func runREPL(cmd *cobra.Command, args []string) error {
 			wired.TeamSvc,
 			factory,
 			application.TeamEngineConfig{
-				DefaultModel:   modelName,
-				ProjectRoot:    cwd,
-				PollInterval:   5 * time.Second,
-				TaskTimeout:    5 * time.Minute,
+				DefaultModel:    modelName,
+				ProjectRoot:     cwd,
+				WorkspaceRootFn: func() string { return app.WorkspaceRoot(cwd) },
+				PollInterval:    5 * time.Second,
+				TaskTimeout:     5 * time.Minute,
 			},
 			logger,
 		)
@@ -262,7 +263,7 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	// Plan Agent: AI 驱动的 workflow 定义生成器（对齐 oh-my-openagent Sisyphus）
 	planSvc := application.NewPlanAgentService(wired.AgentSvc, factory, wfLoader, logger)
 
-	workflows := newWorkflowAdapter(wfSvc, planSvc, wfLoader, wired.AgentSvc, factory, wfDefaults, cwd)
+	workflows := newWorkflowAdapter(wfSvc, planSvc, wfLoader, wired.AgentSvc, factory, wfDefaults, cwd, func() string { return app.WorkspaceRoot(cwd) })
 
 	// 5) REPL
 	repl := shell.NewREPL(engine, modelName, flagProvider, cwd)
@@ -276,6 +277,36 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	repl.Teams = &teamAdapter{svc: wired.TeamSvc}
 	repl.Workflows = workflows
 	repl.Memory = wired.MemorySvc // /remember /memory 命令依赖
+
+	// 共享的 todo 存储：避免 /workspace 切换时重置 todo 清单
+	todoStore := todo.NewMemoryStore()
+
+	// /workspace 动态切换：更新 config + executor + permCtx
+	repl.OnWorkspaceSet = func(newPath string) (string, error) {
+		if newPath == "" {
+			// 查看当前路径
+			return app.WorkspaceRoot(cwd), nil
+		}
+		// 更新 config
+		app.Workspace.Dir = newPath
+		// 解析并确保目录存在
+		resolved, err := app.EnsureWorkspace(cwd)
+		if err != nil {
+			return "", err
+		}
+		// 更新 executor 的 UseContext 模板（file_write 等工具从此读取）
+		executor.SetUseContextTemplate(tool.UseContext{
+			AskUser:       repl.AskUser,
+			TodoStore:     todoStore,
+			WorkingDir:    cwd,
+			ProjectRoot:   cwd,
+			WorkspaceRoot: resolved,
+		})
+		// 更新权限上下文
+		permCtx.WorkspaceRoot = resolved
+		executor.SetPermissionContext(permCtx)
+		return resolved, nil
+	}
 
 	// Shift+Tab 循环切换 permission mode（对齐 src 的 cycleMode 顺序）
 	// default → acceptEdits → plan → bypass → default
@@ -295,7 +326,7 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	// 修复 AskUser 在 raw 模式下读不到 \n 的问题：用 REPL 暂停 raw 模式后再读
 	executor.SetUseContextTemplate(tool.UseContext{
 		AskUser:       repl.AskUser,
-		TodoStore:     todo.NewMemoryStore(),
+		TodoStore:     todoStore,
 		WorkingDir:    cwd,
 		ProjectRoot:   cwd,
 		WorkspaceRoot: workspaceDir,

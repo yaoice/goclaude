@@ -76,7 +76,8 @@ func (t *FileWriteTool) Call(ctx context.Context, input tool.Input, toolCtx *too
 // 规则：
 //   - 若未配置 WorkspaceRoot → 原样返回
 //   - 若 path 已在 WorkspaceRoot 内 → 原样返回
-//   - 若 path 是绝对路径 → 将文件名拼接进 WorkspaceRoot（保持目录结构）
+//   - 若 path 是绝对路径且在 ProjectRoot 内 → 对 ProjectRoot 取相对路径后拼到 WorkspaceRoot 下
+//   - 若 path 是绝对路径但不在 ProjectRoot 内 → 将完整路径镜像到 WorkspaceRoot 下
 //   - 若 path 是相对路径 → 相对 WorkspaceRoot 解析
 func resolveOutputPath(path string, toolCtx *tool.UseContext) string {
 	if toolCtx == nil || toolCtx.WorkspaceRoot == "" {
@@ -87,7 +88,19 @@ func resolveOutputPath(path string, toolCtx *tool.UseContext) string {
 		return path
 	}
 	if filepath.IsAbs(path) {
-		// 绝对路径：提取相对结构拼到 workspace 下
+		// 若路径在 ProjectRoot 内，去掉 ProjectRoot 前缀再拼到 WorkspaceRoot 下，
+		// 避免把完整绝对路径镜像到 workspace 内产生深层嵌套
+		if toolCtx.ProjectRoot != "" {
+			projClean := filepath.Clean(toolCtx.ProjectRoot)
+			pathClean := filepath.Clean(path)
+			if strings.HasPrefix(pathClean, projClean+string(filepath.Separator)) || pathClean == projClean {
+				rel, err := filepath.Rel(projClean, pathClean)
+				if err == nil {
+					return filepath.Join(wsClean, rel)
+				}
+			}
+		}
+		// 不在 ProjectRoot 内的绝对路径：保留全路径结构拼到 workspace 下
 		rel, err := filepath.Rel("/", filepath.Clean(path))
 		if err != nil {
 			rel = filepath.Base(path)

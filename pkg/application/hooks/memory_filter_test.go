@@ -184,7 +184,7 @@ func TestMemoryFilterService_Evict_Priority(t *testing.T) {
 		{MemoryEntry: &memory.MemoryEntry{ID: "l2", Title: "L2", Content: "L", Priority: 5, UpdatedAt: now, ByteSize: 10}},
 	}
 
-	kept, evicted := svc.Evict(entries, now)
+	kept, _ := svc.Evict(entries, now)
 
 	if len(kept) != 3 {
 		t.Fatalf("should keep 3 entries, got %d", len(kept))

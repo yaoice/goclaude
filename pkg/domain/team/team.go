@@ -56,6 +56,12 @@ const (
 	MessageTaskAssign MessageType = "task_assign"
 	// MessageTaskResult worker → leader 汇报任务进展或结果
 	MessageTaskResult MessageType = "task_result"
+	// MessagePlanPropose worker → leader 提交任务提案（Planning Phase）
+	MessagePlanPropose MessageType = "plan_propose"
+	// MessagePlanConsolidate leader → workers 分发待审批的合并计划
+	MessagePlanConsolidate MessageType = "plan_consolidate"
+	// MessagePlanFeedback leader → worker 对提案的反馈
+	MessagePlanFeedback MessageType = "plan_feedback"
 )
 
 // IsValid 报告 t 是否为已识别的消息类型。
@@ -65,7 +71,8 @@ func (t MessageType) IsValid() bool {
 		MessageShutdownReq, MessageShutdownResp,
 		MessagePlanApprovalReq, MessagePlanApprovalResp,
 		MessageIdle,
-		MessageTaskAssign, MessageTaskResult:
+		MessageTaskAssign, MessageTaskResult,
+		MessagePlanPropose, MessagePlanConsolidate, MessagePlanFeedback:
 		return true
 	}
 	return false
@@ -232,6 +239,19 @@ type File struct {
 	Members []Member `json:"members"`
 	// Tasks 团队共享任务列表（对齐 CodeBuddy 官方 agent-teams 文档）
 	Tasks []SharedTask `json:"tasks,omitempty"`
+
+	// Phase 团队当前执行阶段（planning / executing / completed / failed）
+	// 与 Plan-then-Execute 架构对齐；默认为 "planning"。
+	Phase TeamPhase `json:"phase,omitempty"`
+
+	// Plan 团队执行计划（Planning Phase 协作产出）
+	Plan *ExecutionPlan `json:"plan,omitempty"`
+
+	// ReplanCount 当前生命周期内 re-plan 的次数
+	ReplanCount int `json:"replanCount,omitempty"`
+
+	// MaxReplanAttempts 允许的最大 re-plan 次数（0=不限制）
+	MaxReplanAttempts int `json:"maxReplanAttempts,omitempty"`
 }
 
 // Message 是 mailbox 中的一条消息。
@@ -340,6 +360,30 @@ func NewTaskAssign(from, taskID, subject, description string) Message {
 	return stamp(Message{
 		From: from, Type: MessageTaskAssign, TaskID: taskID,
 		Summary: subject, Text: description,
+	})
+}
+
+// NewPlanPropose 构造 worker → leader 的规划提案消息。
+func NewPlanPropose(from, taskID, summary, detail string) Message {
+	return stamp(Message{
+		From: from, Type: MessagePlanPropose, TaskID: taskID,
+		Summary: summary, Text: detail,
+	})
+}
+
+// NewPlanConsolidate 构造 leader → workers 的合并计划分发消息。
+func NewPlanConsolidate(from, planText, summary string) Message {
+	return stamp(Message{
+		From: from, Type: MessagePlanConsolidate,
+		Summary: summary, PlanText: planText,
+	})
+}
+
+// NewPlanFeedback 构造 leader → worker 的提案反馈消息。
+func NewPlanFeedback(from, to, feedback, summary string) Message {
+	return stamp(Message{
+		From: from, Type: MessagePlanFeedback,
+		Summary: summary, Text: feedback,
 	})
 }
 

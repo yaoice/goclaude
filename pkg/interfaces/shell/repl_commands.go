@@ -72,6 +72,8 @@ func (r *REPL) handleLocalCommand(line string) (exit bool, expandedPrompt string
 		r.printEnvOverview()
 	case "/cost", "/usage":
 		r.handleCostCmd()
+	case "/workspace":
+		r.handleWorkspaceCmd(args)
 	case "/compact":
 		r.writeOut(r.colorize(
 			"（auto-compact 由引擎托管；当前会话不支持手动触发）\r\n", colorDim))
@@ -123,6 +125,42 @@ func (r *REPL) handleLocalCommand(line string) (exit bool, expandedPrompt string
 		r.writeOut(r.colorize(fmt.Sprintf("未知命令 %s（输入 /help 查看）\r\n", cmd), colorYellow))
 	}
 	return false, ""
+}
+
+// handleWorkspaceCmd 处理 /workspace 命令。
+//
+// 无参数：显示当前 workspace 路径。
+// 带参数：动态切换到指定路径（支持绝对、~/、相对路径）。
+func (r *REPL) handleWorkspaceCmd(args string) {
+	args = strings.TrimSpace(args)
+	if args == "" {
+		// 显示当前路径：回调返回空值表示查看诉求
+		if r.OnWorkspaceSet != nil {
+			if resolved, _ := r.OnWorkspaceSet(""); resolved != "" {
+				r.writeOut(r.colorize(fmt.Sprintf("workspace: %s\r\n", resolved), colorCyan))
+				r.writeOut(r.colorize("  设置新路径: /workspace <path>\r\n", colorDim))
+				return
+			}
+		}
+		r.writeOut(r.colorize("用法: /workspace <path>  — 设置产物输出目录\r\n", colorCyan))
+		r.writeOut(r.colorize("支持绝对路径、~/ 和相对路径。路径不存在时自动创建。\r\n", colorDim))
+		r.writeOut(r.colorize("示例: /workspace /tmp/my-output   /workspace ~/projects/out\r\n", colorDim))
+		r.writeOut(r.colorize("不带参数: /workspace  — 显示当前路径\r\n", colorDim))
+		return
+	}
+
+	if r.OnWorkspaceSet == nil {
+		r.writeOut(r.colorize("（workspace 动态切换未启用；请通过 --workspace flag 在启动时指定）\r\n", colorYellow))
+		return
+	}
+
+	resolved, err := r.OnWorkspaceSet(args)
+	if err != nil {
+		r.writeOut(r.colorize(fmt.Sprintf("设置 workspace 失败: %v\r\n", err), colorRed))
+		return
+	}
+	r.writeOut(r.colorize(fmt.Sprintf("✓ workspace 已设置为: %s\r\n", resolved), colorGreen))
+	r.writeOut(r.colorize("  后续所有文件输出将写入此目录\r\n", colorDim))
 }
 
 // handleCostCmd 显示当前会话的 token 统计（/cost / /usage）

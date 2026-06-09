@@ -8,7 +8,6 @@ import (
 
 	"github.com/anthropics/goclaude/pkg/application"
 	wf "github.com/anthropics/goclaude/pkg/domain/workflow"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
 	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
 	"github.com/anthropics/goclaude/pkg/interfaces/shell"
 )
@@ -20,6 +19,9 @@ type workflowAdapter struct {
 	planSvc *application.PlanAgentService
 	loader  *workflowinfra.Loader
 	project string
+
+	// workspaceRootFn 动态获取 workspace 根目录（支持 /workspace 切换）
+	workspaceRootFn func() string
 
 	// 执行所需依赖
 	agentSvc *application.AgentService
@@ -45,6 +47,8 @@ type workflowRunnerState struct {
 }
 
 // newWorkflowAdapter 创建适配器并注册事件监听。
+//
+// workspaceRootFn: 动态获取 workspace 根目录（支持 /workspace 切换）
 func newWorkflowAdapter(
 	svc *application.WorkflowService,
 	planSvc *application.PlanAgentService,
@@ -53,16 +57,18 @@ func newWorkflowAdapter(
 	factory application.AgentEngineFactory,
 	defaults application.WorkflowDefaults,
 	projectDir string,
+	workspaceRootFn func() string,
 ) *workflowAdapter {
 	a := &workflowAdapter{
-		svc:      svc,
-		planSvc:  planSvc,
-		loader:   loader,
-		project:  projectDir,
-		agentSvc: agentSvc,
-		factory:  factory,
-		defaults: defaults,
-		runners:  make(map[string]*workflowRunner),
+		svc:             svc,
+		planSvc:         planSvc,
+		loader:          loader,
+		project:         projectDir,
+		workspaceRootFn: workspaceRootFn,
+		agentSvc:        agentSvc,
+		factory:         factory,
+		defaults:        defaults,
+		runners:         make(map[string]*workflowRunner),
 	}
 	svc.SetEventListener(a)
 	return a
@@ -229,10 +235,12 @@ func (a *workflowAdapter) executeWorkflow(ctx context.Context, w *wf.Workflow) (
 		return nil, fmt.Errorf("parse workflow %q: %w", w.Name, err)
 	}
 
-	// 为 workflow 创建专属 workspace 目录（无时间戳，稳定命名）
+	// 动态获取 workspace 目录（支持 /workspace 切换）
 	defaults := a.defaults
-	if ws, wsErr := appconfig.DefaultConfig().EnsureStableTaskWorkspace(a.project, appconfig.TaskKindWorkflow, w.Name); wsErr == nil {
-		defaults.WorkspaceRoot = ws
+	if a.workspaceRootFn != nil {
+		if ws := a.workspaceRootFn(); ws != "" {
+			defaults.WorkspaceRoot = ws
+		}
 	}
 
 	execCtx, cancel := context.WithCancel(ctx)

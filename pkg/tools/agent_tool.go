@@ -4,12 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/anthropics/goclaude/pkg/application"
 	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
 )
 
 // AgentTool 子 Agent 工具
@@ -128,22 +125,11 @@ func (t *AgentTool) Call(ctx context.Context, input tool.Input, uc *tool.UseCont
 	subagentType := input.GetString("subagent_type")
 	prompt := input.GetString("prompt")
 
-	workspaceRoot := t.defaults.WorkspaceRoot
-
-	// 若父 workspace 已配置，则在其中创建 subagent-<type> 子目录（无时间戳）
-	// 父 session 目录已包含时间戳，subagent 用稳定名即可
-	if workspaceRoot != "" {
-		cfg := appconfig.DefaultConfig()
-		subDir, err := cfg.EnsureStableSubWorkspace(workspaceRoot, appconfig.TaskKindSubagent, subagentType)
-		if err != nil {
-			// 创建失败不阻塞 subagent 执行，回退到父目录
-			subDir = workspaceRoot
-		}
-		workspaceRoot = subDir
-		// 同时写入 .identity 文件标记该目录身份
-		identityFile := filepath.Join(subDir, ".identity")
-		identity := fmt.Sprintf("subagent subagent:%s\ncreated:%s\n", subagentType, "auto")
-		_ = os.WriteFile(identityFile, []byte(identity), 0644)
+	// 动态获取 workspace 路径：优先使用 executor 注入的 UseContext（支持 /workspace 切换），
+	// 回退到启动时默认值。
+	wsRoot := t.defaults.WorkspaceRoot
+	if uc != nil && uc.WorkspaceRoot != "" {
+		wsRoot = uc.WorkspaceRoot
 	}
 
 	opts := application.RunOptions{
@@ -152,7 +138,7 @@ func (t *AgentTool) Call(ctx context.Context, input tool.Input, uc *tool.UseCont
 		WorkingDir:      t.defaults.WorkingDir,
 		ProjectRoot:     t.defaults.ProjectRoot,
 		DefaultModel:    t.defaults.DefaultModel,
-		WorkspaceRoot:   workspaceRoot,
+		WorkspaceRoot:   wsRoot,
 	}
 	result, err := t.service.Run(ctx, subagentType, t.factory, opts)
 	if err != nil {
