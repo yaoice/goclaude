@@ -489,6 +489,16 @@ func buildMainSystemPrompt(app *AppContext, teamsEnabled bool, cfg *appconfig.Co
 		sb.WriteString(cfg.SystemPrompt.Guidelines + "\n\n")
 	}
 
+	// === 长期记忆（Long-Term Memory — SQLite+FTS5 跨会话） ===
+	if app.LongTermMemorySvc != nil && app.LongTermMemorySvc.IsEnabled() {
+		sb.WriteString("LONG-TERM MEMORY: You have access to a persistent long-term memory system.\n")
+		sb.WriteString("At the start of each session, relevant memories from previous sessions will be injected into the conversation as a `<long-term-memory>` block in the first user message.\n")
+		sb.WriteString("These memories contain project context, tool observations, and session summaries from past conversations about this project.\n")
+		sb.WriteString("- If the user asks \"what do you remember\" or \"long-term memory\", check the beginning of the conversation for the `<long-term-memory>` block.\n")
+		sb.WriteString("- If no `<long-term-memory>` block appears, this is the first session and no previous memories exist yet.\n")
+		sb.WriteString("- You can reference these memories directly when responding — they are reliable project-level context.\n\n")
+	}
+
 	// === 持久化记忆上下文（MEMORY.md 内容自动注入） ===
 	if app.MemorySvc != nil {
 		if memContent, err := app.MemorySvc.GetEntrypointContent(context.Background()); err == nil && memContent != "" {
