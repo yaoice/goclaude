@@ -57,6 +57,9 @@ func applyMap(cfg *Config, m map[string]interface{}) {
 	if ws, ok := getMap(m, "workspace"); ok {
 		applyWorkspace(&cfg.Workspace, ws)
 	}
+	if ltm, ok := getMap(m, "longterm_memory"); ok {
+		applyLongTermMemory(&cfg.LongTermMemory, ltm)
+	}
 }
 
 func applyAPI(c *APIConfig, m map[string]interface{}) {
@@ -263,6 +266,102 @@ func applyWorkspace(c *WorkspaceConfig, m map[string]interface{}) {
 	}
 	if v, ok := getBool(m, "auto_create"); ok {
 		c.AutoCreate = v
+	}
+}
+
+func applyLongTermMemory(c *LongTermMemoryConfig, m map[string]interface{}) {
+	if v, ok := getBool(m, "enabled"); ok {
+		c.Enabled = v
+	}
+	if v, ok := getString(m, "db_path"); ok {
+		c.DBPath = v
+	}
+	if capt, ok := getMap(m, "capture"); ok {
+		applyLongTermCapture(&c.Capture, capt)
+	}
+	if inj, ok := getMap(m, "injection"); ok {
+		applyLongTermInjection(&c.Injection, inj)
+	}
+	if cap, ok := getMap(m, "capacity"); ok {
+		applyLongTermCapacity(&c.Capacity, cap)
+	}
+	if ev, ok := getMap(m, "eviction"); ok {
+		applyLongTermEviction(&c.Eviction, ev)
+	}
+	if exp, ok := getMap(m, "expiration"); ok {
+		applyLongTermExpiration(&c.Expiration, exp)
+	}
+	if priv, ok := getMap(m, "privacy"); ok {
+		applyLongTermPrivacy(&c.Privacy, priv)
+	}
+}
+
+func applyLongTermCapture(c *LongTermCaptureConfig, m map[string]interface{}) {
+	if v, ok := getBool(m, "auto_capture_tools"); ok {
+		c.AutoCaptureTools = v
+	}
+	if v, ok := getInt(m, "max_observation_size"); ok {
+		c.MaxObservationSize = v
+	}
+	if v, ok := getInt(m, "min_capture_chars"); ok {
+		c.MinCaptureChars = v
+	}
+}
+
+func applyLongTermInjection(c *LongTermInjectionConfig, m map[string]interface{}) {
+	if v, ok := getBool(m, "auto_inject"); ok {
+		c.AutoInject = v
+	}
+	if v, ok := getInt(m, "max_inject_tokens"); ok {
+		c.MaxInjectTokens = v
+	}
+	if v, ok := getInt(m, "search_limit"); ok {
+		c.SearchLimit = v
+	}
+	if v, ok := getFloat(m, "min_relevance_score"); ok {
+		c.MinRelevanceScore = v
+	}
+}
+
+func applyLongTermCapacity(c *LongTermCapacityConfig, m map[string]interface{}) {
+	if v, ok := getInt(m, "max_entries"); ok {
+		c.MaxEntries = v
+	}
+	if v, ok := getInt(m, "max_storage_bytes"); ok {
+		c.MaxStorageBytes = v
+	}
+}
+
+func applyLongTermEviction(c *LongTermEvictionConfig, m map[string]interface{}) {
+	if v, ok := getString(m, "policy"); ok {
+		c.Policy = v
+	}
+	if v, ok := getBool(m, "auto_summarize"); ok {
+		c.AutoSummarize = v
+	}
+	if v, ok := getInt(m, "min_priority"); ok {
+		c.MinPriority = v
+	}
+}
+
+func applyLongTermExpiration(c *LongTermExpirationConfig, m map[string]interface{}) {
+	if v, ok := getInt(m, "default_ttl_days"); ok {
+		c.DefaultTTLDays = v
+	}
+	if v, ok := getInt(m, "low_priority_ttl_days"); ok {
+		c.LowPriorityTTLDays = v
+	}
+	if v, ok := getInt(m, "cleanup_interval_hours"); ok {
+		c.CleanupIntervalHours = v
+	}
+}
+
+func applyLongTermPrivacy(c *LongTermPrivacyConfig, m map[string]interface{}) {
+	if v, ok := getBool(m, "auto_exclude_patterns"); ok {
+		c.AutoExcludePatterns = v
+	}
+	if v, ok := getBool(m, "strip_private_tags"); ok {
+		c.StripPrivateTags = v
 	}
 }
 

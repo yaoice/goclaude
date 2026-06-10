@@ -40,18 +40,19 @@ import (
 //
 // 字段命名采用大写 Go 风格；YAML 键采用 snake_case，由本包内部映射处理。
 type Config struct {
-	API         APIConfig                  `yaml:"api"`
-	Providers   map[string]ProviderConfig  `yaml:"providers"`
-	Engine      EngineConfig               `yaml:"engine"`
-	Tools       ToolsConfig                `yaml:"tools"`
-	MCP         MCPConfig                  `yaml:"mcp"`
-	AgentTeams  AgentTeamsConfig           `yaml:"agent_teams"`
-	Permissions PermissionsConfig          `yaml:"permissions"`
-	Sandbox     SandboxConfig              `yaml:"sandbox"`
-	Session      SessionConfig              `yaml:"session"`
-	TUI          TUIConfig                  `yaml:"tui"`
-	SystemPrompt SystemPromptConfig         `yaml:"system_prompt"`
-	Workspace    WorkspaceConfig            `yaml:"workspace"`
+	API            APIConfig                  `yaml:"api"`
+	Providers      map[string]ProviderConfig  `yaml:"providers"`
+	Engine         EngineConfig               `yaml:"engine"`
+	Tools          ToolsConfig                `yaml:"tools"`
+	MCP            MCPConfig                  `yaml:"mcp"`
+	AgentTeams     AgentTeamsConfig           `yaml:"agent_teams"`
+	Permissions    PermissionsConfig          `yaml:"permissions"`
+	Sandbox        SandboxConfig              `yaml:"sandbox"`
+	Session        SessionConfig              `yaml:"session"`
+	TUI            TUIConfig                  `yaml:"tui"`
+	SystemPrompt   SystemPromptConfig         `yaml:"system_prompt"`
+	Workspace      WorkspaceConfig            `yaml:"workspace"`
+	LongTermMemory LongTermMemoryConfig       `yaml:"longterm_memory"`
 
 	// LoadedFrom 记录配置实际从哪些文件加载（按加载顺序）
 	// 仅诊断用途（goclaude doctor 展示）。
@@ -202,6 +203,70 @@ type WorkspaceConfig struct {
 	AutoCreate bool `yaml:"auto_create"`
 }
 
+// LongTermMemoryConfig 长期记忆配置
+//
+// 基于 SQLite+FTS5 实现跨会话上下文记忆存储与检索。
+// 对齐 claude-mem 的核心机制：渐进式三层搜索、生命周期钩子、隐私过滤。
+type LongTermMemoryConfig struct {
+	// Enabled 总开关：false 时长期记忆完全禁用
+	Enabled bool `yaml:"enabled"`
+	// DBPath 数据库文件路径（支持 ~/ 和相对路径）
+	DBPath string `yaml:"db_path"`
+	// Capture 记忆捕获参数
+	Capture LongTermCaptureConfig `yaml:"capture"`
+	// Injection 上下文注入参数
+	Injection LongTermInjectionConfig `yaml:"injection"`
+	// Capacity 容量管理参数
+	Capacity LongTermCapacityConfig `yaml:"capacity"`
+	// Eviction 淘汰策略参数
+	Eviction LongTermEvictionConfig `yaml:"eviction"`
+	// Expiration 过期策略参数
+	Expiration LongTermExpirationConfig `yaml:"expiration"`
+	// Privacy 隐私过滤参数
+	Privacy LongTermPrivacyConfig `yaml:"privacy"`
+}
+
+// LongTermCaptureConfig 记忆捕获配置
+type LongTermCaptureConfig struct {
+	AutoCaptureTools  bool `yaml:"auto_capture_tools"`
+	MaxObservationSize int `yaml:"max_observation_size"`
+	MinCaptureChars   int  `yaml:"min_capture_chars"`
+}
+
+// LongTermInjectionConfig 上下文注入配置
+type LongTermInjectionConfig struct {
+	AutoInject       bool    `yaml:"auto_inject"`
+	MaxInjectTokens  int     `yaml:"max_inject_tokens"`
+	SearchLimit      int     `yaml:"search_limit"`
+	MinRelevanceScore float64 `yaml:"min_relevance_score"`
+}
+
+// LongTermCapacityConfig 容量管理配置
+type LongTermCapacityConfig struct {
+	MaxEntries      int `yaml:"max_entries"`
+	MaxStorageBytes int `yaml:"max_storage_bytes"`
+}
+
+// LongTermEvictionConfig 淘汰策略配置
+type LongTermEvictionConfig struct {
+	Policy        string `yaml:"policy"`
+	AutoSummarize bool   `yaml:"auto_summarize"`
+	MinPriority   int    `yaml:"min_priority"`
+}
+
+// LongTermExpirationConfig 过期策略配置
+type LongTermExpirationConfig struct {
+	DefaultTTLDays     int `yaml:"default_ttl_days"`
+	LowPriorityTTLDays int `yaml:"low_priority_ttl_days"`
+	CleanupIntervalHours int `yaml:"cleanup_interval_hours"`
+}
+
+// LongTermPrivacyConfig 隐私过滤配置
+type LongTermPrivacyConfig struct {
+	AutoExcludePatterns bool `yaml:"auto_exclude_patterns"`
+	StripPrivateTags    bool `yaml:"strip_private_tags"`
+}
+
 // DefaultConfig 返回内置兜底默认值
 //
 // 这些值是"YAML 文件全部缺失"时的安全保底，与官方 claude / 历史代码兼容。
@@ -283,6 +348,39 @@ func DefaultConfig() *Config {
 		Workspace: WorkspaceConfig{
 			Dir:        "./workspaces/",
 			AutoCreate: true,
+		},
+		LongTermMemory: LongTermMemoryConfig{
+			Enabled: true,
+			DBPath:  "~/.goclaude/longterm_memory.db",
+			Capture: LongTermCaptureConfig{
+				AutoCaptureTools:   true,
+				MaxObservationSize: 8000,
+				MinCaptureChars:    50,
+			},
+			Injection: LongTermInjectionConfig{
+				AutoInject:        true,
+				MaxInjectTokens:   2000,
+				SearchLimit:       10,
+				MinRelevanceScore: 0.2,
+			},
+			Capacity: LongTermCapacityConfig{
+				MaxEntries:      1000,
+				MaxStorageBytes: 10 * 1024 * 1024,
+			},
+			Eviction: LongTermEvictionConfig{
+				Policy:        "priority",
+				AutoSummarize: true,
+				MinPriority:   5,
+			},
+			Expiration: LongTermExpirationConfig{
+				DefaultTTLDays:      90,
+				LowPriorityTTLDays:  30,
+				CleanupIntervalHours: 24,
+			},
+			Privacy: LongTermPrivacyConfig{
+				AutoExcludePatterns: true,
+				StripPrivateTags:    true,
+			},
 		},
 	}
 }

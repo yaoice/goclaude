@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anthropics/goclaude/pkg/application"
+	hooksapp "github.com/anthropics/goclaude/pkg/application/hooks"
+	memoryappsvc "github.com/anthropics/goclaude/pkg/application/memory"
 	"github.com/anthropics/goclaude/pkg/domain/hook"
 	"github.com/anthropics/goclaude/pkg/domain/query"
 	"github.com/anthropics/goclaude/pkg/domain/tool"
@@ -19,6 +21,7 @@ import (
 	"github.com/anthropics/goclaude/pkg/infrastructure/compact"
 	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
 	minfra "github.com/anthropics/goclaude/pkg/infrastructure/memory"
+	sqlitemem "github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
 	"github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
 	"github.com/anthropics/goclaude/pkg/infrastructure/todo"
 	"github.com/anthropics/goclaude/pkg/infrastructure/worktree"
@@ -40,6 +43,14 @@ func sanitizeProjectKey(cwd string) string {
 		return "default"
 	}
 	return s
+}
+
+// resolvePath 解析路径（支持 ~/ 缩写和相对路径）
+func resolvePath(path string, homeDir string) string {
+	if strings.HasPrefix(path, "~/") {
+		return homeDir + path[1:]
+	}
+	return path
 }
 
 var (
@@ -295,21 +306,28 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 
 // AppContext 主 agent 共享的运行时上下文（聚合 Skill/MCP/Agent/Team/Memory 服务）
 type AppContext struct {
-	Registry     *tool.Registry
-	SkillSvc     *application.SkillService
-	MCPSvc       *application.MCPService
-	AgentSvc     *application.AgentService
-	TeamSvc      *application.TeamService
-	HookReg      *hook.Registry
-	MCPToolCount int
-	MemorySvc    *application.MemoryService // auto-memory entrypoint 管理
-	AutoMemDir   string                      // auto-memory 目录路径
+	Registry        *tool.Registry
+	SkillSvc        *application.SkillService
+	MCPSvc          *application.MCPService
+	AgentSvc        *application.AgentService
+	TeamSvc         *application.TeamService
+	HookReg         *hook.Registry
+	MCPToolCount    int
+	MemorySvc       *application.MemoryService       // auto-memory entrypoint 管理
+	AutoMemDir      string                            // auto-memory 目录路径
+	LongTermMemorySvc *memoryappsvc.LongTermMemoryService // 长期记忆服务
+	MemoryLifecycleHooks *hooksapp.MemoryLifecycleHooks    // 长期记忆生命周期钩子
 }
 
-// Close 释放 MCP 连接
+// Close 释放 MCP 连接 + 长期记忆服务
 func (c *AppContext) Close() {
 	if c.MCPSvc != nil {
 		c.MCPSvc.Shutdown()
+	}
+	if c.LongTermMemorySvc != nil {
+		if err := c.LongTermMemorySvc.Close(); err != nil {
+			slog.Warn("关闭长期记忆服务失败", "error", err)
+		}
 	}
 }
 
@@ -360,6 +378,36 @@ func buildAppContext(ctx context.Context, cwd, model string, logger *slog.Logger
 	memFS := minfra.OSFileSystem{}
 	memRepo := minfra.NewFileRepository(memFS)
 	app.MemorySvc = application.NewMemoryServiceWithDir(memRepo, app.AutoMemDir)
+
+	// 长期记忆（Long-Term Memory）初始化
+	appcfg := AppConfig()
+	if appcfg.LongTermMemory.Enabled {
+		dbPath := resolvePath(appcfg.LongTermMemory.DBPath, homeDir)
+
+		sqliteRepo, err := sqlitemem.NewRepository(dbPath)
+		if err != nil {
+			logger.Warn("初始化长期记忆数据库失败，已禁用", "path", dbPath, "error", err)
+		} else {
+			app.LongTermMemorySvc = memoryappsvc.NewLongTermMemoryService(
+				sqliteRepo, appcfg.LongTermMemory, logger,
+			)
+			app.LongTermMemorySvc.Start(ctx)
+
+			// 创建并注册生命周期钩子
+			app.MemoryLifecycleHooks = hooksapp.NewMemoryLifecycleHooks(
+				app.LongTermMemorySvc,
+				appcfg.LongTermMemory,
+				logger,
+				cwd, // project root
+			)
+			app.MemoryLifecycleHooks.RegisterAll(app.HookReg)
+
+			logger.Info("长期记忆已启用",
+				"db", dbPath,
+				"max_entries", appcfg.LongTermMemory.Capacity.MaxEntries,
+			)
+		}
+	}
 
 	app.Registry = tool.NewRegistry()
 	tools.RegisterAll(app.Registry, cwd, toSandboxConfig(AppConfig().Sandbox))
