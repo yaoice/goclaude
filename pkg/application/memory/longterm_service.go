@@ -79,6 +79,7 @@ func (s *LongTermMemoryService) Start(ctx context.Context) {
 	}
 
 	s.stopCh = make(chan struct{})
+	stopCh := s.stopCh // 捕获到本地变量，goroutine 不再触碰 s.stopCh
 	s.started = true
 
 	go func() {
@@ -92,7 +93,7 @@ func (s *LongTermMemoryService) Start(ctx context.Context) {
 				} else if n > 0 {
 					s.logger.Info("periodic memory cleanup", "removed", n)
 				}
-			case <-s.stopCh:
+			case <-stopCh:
 				return
 			}
 		}

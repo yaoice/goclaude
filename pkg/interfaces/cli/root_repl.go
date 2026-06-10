@@ -269,6 +269,8 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	repl := shell.NewREPL(engine, modelName, flagProvider, cwd)
 	repl.Verbose = flagVerbose
 	repl.PermissionMode = string(permCtx.Mode)
+	repl.HookReg = wired.HookReg             // 长期记忆生命周期 hooks
+	repl.SessionID = sessionID               // 当前会话 ID
 	// 注入扩展能力管理服务
 	repl.Skills = &skillAdapter{svc: wired.SkillSvc}
 	repl.Agents = &agentAdapter{svc: wired.AgentSvc}
