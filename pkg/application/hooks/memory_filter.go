@@ -285,36 +285,45 @@ func (s *MemoryFilterService) CheckCapacity(entries []*EntryWithMeta) CapacitySt
 //   - "lru":      按最近访问时间淘汰（最久未访问先删）
 // 返回：保留的条目、被淘汰的条目
 func (s *MemoryFilterService) Evict(entries []*EntryWithMeta, now time.Time) (kept, evicted []*EntryWithMeta) {
-	if len(entries) <= s.cfg.MaxEntries {
-		totalBytes := totalSize(entries)
-		if totalBytes <= s.cfg.MaxTotalBytes {
-			return entries, nil
+	withinCapacity := len(entries) <= s.cfg.MaxEntries && totalSize(entries) <= s.cfg.MaxTotalBytes
+
+	// 无论容量是否超限，始终先筛掉低于最低优先级的条目
+	lowPriority := make([]*EntryWithMeta, 0)
+	candidates := make([]*EntryWithMeta, 0, len(entries))
+	for _, entry := range entries {
+		if entry.Priority < s.cfg.MinPriorityScore {
+			lowPriority = append(lowPriority, entry)
+		} else {
+			candidates = append(candidates, entry)
 		}
 	}
 
-	// 按策略排序
+	// 容量未超限且没有低优先级条目 → 无需淘汰
+	if withinCapacity && len(lowPriority) == 0 {
+		return entries, nil
+	}
+	// 仅淘汰低优先级条目（容量未超限）
+	if withinCapacity {
+		return candidates, lowPriority
+	}
+
+	// 容量超限：在候选条目上执行排序淘汰
 	switch s.cfg.EvictionPolicy {
 	case "lru":
-		s.sortByLRU(entries)
+		s.sortByLRU(candidates)
 	default: // "priority"
-		SortByPriority(entries, now) // 降序排列
+		SortByPriority(candidates, now) // 降序排列
 	}
 
 	// 从末尾开始淘汰（最低分 / 最久未访问）
 	kept = make([]*EntryWithMeta, 0, s.cfg.MaxEntries)
-	evicted = make([]*EntryWithMeta, 0)
+	evicted = lowPriority // 低优先级必定淘汰
 	keptBytes := 0
 
-	for i, entry := range entries {
+	for _, entry := range candidates {
 		entrySize := entry.ByteSize
 		if entrySize == 0 {
 			entrySize = len(entry.Title) + len(entry.Content)
-		}
-
-		// 低于最低优先级直接淘汰
-		if entry.Priority < s.cfg.MinPriorityScore {
-			evicted = append(evicted, entry)
-			continue
 		}
 
 		if len(kept) < s.cfg.MaxEntries && keptBytes+entrySize <= s.cfg.MaxTotalBytes {
@@ -323,7 +332,6 @@ func (s *MemoryFilterService) Evict(entries []*EntryWithMeta, now time.Time) (ke
 		} else {
 			evicted = append(evicted, entry)
 		}
-		_ = i
 	}
 
 	return kept, evicted

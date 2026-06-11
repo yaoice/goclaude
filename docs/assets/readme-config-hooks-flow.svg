@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="640" viewBox="0 0 1240 640" role="img" aria-labelledby="title desc">
+  <title id="title">配置、权限与 Hook 流程</title>
+  <desc id="desc">展示多源配置如何合并到 AppConfig，再注入 Engine、Executor、Hook 与 Sandbox，参与工具调度的安全与可观测链路。</desc>
+  <defs>
+    <style>
+      .t-title{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#0f172a;letter-spacing:-.6px}
+      .t-sub{font:400 14px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-eyebrow{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:1.6px}
+      .t-l{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#64748b;letter-spacing:1.4px}
+      .t-h{font:600 14px "Helvetica Neue",Arial,sans-serif;fill:#0f172a}
+      .t-n{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-tag{font:600 10px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#2563eb;letter-spacing:.5px}
+      .card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .pill{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card-core{fill:#0f172a;stroke:#0f172a;stroke-width:1}
+      .card-accent{fill:#eff6ff;stroke:#bfdbfe;stroke-width:1}
+      .lane{fill:#f1f5f9;stroke:#e2e8f0;stroke-width:1}
+      .stroke{stroke:#cbd5e1;stroke-width:1.4;fill:none}
+      .accent{stroke:#2563eb;stroke-width:1.6;fill:none}
+      .dash{stroke:#94a3b8;stroke-width:1.2;stroke-dasharray:5 4;fill:none}
+      .divider{stroke:#e2e8f0;stroke-width:1}
+      .feedback{stroke:#6366f1;stroke-width:1.4;fill:none;stroke-dasharray:6 4}
+    </style>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowIndigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="640" fill="#f8fafc"/>
+
+  <!-- Header -->
+  <text x="60" y="52" class="t-eyebrow">CONFIG · HOOK · SANDBOX · 02</text>
+  <text x="60" y="86" class="t-title">配置、权限与 Hook 流程</text>
+  <text x="60" y="110" class="t-sub">运行时合并多源配置 → 注入 Engine / Executor → Hook 拦截 → Sandbox 边界</text>
+  <line x1="60" y1="130" x2="1180" y2="130" class="divider"/>
+
+  <!-- Stage labels -->
+  <text x="160" y="170" class="t-l">① CONFIG SOURCES</text>
+  <text x="430" y="170" class="t-l">② MERGE</text>
+  <text x="700" y="170" class="t-l">③ RUNTIME PIPELINE</text>
+  <text x="1000" y="170" class="t-l">④ POLICY · SIGNAL</text>
+
+  <!-- Lane 1: Config sources -->
+  <g transform="translate(60 190)" filter="url(#cardShadow)">
+    <rect width="280" height="320" rx="8" class="lane"/>
+    <g transform="translate(20 24)">
+      <rect width="240" height="56" rx="6" class="pill"/>
+      <text x="14" y="22" class="t-h">CLI flags</text>
+      <text x="14" y="40" class="t-n">命令行一次性覆盖</text>
+      <text x="200" y="22" class="t-tag">P0</text>
+    </g>
+    <g transform="translate(20 96)">
+      <rect width="240" height="56" rx="6" class="pill"/>
+      <text x="14" y="22" class="t-h">.goclaude.yaml</text>
+      <text x="14" y="40" class="t-n">项目级 · 团队共享</text>
+      <text x="200" y="22" class="t-tag">P1</text>
+    </g>
+    <g transform="translate(20 168)">
+      <rect width="240" height="56" rx="6" class="pill"/>
+      <text x="14" y="22" class="t-h">~/.goclaude/config.yaml</text>
+      <text x="14" y="40" class="t-n">用户级 · 个人偏好</text>
+      <text x="200" y="22" class="t-tag">P2</text>
+    </g>
+    <g transform="translate(20 240)">
+      <rect width="240" height="56" rx="6" class="pill"/>
+      <text x="14" y="22" class="t-h">configs/default.yaml</text>
+      <text x="14" y="40" class="t-n">内置默认 · 兜底</text>
+      <text x="200" y="22" class="t-tag">P3</text>
+    </g>
+  </g>
+
+  <!-- Lane 2: AppConfig (core) -->
+  <g transform="translate(390 290)" filter="url(#cardShadow)">
+    <rect width="220" height="120" rx="8" class="card-core"/>
+    <text x="16" y="28" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="11" fill="#94a3b8" letter-spacing="1.4">APPCONFIG</text>
+    <text x="16" y="52" font-family="Helvetica Neue,Arial,sans-serif" font-weight="700" font-size="16" fill="#ffffff">合并与覆盖</text>
+    <line x1="16" y1="64" x2="100" y2="64" stroke="#334155" stroke-width="1"/>
+    <text x="16" y="84" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">scalar · override</text>
+    <text x="16" y="102" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">array · concat+dedup</text>
+  </g>
+
+  <!-- Lane 3: Runtime pipeline -->
+  <g transform="translate(660 190)" filter="url(#cardShadow)">
+    <rect width="240" height="100" rx="8" class="card-accent"/>
+    <text x="16" y="24" class="t-l">ENGINE</text>
+    <text x="16" y="48" class="t-h">Query Engine</text>
+    <text x="16" y="68" class="t-n">model · turns · compact</text>
+    <text x="16" y="86" class="t-tag">domain/query</text>
+  </g>
+  <g transform="translate(660 320)" filter="url(#cardShadow)">
+    <rect width="240" height="100" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">EXECUTOR</text>
+    <text x="16" y="48" class="t-h">Tool Executor</text>
+    <text x="16" y="68" class="t-n">permission · schedule</text>
+    <text x="16" y="86" class="t-tag">domain/tool</text>
+  </g>
+  <g transform="translate(660 450)" filter="url(#cardShadow)">
+    <rect width="240" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">RESULT</text>
+    <text x="16" y="48" class="t-h">tool_result</text>
+    <text x="16" y="68" class="t-n">回填至下一轮消息循环</text>
+  </g>
+
+  <!-- Lane 4: Hooks/Sandbox/Observability -->
+  <g transform="translate(950 190)" filter="url(#cardShadow)">
+    <rect width="220" height="100" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">HOOKS</text>
+    <text x="16" y="48" class="t-h">生命周期钩子</text>
+    <text x="16" y="68" class="t-n">Session · Tool · Agent</text>
+    <text x="16" y="86" class="t-tag">7 events</text>
+  </g>
+  <g transform="translate(950 320)" filter="url(#cardShadow)">
+    <rect width="220" height="100" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">SANDBOX</text>
+    <text x="16" y="48" class="t-h">权限边界</text>
+    <text x="16" y="68" class="t-n">FS · network · command</text>
+    <text x="16" y="86" class="t-tag">bwrap / sandbox-exec</text>
+  </g>
+  <g transform="translate(950 450)" filter="url(#cardShadow)">
+    <rect width="220" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">OBSERVABILITY</text>
+    <text x="16" y="48" class="t-h">日志与事件</text>
+    <text x="16" y="68" class="t-n">slog · ToolEvent · cost</text>
+  </g>
+
+  <!-- Connections -->
+  <!-- Sources -> AppConfig (4 lines) -->
+  <g class="stroke" marker-end="url(#arrowGray)">
+    <path d="M340 246 C370 246 370 320 388 320"/>
+    <path d="M340 318 H388"/>
+    <path d="M340 390 C370 390 370 360 388 360"/>
+    <path d="M340 462 C370 462 370 380 388 380"/>
+  </g>
+
+  <!-- AppConfig -> Engine -->
+  <path d="M610 320 C630 320 630 240 660 240" class="accent" marker-end="url(#arrowBlue)"/>
+  <!-- AppConfig -> Executor -->
+  <path d="M610 360 C630 360 630 360 660 360" class="accent" marker-end="url(#arrowBlue)"/>
+  <!-- Engine -> Executor -->
+  <path d="M780 290 V320" class="stroke" marker-end="url(#arrowGray)"/>
+  <!-- Executor -> Result -->
+  <path d="M780 420 V450" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Engine/Executor/Result -> Hooks/Sandbox/Obs (right) -->
+  <g class="dash" marker-end="url(#arrowGray)">
+    <path d="M900 230 H950"/>
+    <path d="M900 360 H950"/>
+    <path d="M900 480 H950"/>
+  </g>
+
+  <!-- Feedback loop: Result -> back to interfaces -->
+  <path d="M780 530 C500 600 280 580 100 540" class="feedback" marker-end="url(#arrowIndigo)"/>
+  <text x="80" y="560" class="t-n" fill="#6366f1">↺ 反馈至 CLI / REPL 渲染与权限弹窗</text>
+
+  <!-- Stage divider arrows -->
+  <text x="354" y="270" class="t-tag" fill="#94a3b8">merge</text>
+  <text x="624" y="226" class="t-tag" fill="#2563eb">inject</text>
+  <text x="912" y="226" class="t-tag" fill="#94a3b8">tap</text>
+</svg>

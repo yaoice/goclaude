@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="640" viewBox="0 0 1240 640" role="img" aria-labelledby="title desc">
+  <title id="title">GoClaude 能力地图</title>
+  <desc id="desc">以中心辐射的极简图形式展示 GoClaude 八项核心能力的归属与作用：模型接入、工具系统、MCP 扩展、Skills、Subagent、Memory、Sandbox、Agent Teams。</desc>
+  <defs>
+    <style>
+      .t-title{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#0f172a;letter-spacing:-.6px}
+      .t-sub{font:400 14px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-eyebrow{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:1.6px}
+      .t-num{font:600 11px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#94a3b8;letter-spacing:.5px}
+      .t-h{font:600 15px "Helvetica Neue",Arial,sans-serif;fill:#0f172a}
+      .t-n{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-hub{font:700 20px "Helvetica Neue",Arial,sans-serif;fill:#ffffff;letter-spacing:-.2px}
+      .t-hub-sub{font:600 10px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:2px}
+      .card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card-accent{fill:#eff6ff;stroke:#bfdbfe;stroke-width:1}
+      .line{stroke:#cbd5e1;stroke-width:1.2;fill:none}
+      .accent{stroke:#2563eb;stroke-width:1.4;fill:none}
+      .divider{stroke:#e2e8f0;stroke-width:1}
+    </style>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+    <radialGradient id="hubGrad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1240" height="640" fill="#f8fafc"/>
+
+  <!-- Header -->
+  <text x="60" y="52" class="t-eyebrow">CAPABILITY MAP · 01</text>
+  <text x="60" y="86" class="t-title">能力地图</text>
+  <text x="60" y="110" class="t-sub">模型、工具、协议、记忆与多 Agent 协作，由单一终端运行时统一调度</text>
+  <line x1="60" y1="130" x2="1180" y2="130" class="divider"/>
+
+  <!-- Legend -->
+  <g transform="translate(60 580)">
+    <rect width="10" height="10" fill="#2563eb" rx="2"/>
+    <text x="20" y="9" class="t-n">实线 · 主依赖</text>
+    <line x1="120" y1="5" x2="160" y2="5" class="line" stroke-dasharray="4 3"/>
+    <text x="170" y="9" class="t-n">虚线 · 弱依赖</text>
+    <circle cx="290" cy="5" r="4" fill="#0f172a"/>
+    <text x="305" y="9" class="t-n">中心节点 · 终端运行时</text>
+    <rect x="490" y="0" width="10" height="10" class="card-accent"/>
+    <text x="510" y="9" class="t-n">高亮卡 · 核心能力</text>
+  </g>
+
+  <!-- Hub -->
+  <g transform="translate(620 340)">
+    <circle r="72" fill="url(#hubGrad)" filter="url(#cardShadow)"/>
+    <circle r="72" fill="none" stroke="#334155" stroke-width="1" opacity=".4"/>
+    <circle r="84" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>
+    <text x="0" y="-4" text-anchor="middle" class="t-hub">GoClaude</text>
+    <text x="0" y="20" text-anchor="middle" class="t-hub-sub">RUNTIME</text>
+  </g>
+
+  <!-- Spokes (dashed = weak, solid = primary) -->
+  <g class="line">
+    <path d="M620 268 L320 220"/>
+    <path d="M620 268 L920 220"/>
+    <path d="M620 412 L320 460"/>
+    <path d="M620 412 L920 460"/>
+  </g>
+  <g class="accent">
+    <path d="M548 340 L420 340"/>
+    <path d="M692 340 L820 340"/>
+    <path d="M620 268 L620 200"/>
+    <path d="M620 412 L620 480"/>
+  </g>
+
+  <!-- Endpoint dots -->
+  <g fill="#0f172a">
+    <circle cx="320" cy="220" r="3.5"/><circle cx="920" cy="220" r="3.5"/>
+    <circle cx="320" cy="460" r="3.5"/><circle cx="920" cy="460" r="3.5"/>
+    <circle cx="420" cy="340" r="3.5"/><circle cx="820" cy="340" r="3.5"/>
+    <circle cx="620" cy="200" r="3.5"/><circle cx="620" cy="480" r="3.5"/>
+  </g>
+
+  <!-- 8 capability cards -->
+  <!-- 01 Top center: Multi Provider (highlighted) -->
+  <g transform="translate(500 158)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card-accent"/>
+    <text x="16" y="22" class="t-num">01</text>
+    <text x="16" y="40" class="t-h">多 Provider 接入</text>
+    <text x="16" y="56" class="t-n">Anthropic · DeepSeek · Bedrock · Vertex</text>
+  </g>
+
+  <!-- 02 Top-left: Tools -->
+  <g transform="translate(80 188)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card"/>
+    <text x="16" y="22" class="t-num">02</text>
+    <text x="16" y="40" class="t-h">工具系统</text>
+    <text x="16" y="56" class="t-n">file · bash · grep · glob · web · todo</text>
+  </g>
+
+  <!-- 03 Top-right: MCP -->
+  <g transform="translate(920 188)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card"/>
+    <text x="16" y="22" class="t-num">03</text>
+    <text x="16" y="40" class="t-h">MCP 扩展</text>
+    <text x="16" y="56" class="t-n">stdio · HTTP · SSE · WebSocket</text>
+  </g>
+
+  <!-- 04 Mid-left: Skills (highlighted) -->
+  <g transform="translate(180 308)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card-accent"/>
+    <text x="16" y="22" class="t-num">04</text>
+    <text x="16" y="40" class="t-h">Skills</text>
+    <text x="16" y="56" class="t-n">按需加载的专业提示与规则集</text>
+  </g>
+
+  <!-- 05 Mid-right: Subagent (highlighted) -->
+  <g transform="translate(820 308)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card-accent"/>
+    <text x="16" y="22" class="t-num">05</text>
+    <text x="16" y="40" class="t-h">Subagent</text>
+    <text x="16" y="56" class="t-n">隔离上下文执行子任务</text>
+  </g>
+
+  <!-- 06 Bottom-left: Memory -->
+  <g transform="translate(80 428)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card"/>
+    <text x="16" y="22" class="t-num">06</text>
+    <text x="16" y="40" class="t-h">Memory</text>
+    <text x="16" y="56" class="t-n">MEMORY.md · SQLite FTS5 跨会话</text>
+  </g>
+
+  <!-- 07 Bottom center: Sandbox (highlighted) -->
+  <g transform="translate(500 488)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card-accent"/>
+    <text x="16" y="22" class="t-num">07</text>
+    <text x="16" y="40" class="t-h">Sandbox</text>
+    <text x="16" y="56" class="t-n">权限 · 路径 · 网络 · 命令边界</text>
+  </g>
+
+  <!-- 08 Bottom-right: Agent Teams -->
+  <g transform="translate(920 428)" filter="url(#cardShadow)">
+    <rect width="240" height="64" rx="8" class="card"/>
+    <text x="16" y="22" class="t-num">08</text>
+    <text x="16" y="40" class="t-h">Agent Teams</text>
+    <text x="16" y="56" class="t-n">Coordinator + Worker 并行协作</text>
+  </g>
+</svg>

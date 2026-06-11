@@ -191,6 +191,72 @@ session:
   max_memory_bytes: 25000
 
 # ═══════════════════════════════════════════════════════════════
+# 长期记忆（Long-Term Memory）
+# ═══════════════════════════════════════════════════════════════
+# 基于 SQLite+FTS5 实现跨会话上下文记忆存储与检索。
+# 对齐 claude-mem 的核心机制：渐进式三层搜索、生命周期钩子、隐私过滤。
+longterm_memory:
+  # 总开关：false 时长期记忆完全禁用，不影响现有 MEMORY.md 文件记忆
+  enabled: true
+
+  # 数据库文件路径（相对路径相对于 ~/.goclaude/）
+  db_path: ~/.goclaude/longterm_memory.db
+
+  # ───── 记忆捕获 ─────
+  capture:
+    # 是否在 PostToolUse 事件时自动捕获工具观察记录
+    auto_capture_tools: true
+    # 最大单条记忆大小（字节，超限截断）
+    max_observation_size: 8000
+    # 工具结果最小字符数才触发捕获（避免空结果/错误消息噪音）
+    min_capture_chars: 50
+
+  # ───── 上下文注入 ─────
+  injection:
+    # SessionStart 时自动检索并注入相关历史记忆
+    auto_inject: true
+    # 最大注入 token 数（防止超预算）
+    max_inject_tokens: 2000
+    # 检索返回的最大索引条目数
+    search_limit: 10
+    # 最小相关度评分阈值（0-1，低于此评分不注入）
+    min_relevance_score: 0.2
+
+  # ───── 容量管理 ─────
+  capacity:
+    # 最大记忆条目数
+    max_entries: 1000
+    # 最大存储字节数（默认 10MB）
+    max_storage_bytes: 10485760
+
+  # ───── 淘汰策略 ─────
+  eviction:
+    # 策略: "priority"（按综合评分淘汰低分条目） | "lru"（按最近访问淘汰）
+    policy: priority
+    # 淘汰前是否自动生成摘要压缩
+    auto_summarize: true
+    # 最低优先级阈值（低于此分数的条目可被淘汰）
+    min_priority: 5
+
+  # ───── 过期策略 ─────
+  expiration:
+    # 默认记忆 TTL（天数，0 表示永不过期）
+    # 注意：低优先级条目仍可按 low_priority_ttl_days 单独过期
+    # 单条记忆可通过 SaveOptions.Permanent=true 强制永久
+    default_ttl_days: 0
+    # 低优先级条目 TTL（天数，0 表示不单独过期）
+    low_priority_ttl_days: 30
+    # 后台清理间隔（小时，0 表示仅启动时清理）
+    cleanup_interval_hours: 24
+
+  # ───── 隐私过滤 ─────
+  privacy:
+    # 自动排除含以下关键词模式的记忆
+    auto_exclude_patterns: true
+    # 支持 <private> 标签过滤（标签内的内容不存储）
+    strip_private_tags: true
+
+# ═══════════════════════════════════════════════════════════════
 # 终端 UI
 # ═══════════════════════════════════════════════════════════════
 tui:

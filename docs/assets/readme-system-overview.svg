@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="720" viewBox="0 0 1240 720" role="img" aria-labelledby="title desc">
+  <title id="title">GoClaude 系统架构总览</title>
+  <desc id="desc">四层系统总览：从用户接口到数据基础设施的依赖方向，以及依赖倒置（DIP）的反向实现关系。</desc>
+  <defs>
+    <style>
+      .t-title{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#0f172a;letter-spacing:-.6px}
+      .t-sub{font:400 14px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-eyebrow{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:1.6px}
+      .t-l{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#64748b;letter-spacing:1.4px}
+      .t-h{font:600 14px "Helvetica Neue",Arial,sans-serif;fill:#0f172a}
+      .t-n{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-tag{font:600 10px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#94a3b8;letter-spacing:.5px}
+      .t-num{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#cbd5e1;letter-spacing:-.5px}
+      .lane-1{fill:#eff6ff;stroke:#bfdbfe;stroke-width:1}
+      .lane-2{fill:#f1f5f9;stroke:#e2e8f0;stroke-width:1}
+      .lane-3{fill:#0f172a;stroke:#0f172a;stroke-width:1}
+      .lane-4{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card-on-dark{fill:#1e293b;stroke:#334155;stroke-width:1}
+      .stroke{stroke:#cbd5e1;stroke-width:1.4;fill:none}
+      .accent{stroke:#2563eb;stroke-width:1.6;fill:none}
+      .dip{stroke:#6366f1;stroke-width:1.4;fill:none;stroke-dasharray:5 4}
+      .divider{stroke:#e2e8f0;stroke-width:1}
+    </style>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.05"/>
+    </filter>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowIndigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="720" fill="#f8fafc"/>
+
+  <!-- Header -->
+  <text x="60" y="52" class="t-eyebrow">SYSTEM OVERVIEW · 04</text>
+  <text x="60" y="86" class="t-title">系统架构总览</text>
+  <text x="60" y="110" class="t-sub">自上而下：接口层 → 应用编排 → 领域核心 → 基础设施实现，依赖倒置由 infra 实现 domain 端口</text>
+  <line x1="60" y1="130" x2="1180" y2="130" class="divider"/>
+
+  <!-- Lane 1: Interfaces -->
+  <g transform="translate(60 160)" filter="url(#cardShadow)">
+    <rect width="1080" height="110" rx="10" class="lane-1"/>
+    <text x="20" y="28" class="t-num">01</text>
+    <text x="60" y="32" class="t-l">INTERFACES · 用户入口</text>
+
+    <g transform="translate(180 50)">
+      <rect width="200" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">cmd/goclaude</text>
+      <text x="14" y="40" class="t-n">main · env · signal</text>
+    </g>
+    <g transform="translate(400 50)">
+      <rect width="200" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">Cobra CLI</text>
+      <text x="14" y="40" class="t-n">root · run · chat · doctor</text>
+    </g>
+    <g transform="translate(620 50)">
+      <rect width="200" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">REPL shell</text>
+      <text x="14" y="40" class="t-n">readline · slash · 权限弹窗</text>
+    </g>
+    <g transform="translate(840 50)">
+      <rect width="220" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">TUI renderer</text>
+      <text x="14" y="40" class="t-n">流式输出 · 进度对齐</text>
+    </g>
+  </g>
+  <path d="M600 270 V300" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Lane 2: Application -->
+  <g transform="translate(60 300)" filter="url(#cardShadow)">
+    <rect width="1080" height="110" rx="10" class="lane-2"/>
+    <text x="20" y="28" class="t-num">02</text>
+    <text x="60" y="32" class="t-l">APPLICATION · 用例编排</text>
+
+    <g transform="translate(160 50)">
+      <rect width="180" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">buildAppContext</text>
+      <text x="14" y="40" class="t-n">集中装配服务</text>
+    </g>
+    <g transform="translate(360 50)">
+      <rect width="160" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">SkillService</text>
+      <text x="14" y="40" class="t-n">加载 · 条件激活</text>
+    </g>
+    <g transform="translate(540 50)">
+      <rect width="160" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">AgentService</text>
+      <text x="14" y="40" class="t-n">执行工厂</text>
+    </g>
+    <g transform="translate(720 50)">
+      <rect width="180" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">MCP / TeamService</text>
+      <text x="14" y="40" class="t-n">连接 · 路由</text>
+    </g>
+    <g transform="translate(920 50)">
+      <rect width="160" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">Memory · Workflow</text>
+      <text x="14" y="40" class="t-n">持久化 · 编排</text>
+    </g>
+  </g>
+  <path d="M600 410 V440" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Lane 3: Domain (dark) -->
+  <g transform="translate(60 440)" filter="url(#cardShadow)">
+    <rect width="1080" height="110" rx="10" class="lane-3"/>
+    <text x="20" y="28" font-family="Helvetica Neue,Arial,sans-serif" font-weight="700" font-size="30" fill="#334155">03</text>
+    <text x="60" y="32" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="11" fill="#94a3b8" letter-spacing="1.4">DOMAIN · 领域核心</text>
+
+    <g transform="translate(160 50)">
+      <rect width="180" height="50" rx="6" class="card-on-dark"/>
+      <text x="14" y="22" font-weight="600" font-size="14" font-family="Helvetica Neue,Arial,sans-serif" fill="#ffffff">Query Engine</text>
+      <text x="14" y="40" font-weight="400" font-size="12" font-family="Helvetica Neue,Arial,sans-serif" fill="#94a3b8">消息循环 · 压缩</text>
+    </g>
+    <g transform="translate(360 50)">
+      <rect width="160" height="50" rx="6" class="card-on-dark"/>
+      <text x="14" y="22" font-weight="600" font-size="14" font-family="Helvetica Neue,Arial,sans-serif" fill="#ffffff">Tool Registry</text>
+      <text x="14" y="40" font-weight="400" font-size="12" font-family="Helvetica Neue,Arial,sans-serif" fill="#94a3b8">并发 · 权限</text>
+    </g>
+    <g transform="translate(540 50)">
+      <rect width="180" height="50" rx="6" class="card-on-dark"/>
+      <text x="14" y="22" font-weight="600" font-size="14" font-family="Helvetica Neue,Arial,sans-serif" fill="#ffffff">Agent / Team / Skill</text>
+      <text x="14" y="40" font-weight="400" font-size="12" font-family="Helvetica Neue,Arial,sans-serif" fill="#94a3b8">协作模型</text>
+    </g>
+    <g transform="translate(740 50)">
+      <rect width="180" height="50" rx="6" class="card-on-dark"/>
+      <text x="14" y="22" font-weight="600" font-size="14" font-family="Helvetica Neue,Arial,sans-serif" fill="#ffffff">MCP / Hook / Memory</text>
+      <text x="14" y="40" font-weight="400" font-size="12" font-family="Helvetica Neue,Arial,sans-serif" fill="#94a3b8">扩展模型</text>
+    </g>
+    <g transform="translate(940 50)">
+      <rect width="140" height="50" rx="6" fill="#1e293b" stroke="#2563eb" stroke-width="1.4"/>
+      <text x="14" y="22" font-weight="600" font-size="14" font-family="Helvetica Neue,Arial,sans-serif" fill="#ffffff">AIProvider</text>
+      <text x="14" y="40" font-weight="400" font-size="11" font-family="SFMono-Regular,ui-monospace,Menlo,monospace" fill="#60a5fa">port</text>
+    </g>
+  </g>
+  <path d="M600 550 V580" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Lane 4: Infrastructure -->
+  <g transform="translate(60 580)" filter="url(#cardShadow)">
+    <rect width="1080" height="80" rx="10" class="lane-4"/>
+    <text x="20" y="28" class="t-num">04</text>
+    <text x="60" y="32" class="t-l">INFRASTRUCTURE · 基础设施实现</text>
+
+    <g transform="translate(160 50)">
+      <text class="t-h">Provider API</text>
+      <text x="0" y="16" class="t-n">anthropic · deepseek</text>
+    </g>
+    <g transform="translate(340 50)">
+      <text class="t-h">MCP transports</text>
+      <text x="0" y="16" class="t-n">stdio · HTTP · SSE · WS</text>
+    </g>
+    <g transform="translate(540 50)">
+      <text class="t-h">本机资源</text>
+      <text x="0" y="16" class="t-n">filesystem · shell · sandbox</text>
+    </g>
+    <g transform="translate(740 50)">
+      <text class="t-h">持久化</text>
+      <text x="0" y="16" class="t-n">SQLite · loaders</text>
+    </g>
+    <g transform="translate(900 50)">
+      <text class="t-h">观测</text>
+      <text x="0" y="16" class="t-n">slog · cost · metrics</text>
+    </g>
+  </g>
+
+  <!-- DIP arrow on right side -->
+  <path d="M1080 470 C1180 470 1180 600 1140 615" class="dip" marker-end="url(#arrowIndigo)"/>
+  <g transform="translate(1090 510)">
+    <rect width="120" height="50" rx="6" fill="#ffffff" stroke="#c7d2fe" stroke-width="1"/>
+    <text x="12" y="20" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="11" fill="#4f46e5" letter-spacing="1.4">DIP</text>
+    <text x="12" y="40" font-family="SFMono-Regular,ui-monospace,Menlo,monospace" font-size="10" fill="#6366f1">infra → domain port</text>
+  </g>
+
+  <!-- Bottom legend -->
+  <g transform="translate(60 690)">
+    <line x1="0" y1="5" x2="40" y2="5" class="stroke" marker-end="url(#arrowGray)"/>
+    <text x="50" y="9" class="t-n">向下依赖（调用）</text>
+    <line x1="200" y1="5" x2="240" y2="5" class="dip" marker-end="url(#arrowIndigo)"/>
+    <text x="250" y="9" class="t-n">向上实现（依赖倒置）</text>
+  </g>
+</svg>

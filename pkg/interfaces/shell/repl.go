@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/anthropics/goclaude/pkg/application"
+	"github.com/anthropics/goclaude/pkg/domain/hook"
 	"github.com/anthropics/goclaude/pkg/domain/memory"
 	"github.com/anthropics/goclaude/pkg/domain/query"
 )
@@ -63,6 +64,12 @@ type REPL struct {
 	Model    string
 	Provider string
 	WorkDir  string
+
+	// HookReg 生命周期 hook 注册表（长期记忆等注入）
+	// nil 时表示无 hook，所有事件触发为 no-op
+	HookReg *hook.Registry
+	// SessionID 当前 REPL 会话 ID（由 cli 层分配）
+	SessionID string
 
 	// Verbose 控制是否在每轮回复后打印 turns/stop/elapsed/tokens 状态行
 	Verbose bool
@@ -241,6 +248,19 @@ func (r *REPL) Run(ctx context.Context) error {
 		if r.OnExit != nil {
 			r.OnExit()
 		}
+		// SessionEnd: 保存当前会话摘要到长期记忆
+		if r.HookReg != nil {
+			r.mu.Lock()
+			turnCount := len(r.messages) / 2 // user+assistant 对
+			r.mu.Unlock()
+			r.HookReg.Run(context.Background(), hook.EventSessionEnd, &hook.Context{
+				SessionID: r.SessionID,
+				Extra: map[string]interface{}{
+					"summary":  fmt.Sprintf("REPL session ended with %d exchanges.", turnCount),
+					"turn_count": turnCount,
+				},
+			})
+		}
 	}()
 
 	// 把 Shift+Tab 接到权限模式切换
@@ -270,6 +290,21 @@ func (r *REPL) Run(ctx context.Context) error {
 	}
 
 	r.printBanner()
+
+	// SessionStart 事件：检索长期记忆，注入跨会话上下文
+	if r.HookReg != nil {
+		res := r.HookReg.Run(ctx, hook.EventSessionStart, &hook.Context{
+			SessionID: r.SessionID,
+			Extra:     map[string]interface{}{"prompt": r.WorkDir},
+		})
+		if res != nil && len(res.AdditionalContexts) > 0 {
+			r.mu.Lock()
+			for _, ctxText := range res.AdditionalContexts {
+				r.messages = append(r.messages, query.NewTextMessage(query.RoleUser, ctxText))
+			}
+			r.mu.Unlock()
+		}
+	}
 
 	// 安装信号处理
 	sigCh := make(chan os.Signal, 4)
@@ -411,6 +446,14 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 		}
 	}
 
+	// UserPromptSubmit: 记录用户查询到长期记忆
+	if r.HookReg != nil {
+		r.HookReg.Run(parent, hook.EventUserPromptSubmit, &hook.Context{
+			SessionID: r.SessionID,
+			Extra:     map[string]interface{}{"prompt": userInput},
+		})
+	}
+
 	r.mu.Lock()
 	r.messages = append(r.messages, query.NewTextMessage(query.RoleUser, userInput))
 	userMsgIdx := len(r.messages) - 1
@@ -545,9 +588,31 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 					}
 				}
 
-			case query.ContentTypeToolResult:
-				flushFmt()
-				// 折叠工具
+		case query.ContentTypeToolResult:
+			flushFmt()
+
+			// PostToolUse: 自动捕获工具执行结果到长期记忆
+			if r.HookReg != nil {
+				toolName := ""
+				extra := map[string]interface{}{"result": b.Text}
+				if m, ok := toolUseIDToMeta[b.ToolUseID]; ok {
+					toolName = m.name
+					if m.partial != "" {
+						var input map[string]interface{}
+						if json.Unmarshal([]byte(m.partial), &input) == nil {
+							extra["tool_input"] = input
+						}
+					}
+				}
+				extra["is_error"] = b.IsError
+				r.HookReg.Run(ctx, hook.EventPostToolUse, &hook.Context{
+					SessionID: r.SessionID,
+					ToolName:  toolName,
+					Extra:     extra,
+				})
+			}
+
+			// 折叠工具
 				if m, ok := toolUseIDToMeta[b.ToolUseID]; ok && m.collapsed {
 					if b.IsError {
 						r.writeOut("      " + r.colorize("✗ "+m.name, colorError) + "\r\n")

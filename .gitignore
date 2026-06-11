@@ -24,4 +24,5 @@ vendor/
 
 # 运行时数据
 .claude/
+.goclaude/workspaces
 *.log

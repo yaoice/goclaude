@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anthropics/goclaude/pkg/application"
+	hooksapp "github.com/anthropics/goclaude/pkg/application/hooks"
+	memoryappsvc "github.com/anthropics/goclaude/pkg/application/memory"
 	"github.com/anthropics/goclaude/pkg/domain/hook"
 	"github.com/anthropics/goclaude/pkg/domain/query"
 	"github.com/anthropics/goclaude/pkg/domain/tool"
@@ -19,8 +21,10 @@ import (
 	"github.com/anthropics/goclaude/pkg/infrastructure/compact"
 	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
 	minfra "github.com/anthropics/goclaude/pkg/infrastructure/memory"
+	sqlitemem "github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
 	"github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
 	"github.com/anthropics/goclaude/pkg/infrastructure/todo"
+	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
 	"github.com/anthropics/goclaude/pkg/infrastructure/worktree"
 	"github.com/anthropics/goclaude/pkg/tools"
 )
@@ -42,6 +46,14 @@ func sanitizeProjectKey(cwd string) string {
 	return s
 }
 
+// resolvePath 解析路径（支持 ~/ 缩写和相对路径）
+func resolvePath(path string, homeDir string) string {
+	if strings.HasPrefix(path, "~/") {
+		return homeDir + path[1:]
+	}
+	return path
+}
+
 var (
 	runProvider     string
 	runModel        string
@@ -49,6 +61,7 @@ var (
 	runNoMCP        bool
 	runNoCompact    bool
 	runMaxContextKB int
+	runWorkflow     string
 )
 
 // newRunCmd 创建 `goclaude run` 子命令
@@ -70,6 +83,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&runNoMCP, "no-mcp", false, "禁用 MCP 自动连接")
 	cmd.Flags().BoolVar(&runNoCompact, "no-compact", false, "禁用上下文自动压缩")
 	cmd.Flags().IntVar(&runMaxContextKB, "max-context-kb", 200, "上下文 token 预算（千）")
+	cmd.Flags().StringVar(&runWorkflow, "workflow", "", "执行预定义的 workflow（按 name 匹配 .json/.yaml 文件）")
 	return cmd
 }
 
@@ -133,6 +147,46 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer wired.Close()
+
+	// === --workflow flag 处理：执行预定义 workflow 而不是普通 query ===
+	if runWorkflow != "" {
+		homeDir, _ := os.UserHomeDir()
+		if homeDir == "" {
+			homeDir = "/home/user"
+		}
+		wfLoader := workflowinfra.NewLoader(homeDir)
+		defaults := application.WorkflowDefaults{
+			ParentSessionID: fmt.Sprintf("run-wf-%d", os.Getpid()),
+			WorkingDir:      cwd,
+			ProjectRoot:     cwd,
+			DefaultModel:    modelName,
+			WorkspaceRoot:   workspaceDir,
+		}
+		budget := query.NewTokenBudget(runMaxContextKB*1000, 0.8)
+		factory := application.NewDefaultAgentEngineFactory(wired.Registry, provider, budget, logger)
+		wfSvc := application.NewWorkflowService(wired.AgentSvc, factory, defaults, logger)
+		wfAdapter := newWorkflowAdapter(
+			wfSvc,
+			nil, // planSvc not needed when loading predefined workflow
+			wfLoader,
+			wired.AgentSvc,
+			factory,
+			defaults,
+			cwd,
+			func() string { return workspaceDir },
+		)
+		result, err := wfAdapter.Run(ctx, runWorkflow)
+		if err != nil {
+			return fmt.Errorf("workflow %q execution failed: %w", runWorkflow, err)
+		}
+		fmt.Fprintf(os.Stderr, "\n=== Workflow Result: %s ===\n", result.WorkflowName)
+		fmt.Fprintf(os.Stderr, "Status: %s | Nodes: %d/%d completed | Failed: %d | Elapsed: %s\n",
+			result.Status, result.Completed, result.TotalNodes, result.Failed, result.Elapsed)
+		if result.Output != "" {
+			fmt.Fprintln(os.Stderr, result.Output)
+		}
+		return nil
+	}
 
 	// 3. 构造 Engine（主 agent 的）
 	executor := tool.NewExecutor(wired.Registry, 10, logger)
@@ -295,21 +349,28 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 
 // AppContext 主 agent 共享的运行时上下文（聚合 Skill/MCP/Agent/Team/Memory 服务）
 type AppContext struct {
-	Registry     *tool.Registry
-	SkillSvc     *application.SkillService
-	MCPSvc       *application.MCPService
-	AgentSvc     *application.AgentService
-	TeamSvc      *application.TeamService
-	HookReg      *hook.Registry
-	MCPToolCount int
-	MemorySvc    *application.MemoryService // auto-memory entrypoint 管理
-	AutoMemDir   string                      // auto-memory 目录路径
+	Registry        *tool.Registry
+	SkillSvc        *application.SkillService
+	MCPSvc          *application.MCPService
+	AgentSvc        *application.AgentService
+	TeamSvc         *application.TeamService
+	HookReg         *hook.Registry
+	MCPToolCount    int
+	MemorySvc       *application.MemoryService       // auto-memory entrypoint 管理
+	AutoMemDir      string                            // auto-memory 目录路径
+	LongTermMemorySvc *memoryappsvc.LongTermMemoryService // 长期记忆服务
+	MemoryLifecycleHooks *hooksapp.MemoryLifecycleHooks    // 长期记忆生命周期钩子
 }
 
-// Close 释放 MCP 连接
+// Close 释放 MCP 连接 + 长期记忆服务
 func (c *AppContext) Close() {
 	if c.MCPSvc != nil {
 		c.MCPSvc.Shutdown()
+	}
+	if c.LongTermMemorySvc != nil {
+		if err := c.LongTermMemorySvc.Close(); err != nil {
+			slog.Warn("关闭长期记忆服务失败", "error", err)
+		}
 	}
 }
 
@@ -360,6 +421,36 @@ func buildAppContext(ctx context.Context, cwd, model string, logger *slog.Logger
 	memFS := minfra.OSFileSystem{}
 	memRepo := minfra.NewFileRepository(memFS)
 	app.MemorySvc = application.NewMemoryServiceWithDir(memRepo, app.AutoMemDir)
+
+	// 长期记忆（Long-Term Memory）初始化
+	appcfg := AppConfig()
+	if appcfg.LongTermMemory.Enabled {
+		dbPath := resolvePath(appcfg.LongTermMemory.DBPath, homeDir)
+
+		sqliteRepo, err := sqlitemem.NewRepository(dbPath)
+		if err != nil {
+			logger.Warn("初始化长期记忆数据库失败，已禁用", "path", dbPath, "error", err)
+		} else {
+			app.LongTermMemorySvc = memoryappsvc.NewLongTermMemoryService(
+				sqliteRepo, appcfg.LongTermMemory, logger,
+			)
+			app.LongTermMemorySvc.Start(ctx)
+
+			// 创建并注册生命周期钩子
+			app.MemoryLifecycleHooks = hooksapp.NewMemoryLifecycleHooks(
+				app.LongTermMemorySvc,
+				appcfg.LongTermMemory,
+				logger,
+				cwd, // project root
+			)
+			app.MemoryLifecycleHooks.RegisterAll(app.HookReg)
+
+			logger.Info("长期记忆已启用",
+				"db", dbPath,
+				"max_entries", appcfg.LongTermMemory.Capacity.MaxEntries,
+			)
+		}
+	}
 
 	app.Registry = tool.NewRegistry()
 	tools.RegisterAll(app.Registry, cwd, toSandboxConfig(AppConfig().Sandbox))
@@ -439,6 +530,16 @@ func buildMainSystemPrompt(app *AppContext, teamsEnabled bool, cfg *appconfig.Co
 	// === 通用行为准则（来自 YAML 配置，定义在 configs/default.yaml） ===
 	if cfg.SystemPrompt.Guidelines != "" {
 		sb.WriteString(cfg.SystemPrompt.Guidelines + "\n\n")
+	}
+
+	// === 长期记忆（Long-Term Memory — SQLite+FTS5 跨会话） ===
+	if app.LongTermMemorySvc != nil && app.LongTermMemorySvc.IsEnabled() {
+		sb.WriteString("LONG-TERM MEMORY: You have access to a persistent long-term memory system.\n")
+		sb.WriteString("At the start of each session, relevant memories from previous sessions will be injected into the conversation as a `<long-term-memory>` block in the first user message.\n")
+		sb.WriteString("These memories contain project context, tool observations, and session summaries from past conversations about this project.\n")
+		sb.WriteString("- If the user asks \"what do you remember\" or \"long-term memory\", check the beginning of the conversation for the `<long-term-memory>` block.\n")
+		sb.WriteString("- If no `<long-term-memory>` block appears, this is the first session and no previous memories exist yet.\n")
+		sb.WriteString("- You can reference these memories directly when responding — they are reliable project-level context.\n\n")
 	}
 
 	// === 持久化记忆上下文（MEMORY.md 内容自动注入） ===
