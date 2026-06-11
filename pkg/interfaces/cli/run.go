@@ -24,6 +24,7 @@ import (
 	sqlitemem "github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
 	"github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
 	"github.com/anthropics/goclaude/pkg/infrastructure/todo"
+	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
 	"github.com/anthropics/goclaude/pkg/infrastructure/worktree"
 	"github.com/anthropics/goclaude/pkg/tools"
 )
@@ -60,6 +61,7 @@ var (
 	runNoMCP        bool
 	runNoCompact    bool
 	runMaxContextKB int
+	runWorkflow     string
 )
 
 // newRunCmd 创建 `goclaude run` 子命令
@@ -81,6 +83,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&runNoMCP, "no-mcp", false, "禁用 MCP 自动连接")
 	cmd.Flags().BoolVar(&runNoCompact, "no-compact", false, "禁用上下文自动压缩")
 	cmd.Flags().IntVar(&runMaxContextKB, "max-context-kb", 200, "上下文 token 预算（千）")
+	cmd.Flags().StringVar(&runWorkflow, "workflow", "", "执行预定义的 workflow（按 name 匹配 .json/.yaml 文件）")
 	return cmd
 }
 
@@ -144,6 +147,46 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer wired.Close()
+
+	// === --workflow flag 处理：执行预定义 workflow 而不是普通 query ===
+	if runWorkflow != "" {
+		homeDir, _ := os.UserHomeDir()
+		if homeDir == "" {
+			homeDir = "/home/user"
+		}
+		wfLoader := workflowinfra.NewLoader(homeDir)
+		defaults := application.WorkflowDefaults{
+			ParentSessionID: fmt.Sprintf("run-wf-%d", os.Getpid()),
+			WorkingDir:      cwd,
+			ProjectRoot:     cwd,
+			DefaultModel:    modelName,
+			WorkspaceRoot:   workspaceDir,
+		}
+		budget := query.NewTokenBudget(runMaxContextKB*1000, 0.8)
+		factory := application.NewDefaultAgentEngineFactory(wired.Registry, provider, budget, logger)
+		wfSvc := application.NewWorkflowService(wired.AgentSvc, factory, defaults, logger)
+		wfAdapter := newWorkflowAdapter(
+			wfSvc,
+			nil, // planSvc not needed when loading predefined workflow
+			wfLoader,
+			wired.AgentSvc,
+			factory,
+			defaults,
+			cwd,
+			func() string { return workspaceDir },
+		)
+		result, err := wfAdapter.Run(ctx, runWorkflow)
+		if err != nil {
+			return fmt.Errorf("workflow %q execution failed: %w", runWorkflow, err)
+		}
+		fmt.Fprintf(os.Stderr, "\n=== Workflow Result: %s ===\n", result.WorkflowName)
+		fmt.Fprintf(os.Stderr, "Status: %s | Nodes: %d/%d completed | Failed: %d | Elapsed: %s\n",
+			result.Status, result.Completed, result.TotalNodes, result.Failed, result.Elapsed)
+		if result.Output != "" {
+			fmt.Fprintln(os.Stderr, result.Output)
+		}
+		return nil
+	}
 
 	// 3. 构造 Engine（主 agent 的）
 	executor := tool.NewExecutor(wired.Registry, 10, logger)

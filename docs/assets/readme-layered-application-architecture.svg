@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="980" viewBox="0 0 1240 980" role="img" aria-labelledby="title desc">
+  <title id="title">GoClaude 完整应用分层架构</title>
+  <desc id="desc">基于实际代码目录扫描的五层架构：展示 / 业务 / 领域核心 / 工具适配 / 数据基础设施，体现自上而下依赖与依赖倒置（DIP）。</desc>
+  <defs>
+    <style>
+      .t-title{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#0f172a;letter-spacing:-.6px}
+      .t-sub{font:400 14px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-eyebrow{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:1.6px}
+      .t-l{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#475569;letter-spacing:1.4px}
+      .t-l-light{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#cbd5e1;letter-spacing:1.4px}
+      .t-num{font:700 32px "Helvetica Neue",Arial,sans-serif;fill:#cbd5e1;letter-spacing:-.5px}
+      .t-num-dark{font:700 32px "Helvetica Neue",Arial,sans-serif;fill:#334155;letter-spacing:-.5px}
+      .t-h{font:600 14px "Helvetica Neue",Arial,sans-serif;fill:#0f172a}
+      .t-h-light{font:600 14px "Helvetica Neue",Arial,sans-serif;fill:#ffffff}
+      .t-n{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-n-light{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#cbd5e1}
+      .t-code{font:500 11px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#2563eb;letter-spacing:.3px}
+      .t-code-light{font:500 11px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#60a5fa;letter-spacing:.3px}
+      .lane-1{fill:#eff6ff;stroke:#bfdbfe;stroke-width:1}
+      .lane-2{fill:#f5f3ff;stroke:#ddd6fe;stroke-width:1}
+      .lane-3{fill:#0f172a;stroke:#0f172a;stroke-width:1}
+      .lane-4{fill:#fefce8;stroke:#fde68a;stroke-width:1}
+      .lane-5{fill:#f0f9ff;stroke:#bae6fd;stroke-width:1}
+      .card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card-on-dark{fill:#1e293b;stroke:#334155;stroke-width:1}
+      .stroke{stroke:#cbd5e1;stroke-width:1.4;fill:none}
+      .accent{stroke:#2563eb;stroke-width:1.6;fill:none}
+      .dip{stroke:#6366f1;stroke-width:1.4;fill:none;stroke-dasharray:5 4}
+      .divider{stroke:#e2e8f0;stroke-width:1}
+    </style>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.05"/>
+    </filter>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowIndigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="980" fill="#f8fafc"/>
+
+  <!-- Header -->
+  <text x="60" y="52" class="t-eyebrow">LAYERED ARCHITECTURE · 07</text>
+  <text x="60" y="86" class="t-title">完整应用分层架构</text>
+  <text x="60" y="110" class="t-sub">基于代码目录扫描：展示入口 → 业务编排 → 领域核心 → 工具适配 → 数据基础设施，体现依赖倒置</text>
+  <line x1="60" y1="130" x2="1180" y2="130" class="divider"/>
+
+  <!-- Layer 1: Presentation -->
+  <g transform="translate(60 160)" filter="url(#cardShadow)">
+    <rect width="1080" height="120" rx="10" class="lane-1"/>
+    <text x="20" y="36" class="t-num">01</text>
+    <text x="60" y="40" class="t-l">PRESENTATION · INTERFACES</text>
+
+    <g transform="translate(220 60)">
+      <rect width="180" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">cmd/goclaude</text>
+      <text x="14" y="40" class="t-code">main · env</text>
+    </g>
+    <g transform="translate(420 60)">
+      <rect width="180" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">CLI Cobra</text>
+      <text x="14" y="40" class="t-code">root · run · chat</text>
+    </g>
+    <g transform="translate(620 60)">
+      <rect width="180" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">REPL shell</text>
+      <text x="14" y="40" class="t-code">slash · 权限</text>
+    </g>
+    <g transform="translate(820 60)">
+      <rect width="240" height="50" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">TUI renderer</text>
+      <text x="14" y="40" class="t-code">流式输出</text>
+    </g>
+  </g>
+  <path d="M600 280 V310" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Layer 2: Business -->
+  <g transform="translate(60 310)" filter="url(#cardShadow)">
+    <rect width="1080" height="140" rx="10" class="lane-2"/>
+    <text x="20" y="36" class="t-num">02</text>
+    <text x="60" y="40" class="t-l">BUSINESS · APPLICATION</text>
+
+    <g transform="translate(180 70)">
+      <rect width="200" height="60" rx="6" class="card"/>
+      <text x="14" y="24" class="t-h">buildAppContext</text>
+      <text x="14" y="42" class="t-n">运行时装配</text>
+      <text x="14" y="56" class="t-code">root_repl.go</text>
+    </g>
+    <g transform="translate(400 70)">
+      <rect width="200" height="60" rx="6" class="card"/>
+      <text x="14" y="24" class="t-h">Skill / Agent</text>
+      <text x="14" y="42" class="t-n">服务工厂</text>
+      <text x="14" y="56" class="t-code">application/service</text>
+    </g>
+    <g transform="translate(620 70)">
+      <rect width="200" height="60" rx="6" class="card"/>
+      <text x="14" y="24" class="t-h">MCP / Team</text>
+      <text x="14" y="42" class="t-n">连接 · 路由</text>
+      <text x="14" y="56" class="t-code">service + engine</text>
+    </g>
+    <g transform="translate(840 70)">
+      <rect width="220" height="60" rx="6" class="card"/>
+      <text x="14" y="24" class="t-h">Workflow / PlanAgent</text>
+      <text x="14" y="42" class="t-n">DAG 编排</text>
+    </g>
+  </g>
+  <path d="M600 450 V480" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Layer 3: Domain (dark) -->
+  <g transform="translate(60 480)" filter="url(#cardShadow)">
+    <rect width="1080" height="160" rx="10" class="lane-3"/>
+    <text x="20" y="36" class="t-num-dark">03</text>
+    <text x="60" y="40" class="t-l-light">DOMAIN · CORE</text>
+
+    <g transform="translate(140 70)">
+      <rect width="220" height="80" rx="6" class="card-on-dark"/>
+      <text x="14" y="24" class="t-h-light">Query Engine</text>
+      <text x="14" y="44" class="t-n-light">消息循环 · 压缩</text>
+      <text x="14" y="64" class="t-code-light">domain/query</text>
+    </g>
+    <g transform="translate(380 70)">
+      <rect width="220" height="80" rx="6" class="card-on-dark"/>
+      <text x="14" y="24" class="t-h-light">Tool Registry / Executor</text>
+      <text x="14" y="44" class="t-n-light">权限 · 调度</text>
+      <text x="14" y="64" class="t-code-light">domain/tool</text>
+    </g>
+    <g transform="translate(620 70)">
+      <rect width="220" height="80" rx="6" class="card-on-dark"/>
+      <text x="14" y="24" class="t-h-light">协作模型</text>
+      <text x="14" y="44" class="t-n-light">agent · team · task</text>
+      <text x="14" y="64" class="t-code-light">domain/*</text>
+    </g>
+    <g transform="translate(860 70)">
+      <rect width="200" height="80" rx="6" fill="#1e293b" stroke="#2563eb" stroke-width="1.4"/>
+      <text x="14" y="24" class="t-h-light">端口（DIP）</text>
+      <text x="14" y="44" class="t-n-light">AIProvider</text>
+      <text x="14" y="62" class="t-n-light">Compactor</text>
+    </g>
+  </g>
+  <path d="M600 640 V670" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Layer 4: Tools adapter -->
+  <g transform="translate(60 670)" filter="url(#cardShadow)">
+    <rect width="1080" height="100" rx="10" class="lane-4"/>
+    <text x="20" y="36" class="t-num">04</text>
+    <text x="60" y="40" class="t-l">TOOL · ADAPTER</text>
+
+    <g transform="translate(140 60)">
+      <rect width="920" height="36" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">pkg/tools · 统一实现 domain/tool.Tool</text>
+      <text x="370" y="22" class="t-n">file · bash · glob · grep · ask_user · todo · web · skill · mcp · agent · team</text>
+    </g>
+  </g>
+  <path d="M600 770 V800" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Layer 5: Infrastructure -->
+  <g transform="translate(60 800)" filter="url(#cardShadow)">
+    <rect width="1080" height="140" rx="10" class="lane-5"/>
+    <text x="20" y="36" class="t-num">05</text>
+    <text x="60" y="40" class="t-l">DATA · INFRASTRUCTURE</text>
+
+    <g transform="translate(140 70)">
+      <rect width="200" height="60" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">Provider API</text>
+      <text x="14" y="40" class="t-n">anthropic · deepseek</text>
+    </g>
+    <g transform="translate(360 70)">
+      <rect width="200" height="60" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">MCP 传输</text>
+      <text x="14" y="40" class="t-n">stdio · HTTP · SSE · WS</text>
+    </g>
+    <g transform="translate(580 70)">
+      <rect width="200" height="60" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">本机资源</text>
+      <text x="14" y="40" class="t-n">filesystem · shell · git</text>
+    </g>
+    <g transform="translate(800 70)">
+      <rect width="260" height="60" rx="6" class="card"/>
+      <text x="14" y="22" class="t-h">持久化 / 加载器</text>
+      <text x="14" y="40" class="t-n">SQLite · team store · loaders</text>
+    </g>
+  </g>
+
+  <!-- DIP arrow on the right -->
+  <path d="M1140 560 C1190 600 1190 800 1140 870" class="dip" marker-end="url(#arrowIndigo)"/>
+  <g transform="translate(1110 700)">
+    <rect width="120" height="60" rx="6" fill="#ffffff" stroke="#c7d2fe" stroke-width="1"/>
+    <text x="12" y="22" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="11" fill="#4f46e5" letter-spacing="1.4">DIP</text>
+    <text x="12" y="42" font-family="SFMono-Regular,ui-monospace,Menlo,monospace" font-size="10" fill="#6366f1">infra → domain</text>
+    <text x="12" y="55" font-family="SFMono-Regular,ui-monospace,Menlo,monospace" font-size="10" fill="#6366f1">port</text>
+  </g>
+
+  <!-- Bottom legend -->
+  <g transform="translate(60 960)">
+    <line x1="0" y1="5" x2="40" y2="5" class="stroke" marker-end="url(#arrowGray)"/>
+    <text x="50" y="9" class="t-n">向下依赖</text>
+    <line x1="140" y1="5" x2="180" y2="5" class="dip" marker-end="url(#arrowIndigo)"/>
+    <text x="190" y="9" class="t-n">DIP · 反向实现</text>
+  </g>
+</svg>

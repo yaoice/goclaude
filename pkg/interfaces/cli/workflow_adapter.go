@@ -331,6 +331,13 @@ func buildSummaryOutput(result *wf.WorkflowResult) string {
 	if result == nil {
 		return ""
 	}
+	// 计算最长的 NodeID，用于对齐输出
+	maxLen := 0
+	for _, nr := range result.NodeResults {
+		if len(nr.NodeID) > maxLen {
+			maxLen = len(nr.NodeID)
+		}
+	}
 	var out string
 	for _, nr := range result.NodeResults {
 		icon := "✔"
@@ -339,7 +346,8 @@ func buildSummaryOutput(result *wf.WorkflowResult) string {
 		} else if nr.Status == wf.NodeStatusSkipped {
 			icon = "↷"
 		}
-		out += fmt.Sprintf("%s %s: %s (%s)\n", icon, nr.NodeID, nr.Status, nr.Elapsed.Round(time.Millisecond))
+		elapsed := nr.Elapsed.Round(time.Millisecond).String()
+		out += fmt.Sprintf("  %s %-*s  %s  (%s)\n", icon, maxLen, nr.NodeID, nr.Status, elapsed)
 	}
 	return out
 }

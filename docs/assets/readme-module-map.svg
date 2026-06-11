@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="700" viewBox="0 0 1240 700" role="img" aria-labelledby="title desc">
+  <title id="title">GoClaude 模块关系图</title>
+  <desc id="desc">按代码目录划分的四层加一个工具适配层；列方向为依赖方向，向下传递依赖，向上提供实现。</desc>
+  <defs>
+    <style>
+      .t-title{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#0f172a;letter-spacing:-.6px}
+      .t-sub{font:400 14px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-eyebrow{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:1.6px}
+      .t-l{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#475569;letter-spacing:1.4px}
+      .t-h{font:600 14px "Helvetica Neue",Arial,sans-serif;fill:#0f172a}
+      .t-n{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-code{font:500 11px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#2563eb;letter-spacing:.3px}
+      .col-bg-1{fill:#eff6ff;stroke:none}
+      .col-bg-2{fill:#f5f3ff;stroke:none}
+      .col-bg-3{fill:#0f172a;stroke:none}
+      .col-bg-4{fill:#f0f9ff;stroke:none}
+      .col-bg-tools{fill:#fefce8;stroke:none}
+      .card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card-on-dark{fill:#1e293b;stroke:#334155;stroke-width:1}
+      .row{stroke:#cbd5e1;stroke-width:1;fill:none}
+      .divider{stroke:#e2e8f0;stroke-width:1}
+      .stroke{stroke:#cbd5e1;stroke-width:1.4;fill:none}
+    </style>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="700" fill="#f8fafc"/>
+
+  <!-- Header -->
+  <text x="60" y="52" class="t-eyebrow">MODULE MAP · 06</text>
+  <text x="60" y="86" class="t-title">模块关系图</text>
+  <text x="60" y="110" class="t-sub">四列按代码目录划分；箭头表示依赖方向：向下传递依赖，向上提供实现</text>
+  <line x1="60" y1="130" x2="1180" y2="130" class="divider"/>
+
+  <!-- Column backgrounds -->
+  <rect x="60" y="160" width="270" height="500" rx="10" class="col-bg-1" opacity="0.6"/>
+  <rect x="340" y="160" width="270" height="500" rx="10" class="col-bg-2" opacity="0.6"/>
+  <rect x="620" y="160" width="270" height="500" rx="10" class="col-bg-3" opacity="0.95"/>
+  <rect x="900" y="160" width="280" height="500" rx="10" class="col-bg-4" opacity="0.6"/>
+
+  <!-- Column headers -->
+  <g transform="translate(80 184)">
+    <circle cx="6" cy="-4" r="4" fill="#2563eb"/>
+    <text x="20" y="0" class="t-l">INTERFACES</text>
+  </g>
+  <g transform="translate(360 184)">
+    <circle cx="6" cy="-4" r="4" fill="#7c3aed"/>
+    <text x="20" y="0" class="t-l">APPLICATION</text>
+  </g>
+  <g transform="translate(640 184)">
+    <circle cx="6" cy="-4" r="4" fill="#94a3b8"/>
+    <text x="20" y="0" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="11" fill="#cbd5e1" letter-spacing="1.4">DOMAIN</text>
+  </g>
+  <g transform="translate(920 184)">
+    <circle cx="6" cy="-4" r="4" fill="#0891b2"/>
+    <text x="20" y="0" class="t-l">INFRASTRUCTURE</text>
+  </g>
+
+  <!-- Tools adapter floating header -->
+  <g transform="translate(80 472)">
+    <rect x="270" y="-8" width="80" height="20" rx="10" fill="#fde68a" stroke="#fbbf24" stroke-width="1"/>
+    <text x="278" y="6" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="10" fill="#92400e" letter-spacing="1.2">TOOLS · 适配层</text>
+  </g>
+
+  <!-- Column 1: Interfaces -->
+  <g transform="translate(80 210)" filter="url(#cardShadow)">
+    <rect width="230" height="100" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">cmd/goclaude</text>
+    <text x="16" y="48" class="t-n">env · signal · cobra</text>
+    <text x="16" y="80" class="t-code">main.go</text>
+  </g>
+  <g transform="translate(80 330)" filter="url(#cardShadow)">
+    <rect width="230" height="100" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">interfaces/cli</text>
+    <text x="16" y="48" class="t-n">root · run · chat</text>
+    <text x="16" y="80" class="t-code">root.go · run.go</text>
+  </g>
+  <g transform="translate(80 450)" filter="url(#cardShadow)">
+    <rect width="230" height="100" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">interfaces/shell</text>
+    <text x="16" y="48" class="t-n">REPL · slash · 权限</text>
+    <text x="16" y="80" class="t-code">repl.go</text>
+  </g>
+  <g transform="translate(80 570)" filter="url(#cardShadow)">
+    <rect width="230" height="80" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">interfaces/tui</text>
+    <text x="16" y="48" class="t-n">渲染与输入模型</text>
+  </g>
+
+  <!-- Column 2: Application -->
+  <g transform="translate(360 210)" filter="url(#cardShadow)">
+    <rect width="230" height="220" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">应用服务</text>
+    <text x="16" y="48" class="t-n">buildAppContext · 装配</text>
+    <line x1="16" y1="62" x2="200" y2="62" stroke="#e2e8f0"/>
+    <text x="16" y="84" class="t-n">Skill · Agent · MCP</text>
+    <text x="16" y="106" class="t-n">Team · Workflow · Memory</text>
+    <text x="16" y="128" class="t-n">Hook lifecycle glue</text>
+    <text x="16" y="160" class="t-code">pkg/application/*</text>
+  </g>
+  <!-- Tools adapter (col 2 lower) -->
+  <g transform="translate(360 450)" filter="url(#cardShadow)">
+    <rect width="230" height="200" rx="8" class="card"/>
+    <rect x="0" y="0" width="4" height="200" rx="2" fill="#fbbf24"/>
+    <text x="20" y="26" class="t-h">工具适配层</text>
+    <text x="20" y="48" class="t-n">file · bash · glob · grep</text>
+    <text x="20" y="70" class="t-n">skill · mcp · agent · team</text>
+    <text x="20" y="92" class="t-n">ask_user · todo · web</text>
+    <line x1="20" y1="106" x2="200" y2="106" stroke="#e2e8f0"/>
+    <text x="20" y="130" class="t-n">统一实现 domain/tool.Tool</text>
+    <text x="20" y="166" class="t-code">pkg/tools</text>
+  </g>
+
+  <!-- Column 3: Domain (dark) -->
+  <g transform="translate(640 210)" filter="url(#cardShadow)">
+    <rect width="230" height="220" rx="8" class="card-on-dark"/>
+    <text x="16" y="26" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="14" fill="#ffffff">领域核心</text>
+    <text x="16" y="48" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">Query Engine · Tool</text>
+    <line x1="16" y1="62" x2="200" y2="62" stroke="#334155"/>
+    <text x="16" y="84" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">agent · team · task</text>
+    <text x="16" y="106" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">skill · mcp · workflow</text>
+    <text x="16" y="128" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">hook · memory · session</text>
+    <text x="16" y="160" font-family="SFMono-Regular,ui-monospace,Menlo,monospace" font-size="11" fill="#60a5fa">domain/query · domain/tool</text>
+  </g>
+  <g transform="translate(640 450)" filter="url(#cardShadow)">
+    <rect width="230" height="100" rx="8" fill="#1e293b" stroke="#2563eb" stroke-width="1.4"/>
+    <text x="16" y="26" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="14" fill="#ffffff">领域端口</text>
+    <text x="16" y="48" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">AIProvider · Compactor</text>
+    <text x="16" y="80" font-family="SFMono-Regular,ui-monospace,Menlo,monospace" font-size="11" fill="#60a5fa">domain/repository.go</text>
+  </g>
+  <g transform="translate(640 570)" filter="url(#cardShadow)">
+    <rect width="230" height="80" rx="8" class="card-on-dark"/>
+    <text x="16" y="26" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="14" fill="#ffffff">ports</text>
+    <text x="16" y="48" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">AIProvider · Compactor</text>
+  </g>
+
+  <!-- Column 4: Infrastructure -->
+  <g transform="translate(920 210)" filter="url(#cardShadow)">
+    <rect width="240" height="100" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">Provider API</text>
+    <text x="16" y="48" class="t-n">anthropic · deepseek</text>
+    <text x="16" y="80" class="t-code">infrastructure/api</text>
+  </g>
+  <g transform="translate(920 330)" filter="url(#cardShadow)">
+    <rect width="240" height="100" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">MCP 传输</text>
+    <text x="16" y="48" class="t-n">stdio · HTTP · SSE · WS</text>
+    <text x="16" y="80" class="t-code">infrastructure/mcp</text>
+  </g>
+  <g transform="translate(920 450)" filter="url(#cardShadow)">
+    <rect width="240" height="100" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">本机资源</text>
+    <text x="16" y="48" class="t-n">filesystem · shell · sandbox</text>
+    <text x="16" y="80" class="t-code">infrastructure/local</text>
+  </g>
+  <g transform="translate(920 570)" filter="url(#cardShadow)">
+    <rect width="240" height="80" rx="8" class="card"/>
+    <text x="16" y="26" class="t-h">持久化 / 加载器</text>
+    <text x="16" y="48" class="t-n">SQLite · loaders</text>
+  </g>
+
+  <!-- Footer note -->
+  <g transform="translate(60 680)">
+    <text x="0" y="10" class="t-n">→ 列方向：依赖向右传递，infrastructure 实现 domain port，application 调用 domain，interfaces 调用 application</text>
+  </g>
+</svg>

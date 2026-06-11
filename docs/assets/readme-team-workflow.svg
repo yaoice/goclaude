@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="640" viewBox="0 0 1240 640" role="img" aria-labelledby="title desc">
+  <title id="title">Agent Teams 协作流程</title>
+  <desc id="desc">显式 Team 模式：Leader 拆分任务，Worker 并行执行，Mailbox 收信回流上下文，下一轮注入 Leader。</desc>
+  <defs>
+    <style>
+      .t-title{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#0f172a;letter-spacing:-.6px}
+      .t-sub{font:400 14px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-eyebrow{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:1.6px}
+      .t-l{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#64748b;letter-spacing:1.4px}
+      .t-h{font:600 14px "Helvetica Neue",Arial,sans-serif;fill:#0f172a}
+      .t-n{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-tag{font:600 10px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#2563eb;letter-spacing:.5px}
+      .t-step{font:700 11px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#ffffff;letter-spacing:1px}
+      .card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card-leader{fill:#0f172a;stroke:#0f172a;stroke-width:1}
+      .card-mailbox{fill:#eff6ff;stroke:#bfdbfe;stroke-width:1}
+      .stroke{stroke:#cbd5e1;stroke-width:1.4;fill:none}
+      .accent{stroke:#2563eb;stroke-width:1.6;fill:none}
+      .dash{stroke:#94a3b8;stroke-width:1.2;stroke-dasharray:5 4;fill:none}
+      .feedback{stroke:#6366f1;stroke-width:1.4;fill:none;stroke-dasharray:6 4}
+      .divider{stroke:#e2e8f0;stroke-width:1}
+    </style>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowIndigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="640" fill="#f8fafc"/>
+
+  <!-- Header -->
+  <text x="60" y="52" class="t-eyebrow">AGENT TEAMS · 03</text>
+  <text x="60" y="86" class="t-title">Agent Teams 协作流程</text>
+  <text x="60" y="110" class="t-sub">Leader 规划 · TeamEngine 拉起 Worker · Mailbox 收信回流上下文</text>
+  <line x1="60" y1="130" x2="1180" y2="130" class="divider"/>
+
+  <!-- Stage labels along the top -->
+  <g>
+    <text x="160" y="170" class="t-l">① LEAD</text>
+    <text x="490" y="170" class="t-l">② WORKERS</text>
+    <text x="780" y="170" class="t-l">③ MAILBOX</text>
+    <text x="1050" y="170" class="t-l">④ CONTEXT</text>
+  </g>
+
+  <!-- Leader card -->
+  <g transform="translate(80 280)" filter="url(#cardShadow)">
+    <rect width="220" height="140" rx="8" class="card-leader"/>
+    <circle cx="44" cy="46" r="22" fill="#2563eb"/>
+    <text x="44" y="52" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-weight="700" font-size="16" fill="#ffffff">L</text>
+    <text x="80" y="42" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="15" fill="#ffffff">Leader</text>
+    <text x="80" y="60" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#94a3b8">team_create · 汇总</text>
+    <line x1="20" y1="86" x2="200" y2="86" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="106" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="11" fill="#94a3b8" letter-spacing="1.4">DISPATCH</text>
+    <text x="20" y="124" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">send_message · broadcast</text>
+  </g>
+
+  <!-- Workers (3 stacked) -->
+  <g transform="translate(420 200)" filter="url(#cardShadow)">
+    <rect width="220" height="84" rx="8" class="card"/>
+    <rect x="0" y="0" width="4" height="84" rx="2" fill="#2563eb"/>
+    <text x="20" y="24" class="t-l">WORKER 01</text>
+    <text x="20" y="48" class="t-h">探索 / 初始化</text>
+    <text x="20" y="68" class="t-n">独立 Engine 循环</text>
+  </g>
+  <g transform="translate(420 320)" filter="url(#cardShadow)">
+    <rect width="220" height="84" rx="8" class="card"/>
+    <rect x="0" y="0" width="4" height="84" rx="2" fill="#6366f1"/>
+    <text x="20" y="24" class="t-l">WORKER 02</text>
+    <text x="20" y="48" class="t-h">实现 / 修改</text>
+    <text x="20" y="68" class="t-n">独立 Engine 循环</text>
+  </g>
+  <g transform="translate(420 440)" filter="url(#cardShadow)">
+    <rect width="220" height="84" rx="8" class="card"/>
+    <rect x="0" y="0" width="4" height="84" rx="2" fill="#0891b2"/>
+    <text x="20" y="24" class="t-l">WORKER 03</text>
+    <text x="20" y="48" class="t-h">测试 / 验证</text>
+    <text x="20" y="68" class="t-n">独立 Engine 循环</text>
+  </g>
+
+  <!-- Mailbox -->
+  <g transform="translate(740 280)" filter="url(#cardShadow)">
+    <rect width="240" height="140" rx="8" class="card-mailbox"/>
+    <text x="20" y="28" class="t-l">MAILBOX</text>
+    <text x="20" y="54" class="t-h">Team Mailbox</text>
+    <line x1="20" y1="68" x2="220" y2="68" stroke="#bfdbfe" stroke-width="1"/>
+    <g transform="translate(20 84)">
+      <circle cx="4" cy="4" r="3" fill="#2563eb"/>
+      <text x="14" y="8" class="t-n">send · broadcast</text>
+    </g>
+    <g transform="translate(20 104)">
+      <circle cx="4" cy="4" r="3" fill="#6366f1"/>
+      <text x="14" y="8" class="t-n">read_inbox · heartbeat</text>
+    </g>
+    <g transform="translate(20 124)">
+      <circle cx="4" cy="4" r="3" fill="#0891b2"/>
+      <text x="14" y="8" class="t-n">task status · reports</text>
+    </g>
+  </g>
+
+  <!-- Context injection -->
+  <g transform="translate(1020 320)" filter="url(#cardShadow)">
+    <rect width="160" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">CONTEXT</text>
+    <text x="16" y="48" class="t-h">上下文注入</text>
+    <text x="16" y="66" class="t-tag">ProcessLeaderInbox</text>
+  </g>
+
+  <!-- Flows: Leader -> Workers -->
+  <g class="accent" marker-end="url(#arrowBlue)">
+    <path d="M300 320 C360 240 380 240 416 240"/>
+    <path d="M300 350 C360 360 380 360 416 360"/>
+    <path d="M300 380 C360 480 380 480 416 480"/>
+  </g>
+
+  <!-- Flows: Workers -> Mailbox -->
+  <g class="stroke" marker-end="url(#arrowGray)">
+    <path d="M640 240 C700 260 700 320 736 330"/>
+    <path d="M640 360 H736"/>
+    <path d="M640 480 C700 460 700 400 736 390"/>
+  </g>
+
+  <!-- Mailbox -> Context -->
+  <path d="M980 360 H1016" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- Feedback Context -> Leader (top loop) -->
+  <path d="M1100 320 C1100 200 240 200 190 280" class="feedback" marker-end="url(#arrowIndigo)"/>
+  <g transform="translate(540 178)">
+    <rect width="280" height="32" rx="16" fill="#ffffff" stroke="#c7d2fe" stroke-width="1"/>
+    <circle cx="14" cy="16" r="4" fill="#6366f1"/>
+    <text x="26" y="20" class="t-n" fill="#4f46e5">inbox 摘要回流到下一轮对话</text>
+  </g>
+
+  <!-- Bottom legend -->
+  <g transform="translate(60 580)">
+    <line x1="0" y1="5" x2="40" y2="5" class="accent"/>
+    <text x="50" y="9" class="t-n">分配任务</text>
+    <line x1="140" y1="5" x2="180" y2="5" class="stroke"/>
+    <text x="190" y="9" class="t-n">任务结果回传</text>
+    <line x1="290" y1="5" x2="330" y2="5" class="feedback"/>
+    <text x="340" y="9" class="t-n">摘要反馈循环</text>
+  </g>
+</svg>

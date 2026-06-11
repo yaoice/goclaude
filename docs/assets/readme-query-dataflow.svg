@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="640" viewBox="0 0 1240 640" role="img" aria-labelledby="title desc">
+  <title id="title">Query Engine 数据流</title>
+  <desc id="desc">消息进入 Engine 后形成闭环：组装 → Provider 流式 → 事件 → 工具执行 → tool_result 回填 → 下一轮。</desc>
+  <defs>
+    <style>
+      .t-title{font:700 30px "Helvetica Neue",Arial,sans-serif;fill:#0f172a;letter-spacing:-.6px}
+      .t-sub{font:400 14px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-eyebrow{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#94a3b8;letter-spacing:1.6px}
+      .t-l{font:600 11px "Helvetica Neue",Arial,sans-serif;fill:#64748b;letter-spacing:1.4px}
+      .t-h{font:600 14px "Helvetica Neue",Arial,sans-serif;fill:#0f172a}
+      .t-n{font:400 12px "Helvetica Neue",Arial,sans-serif;fill:#64748b}
+      .t-step{font:700 11px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#2563eb;letter-spacing:.5px}
+      .t-tag{font:600 10px "SFMono-Regular",ui-monospace,Menlo,monospace;fill:#94a3b8;letter-spacing:.5px}
+      .card{fill:#ffffff;stroke:#e2e8f0;stroke-width:1}
+      .card-core{fill:#0f172a;stroke:#0f172a;stroke-width:1}
+      .card-accent{fill:#eff6ff;stroke:#bfdbfe;stroke-width:1}
+      .stroke{stroke:#cbd5e1;stroke-width:1.4;fill:none}
+      .accent{stroke:#2563eb;stroke-width:1.6;fill:none}
+      .feedback{stroke:#6366f1;stroke-width:1.4;fill:none;stroke-dasharray:6 4}
+      .divider{stroke:#e2e8f0;stroke-width:1}
+    </style>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowIndigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="640" fill="#f8fafc"/>
+
+  <!-- Header -->
+  <text x="60" y="52" class="t-eyebrow">QUERY ENGINE · 05</text>
+  <text x="60" y="86" class="t-title">Query Engine 数据流</text>
+  <text x="60" y="110" class="t-sub">消息组装 → Provider 流式 → 事件分发 → 工具执行 → tool_result 回填，构成完整闭环</text>
+  <line x1="60" y1="130" x2="1180" y2="130" class="divider"/>
+
+  <!-- Top row: 5 cards in flow -->
+  <!-- INPUT -->
+  <g transform="translate(80 230)" filter="url(#cardShadow)">
+    <rect width="160" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">INPUT</text>
+    <text x="16" y="48" class="t-h">用户输入</text>
+    <text x="16" y="68" class="t-tag">stdin / REPL</text>
+  </g>
+  <text x="120" y="208" class="t-step">① INPUT</text>
+
+  <!-- CORE: Query Engine (dark/highlight) -->
+  <g transform="translate(290 220)" filter="url(#cardShadow)">
+    <rect width="180" height="100" rx="8" class="card-core"/>
+    <text x="16" y="24" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="11" fill="#94a3b8" letter-spacing="1.4">CORE</text>
+    <text x="16" y="48" font-family="Helvetica Neue,Arial,sans-serif" font-weight="700" font-size="16" fill="#ffffff">Query Engine</text>
+    <line x1="16" y1="60" x2="100" y2="60" stroke="#334155" stroke-width="1"/>
+    <text x="16" y="80" font-family="Helvetica Neue,Arial,sans-serif" font-weight="400" font-size="12" fill="#cbd5e1">消息循环 · 压缩</text>
+  </g>
+  <text x="330" y="208" class="t-step">② ENGINE</text>
+
+  <!-- REQUEST -->
+  <g transform="translate(520 230)" filter="url(#cardShadow)">
+    <rect width="170" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">REQUEST</text>
+    <text x="16" y="48" class="t-h">StreamParams</text>
+    <text x="16" y="68" class="t-tag">tools · model · turns</text>
+  </g>
+  <text x="560" y="208" class="t-step">③ REQUEST</text>
+
+  <!-- PROVIDER (accent) -->
+  <g transform="translate(740 230)" filter="url(#cardShadow)">
+    <rect width="180" height="80" rx="8" class="card-accent"/>
+    <text x="16" y="24" class="t-l">PROVIDER</text>
+    <text x="16" y="48" class="t-h">AI Provider</text>
+    <text x="16" y="68" class="t-tag">SSE / streaming</text>
+  </g>
+  <text x="780" y="208" class="t-step">④ STREAM</text>
+
+  <!-- EVENTS -->
+  <g transform="translate(970 230)" filter="url(#cardShadow)">
+    <rect width="180" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">EVENTS</text>
+    <text x="16" y="48" class="t-h">Stream Events</text>
+    <text x="16" y="68" class="t-tag">delta · tool_use · stop</text>
+  </g>
+  <text x="1010" y="208" class="t-step">⑤ EVENTS</text>
+
+  <!-- Forward arrows in row -->
+  <g class="accent" marker-end="url(#arrowBlue)">
+    <path d="M240 270 H290"/>
+    <path d="M470 270 H520"/>
+    <path d="M690 270 H740"/>
+    <path d="M920 270 H970"/>
+  </g>
+
+  <!-- Drop down to Tool Executor -->
+  <path d="M1060 310 V380" class="stroke" marker-end="url(#arrowGray)"/>
+
+  <!-- EXEC: Tool Executor -->
+  <g transform="translate(970 380)" filter="url(#cardShadow)">
+    <rect width="180" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">EXEC</text>
+    <text x="16" y="48" class="t-h">Tool Executor</text>
+    <text x="16" y="68" class="t-tag">permission · schedule</text>
+  </g>
+  <text x="1010" y="370" class="t-step">⑥ EXECUTE</text>
+
+  <!-- Tool registry & schedule strategy (3 cards under EXEC) -->
+  <g transform="translate(80 380)" filter="url(#cardShadow)">
+    <rect width="280" height="80" rx="8" class="card"/>
+    <text x="16" y="24" class="t-l">TOOL REGISTRY</text>
+    <text x="16" y="48" class="t-h">file · bash · grep · glob · skill · mcp · agent</text>
+    <text x="16" y="68" class="t-tag">domain/tool.Tool</text>
+  </g>
+  <g transform="translate(390 380)" filter="url(#cardShadow)">
+    <rect width="280" height="80" rx="8" class="card"/>
+    <rect x="0" y="0" width="4" height="80" rx="2" fill="#0891b2"/>
+    <text x="20" y="24" class="t-l">PARALLEL</text>
+    <text x="20" y="48" class="t-h">只读工具并发执行</text>
+    <text x="20" y="68" class="t-tag">errgroup · max_concurrency</text>
+  </g>
+  <g transform="translate(700 380)" filter="url(#cardShadow)">
+    <rect width="240" height="80" rx="8" class="card"/>
+    <rect x="0" y="0" width="4" height="80" rx="2" fill="#d97706"/>
+    <text x="20" y="24" class="t-l">SERIAL</text>
+    <text x="20" y="48" class="t-h">写入串行执行</text>
+    <text x="20" y="68" class="t-tag">file_write · bash</text>
+  </g>
+
+  <!-- EXEC -> registry/parallel/serial (gray arrows back to left) -->
+  <g class="stroke" marker-end="url(#arrowGray)">
+    <path d="M970 420 H940"/>
+    <path d="M940 420 H700"/>
+  </g>
+
+  <!-- Feedback loop: tool_result -> Engine input -->
+  <g transform="translate(80 510)">
+    <rect width="1080" height="56" rx="8" fill="#ffffff" stroke="#c7d2fe" stroke-width="1"/>
+    <circle cx="20" cy="28" r="6" fill="#6366f1"/>
+    <text x="36" y="24" font-family="Helvetica Neue,Arial,sans-serif" font-weight="600" font-size="13" fill="#4f46e5" letter-spacing=".2px">tool_result 回填</text>
+    <text x="36" y="44" class="t-n" fill="#64748b">追加为 user 消息 → 回到 Engine.Execute 下一轮循环 → 直到无 tool_use 或达到 max_turns</text>
+  </g>
+
+  <!-- Loop curve from result lane back to Engine -->
+  <path d="M1100 510 C1180 460 1180 200 380 200 V230" class="feedback" marker-end="url(#arrowIndigo)"/>
+
+  <!-- Bottom legend -->
+  <g transform="translate(60 600)">
+    <line x1="0" y1="5" x2="40" y2="5" class="accent"/>
+    <text x="50" y="9" class="t-n">主流向</text>
+    <line x1="120" y1="5" x2="160" y2="5" class="stroke"/>
+    <text x="170" y="9" class="t-n">分发与执行</text>
+    <line x1="270" y1="5" x2="310" y2="5" class="feedback"/>
+    <text x="320" y="9" class="t-n">回填循环</text>
+  </g>
+</svg>
