@@ -488,9 +488,15 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 	}()
 
 	// 实时打印（带 markdown 流式格式化）
-	r.printAssistantHeader()
+	// 头部展示助手标识 + 本次会话预计消耗 Credits 估算。
+	r.printAssistantHeader(r.sessionEstimateText(msgs))
 	var assistantText strings.Builder
 	startedAt := time.Now()
+
+	// 底部加载动画：在等待首个流式事件期间显示"⠋ 生成回复中…"。
+	// 首个事件到达即停止并清行，后续渲染从干净行首开始，不影响任何输出。
+	waitSpin := r.startWaitSpinner(func() string { return "生成回复中…" })
+	firstEvent := true
 
 	// indent + 边条让助手回复区与用户输入视觉分离
 	formatter := NewStreamFormatter("  ", "│ ")
@@ -541,6 +547,11 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 	toolStepCount := 0
 
 	for ev := range events {
+		// 首个事件到达：停止底部加载动画并清行，确保后续渲染从干净行首开始。
+		if firstEvent {
+			firstEvent = false
+			waitSpin.Stop()
+		}
 		switch ev.Type {
 		case query.EventContentBlockStart:
 			if ev.ContentBlock == nil {
@@ -564,27 +575,18 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 				}
 				// 递增步骤计数
 				toolStepCount++
-				// 渲染启动行：[N] ◌ tool_name  …（运行中状态）
-				displayName := b.ToolName
-				marker := ""
-				if strings.HasPrefix(b.ToolName, "mcp__") {
-					marker = r.colorize(" ⟨MCP⟩", colorInfo)
-				}
-				stepLabel := r.colorize(fmt.Sprintf("  [%d] ", toolStepCount), colorStepNum)
-				r.writeOut(stepLabel +
-					r.colorize("◌ ", colorInfo) +
-					r.colorize(displayName, colorToolName) + marker +
-					r.colorize("  …", colorMuted) + "\r\n")
-				meta.summaryFlushed = true
 				meta.stepNum = toolStepCount
+				// 渲染运行中启动行：图标/命令提示符 + 加载指示 ⋯
+				r.writeOut(r.renderTaskToolLine(b.ToolName, "", true, false, false) + "\r\n")
+				meta.summaryFlushed = true
 
 			case query.ContentTypeThinking:
 				flushFmt()
 				if !thinkingShown {
 					thinkingShown = true
-					// 非 verbose：一行提示
+					// 非 verbose：一行「深度思考」标签
 					if !r.Verbose {
-						r.writeOut(r.colorize("  "+r.gl().minor+"thinking…\r\n", colorMuted))
+						r.writeOut(r.colorize("  深度思考", colorThinkLabel) + "\r\n")
 					}
 				}
 
@@ -756,7 +758,7 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 				} else if !thinkingShown {
 					thinkingShown = true
 					flushFmt()
-					r.writeOut(r.colorize("  "+r.gl().minor+"thinking…\r\n", colorMuted))
+					r.writeOut(r.colorize("  深度思考", colorThinkLabel) + "\r\n")
 				}
 			}
 		case query.EventContentBlockStop:
@@ -792,31 +794,15 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 					m.inputSummary = formatted
 				}
 
-				// 覆盖打印启动行：ANSI 上移一行 + 清行 + 重写含摘要的版本
-				if m.summaryFlushed && m.inputSummary != "" {
-					displayName := m.name
-					marker := ""
-					if strings.HasPrefix(m.name, "mcp__") {
-						marker = r.colorize(" ⟨MCP⟩", colorInfo)
-					}
-					// 沙箱命令：显示 🔒 标记 + 高亮实际命令
-					if m.isSandboxed {
-						marker += r.colorize(" 🔒", colorSandboxTag)
-					}
-					stepLabel := r.colorize(fmt.Sprintf("  [%d] ", m.stepNum), colorStepNum)
+				// 覆盖打印启动行：重写为"就绪"状态（含参数摘要 + 折叠箭头 ∨）
+				if m.summaryFlushed {
+					line := r.renderTaskToolLine(m.name, m.inputSummary, false, false, m.isSandboxed)
 					if r.useColor {
-						summaryColor := colorSubtle
-						if m.isSandboxed {
-							summaryColor = colorSandboxCmd
-						}
-						r.writeOut("\x1b[1A\x1b[2K\r" +
-							stepLabel +
-							r.colorize("◌ ", colorInfo) +
-							r.colorize(displayName, colorToolName) + marker +
-							"  " + r.colorize(m.inputSummary, summaryColor) +
-							"\r\n")
-					} else {
-						prefix := "    ↳ "
+						// ANSI 上移一行 + 清行 + 原位重写
+						r.writeOut("\x1b[1A\x1b[2K\r" + line + "\r\n")
+					} else if m.inputSummary != "" {
+						// 无色环境：另起一行补充摘要，避免重复图标/标签
+						prefix := "    " + r.gl().toolCall
 						if m.isSandboxed {
 							prefix = "    🔒 "
 						}
@@ -831,6 +817,8 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 			}
 		}
 	}
+	// 兜底停止加载动画（如未收到任何事件即出错/取消，firstEvent 仍为 true）。
+	waitSpin.Stop()
 	flushFmt()
 	r.writeOut("\r\n")
 
@@ -860,24 +848,33 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 	}
 	r.mu.Unlock()
 
-	// 执行摘要尾行：统计 turns/耗时/token 用量
+	// 执行摘要尾行：统计 turns/耗时/token 用量 + 已消耗 Credits（呼应截图底部状态）
 	if d.res != nil {
 		elapsed := time.Since(startedAt).Truncate(time.Millisecond)
+		creditsSummary := ""
+		if d.res.Usage != nil {
+			creditsSummary = fmt.Sprintf(" · 已消耗 %d tokens", d.res.Usage.TotalTokens())
+		}
 		if r.Verbose {
 			usage := ""
 			if d.res.Usage != nil {
 				usage = fmt.Sprintf("  tokens: %d→%d", d.res.Usage.InputTokens, d.res.Usage.OutputTokens)
 			}
 			r.writeOut(r.colorize(
-				fmt.Sprintf("  ── %d turns · %s · stop=%s%s ──\r\n",
-					d.res.TurnCount, elapsed, d.res.StopReason, usage),
+				fmt.Sprintf("  ── %d turns · %s · stop=%s%s%s ──\r\n",
+					d.res.TurnCount, elapsed, d.res.StopReason, usage, creditsSummary),
 				colorMuted,
 			))
-		} else if toolStepCount > 0 {
-			// 有工具调用时显示轻量统计行
+		} else {
+			// 统一展示轻量状态行：步骤数 · 耗时 · 已消耗 tokens
+			steps := ""
+			if toolStepCount > 0 {
+				steps = fmt.Sprintf("%d steps · ", toolStepCount)
+			}
 			r.writeOut(r.colorize(
-				fmt.Sprintf("  ── %d steps · %s ──\r\n", toolStepCount, formatElapsedCompact(elapsed)),
-				colorMuted,
+				fmt.Sprintf("  ✓ 生成完毕 · %s%s%s\r\n",
+					steps, formatElapsedCompact(elapsed), creditsSummary),
+				colorFooter,
 			))
 		}
 	}
