@@ -59,8 +59,9 @@ var (
 	runModel        string
 	runMaxTurns     int
 	runNoMCP        bool
-	runNoCompact    bool
-	runMaxContextKB int
+	runNoCompact        bool
+	runMaxContextKB     int
+	runCompactThreshold float64
 	runWorkflow     string
 )
 
@@ -128,6 +129,9 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 	if !cmd.Flags().Changed("no-compact") {
 		runNoCompact = !app.Engine.AutoCompact
 	}
+	if app.Engine.CompactThreshold > 0 {
+		runCompactThreshold = app.Engine.CompactThreshold
+	}
 	if !cmd.Flags().Changed("no-mcp") {
 		runNoMCP = !app.MCP.Enabled
 	}
@@ -162,7 +166,7 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 			DefaultModel:    modelName,
 			WorkspaceRoot:   workspaceDir,
 		}
-		budget := query.NewTokenBudget(runMaxContextKB*1000, 0.8)
+		budget := query.NewTokenBudget(runMaxContextKB*1000, runCompactThreshold)
 		factory := application.NewDefaultAgentEngineFactory(wired.Registry, provider, budget, logger)
 		wfSvc := application.NewWorkflowService(wired.AgentSvc, factory, defaults, logger)
 		wfAdapter := newWorkflowAdapter(
@@ -211,7 +215,7 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 		ProjectRoot:   cwd,
 		WorkspaceRoot: workspaceDir,
 	})
-	budget := query.NewTokenBudget(runMaxContextKB*1000, 0.8)
+	budget := query.NewTokenBudget(runMaxContextKB*1000, runCompactThreshold)
 	cfg := query.DefaultConfig()
 	cfg.Model = modelName
 	cfg.MaxTurns = runMaxTurns

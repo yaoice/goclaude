@@ -112,28 +112,11 @@ func gitBranch(cwd string) string {
 	return s
 }
 
-// printAssistantHeader 渲染助手回复的头部。
-//
-// 视觉对齐任务执行界面：助手标识 + 本次会话预计消耗 Credits 估算。
-// estimate 为预估文案（如 "本次会话预计消耗 3.7 ~ 15.1 Credits ⓘ"）；为空时只渲染标识。
-func (r *REPL) printAssistantHeader(estimate string) {
+// printAssistantHeader 渲染助手回复头部标识。
+func (r *REPL) printAssistantHeader() {
 	r.writeOut("\r\n")
 	line := r.colorize("🐼 ", colorBrand) + r.colorize("GoClaude", colorAssistantName)
-	if estimate != "" {
-		line += "  " + r.colorize(estimate, colorFooter)
-	}
 	r.writeOut(line + "\r\n")
-}
-
-// sessionEstimateText 构造头部"本次会话预计消耗"文案。
-func (r *REPL) sessionEstimateText(msgs []query.Message) string {
-	low, high := estimateSessionTokens(msgs)
-	info := "ⓘ"
-	if r.useASCII {
-		info = "(i)"
-	}
-	return fmt.Sprintf("本次会话预计消耗 %d ~ %d tokens %s",
-		low, high, info)
 }
 
 func (r *REPL) writeOut(s string) {

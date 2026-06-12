@@ -29,7 +29,11 @@ func NewQueryService(
 	executor := tool.NewExecutor(registry, 10, logger)
 
 	// 创建token预算
-	budget := query.NewTokenBudget(200000, 0.8)
+	budgetKB := config.TokenBudget
+	if budgetKB <= 0 {
+		budgetKB = 200000
+	}
+	budget := query.NewTokenBudget(budgetKB, 0.8)
 
 	// 创建查询引擎
 	engine := query.NewEngine(provider, executor, budget, nil, config, logger)

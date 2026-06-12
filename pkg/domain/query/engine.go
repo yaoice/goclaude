@@ -22,6 +22,8 @@ type Config struct {
 	MaxTurns int
 	// AutoCompact 是否启用自动压缩
 	AutoCompact bool
+	// TokenBudget 上下文 token 预算上限
+	TokenBudget int
 	// SystemPrompt 系统提示词
 	SystemPrompt []ContentBlock
 }
@@ -34,6 +36,7 @@ func DefaultConfig() *Config {
 		Temperature: 1.0,
 		MaxTurns:    100,
 		AutoCompact: true,
+		TokenBudget: 200000,
 	}
 }
 

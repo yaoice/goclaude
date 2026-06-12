@@ -47,6 +47,7 @@ engine:
   max_turns: 400                      # 单轮查询最大工具循环数
   token_budget: 1000000                # 上下文 token 预算上限
   auto_compact: true                  # 自动压缩开关
+  compact_threshold: 0.8              # 触发压缩的上下文占用比例
   max_retries: 3
   retry_base_delay: 1s
 

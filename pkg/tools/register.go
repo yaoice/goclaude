@@ -1,6 +1,9 @@
 package tools
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/yaoice/goclaude/pkg/domain/tool"
 	"github.com/yaoice/goclaude/pkg/infrastructure/filesystem"
 	"github.com/yaoice/goclaude/pkg/infrastructure/sandbox"
@@ -19,6 +22,8 @@ func RegisterAll(registry *tool.Registry, workDir string, sbCfg *sandbox.Config)
 	if sbCfg != nil && sbCfg.Enabled {
 		if ex, err := shell.NewExecutorWithSandbox(workDir, 0, sbCfg); err == nil {
 			shellExec = ex
+		} else {
+			fmt.Fprintf(os.Stderr, "sandbox init failed (falling back to direct execution): %v\n", err)
 		}
 	}
 

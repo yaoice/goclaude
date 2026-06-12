@@ -3,7 +3,11 @@
 // bash commands with filesystem and network restrictions.
 package sandbox
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 // Config holds sandbox configuration (maps to SandboxRuntimeConfig from TS version).
 type Config struct {
@@ -79,11 +83,25 @@ type Sandbox struct {
 }
 
 // New creates a new Sandbox instance.
+//
+// When cfg.Enabled is true, this function verifies that the required
+// sandbox backend binary (bwrap on Linux, sandbox-exec on macOS) is
+// available in PATH.  If the binary is missing, it returns an error
+// so that callers can fall back to direct execution.
 func New(cfg *Config, workDir string, timeout time.Duration) (*Sandbox, error) {
 	plat := DetectPlatform()
 
 	if cfg == nil {
 		cfg = DefaultConfig()
+	}
+
+	// 当沙箱启用时，检查必需的二进制文件是否可用。
+	// 若不可用则返回 error，让调用方降级为直接执行。
+	if cfg.Enabled {
+		errs, _ := checkDepsForPlatform(plat)
+		if len(errs) > 0 {
+			return nil, fmt.Errorf("sandbox disabled: %s", strings.Join(errs, "; "))
+		}
 	}
 
 	s := &Sandbox{
@@ -94,6 +112,24 @@ func New(cfg *Config, workDir string, timeout time.Duration) (*Sandbox, error) {
 	}
 
 	return s, nil
+}
+
+// checkDepsForPlatform 检查指定平台的沙箱二进制是否可用，避免重复调用 DetectPlatform。
+func checkDepsForPlatform(plat Platform) (errors []string, warnings []string) {
+	switch plat {
+	case PlatformLinux, PlatformWSL2:
+		if !commandExists("bwrap") {
+			errors = append(errors, "bwrap not found (install: apt install bubblewrap)")
+		}
+		if !commandExists("socat") {
+			warnings = append(warnings, "socat not found (needed for network proxy)")
+		}
+	case PlatformMacOS:
+		if !commandExists("sandbox-exec") {
+			errors = append(errors, "sandbox-exec not found")
+		}
+	}
+	return
 }
 
 // Enabled returns whether sandboxing is active.
