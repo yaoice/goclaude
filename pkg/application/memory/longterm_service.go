@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	domainmemory "github.com/anthropics/goclaude/pkg/domain/memory"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
+	domainmemory "github.com/yaoice/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
 )
 
 // LongTermMemoryService 长期记忆应用服务
@@ -29,9 +29,9 @@ type LongTermMemoryService struct {
 	cfg    appconfig.LongTermMemoryConfig
 	logger *slog.Logger
 
-	mu       sync.Mutex
-	started  bool
-	stopCh   chan struct{}
+	mu      sync.Mutex
+	started bool
+	stopCh  chan struct{}
 }
 
 // NewLongTermMemoryService 创建长期记忆服务
@@ -201,14 +201,14 @@ func (s *LongTermMemoryService) SaveSessionSummary(
 
 	// 保存会话记录
 	session := &domainmemory.LongTermSession{
-		ID:               sessionID,
-		ProjectRoot:      projectRoot,
-		Summary:          summary,
-		InputTokens:      stats.InputTokens,
-		OutputTokens:     stats.OutputTokens,
-		TurnCount:        stats.TurnCount,
-		StartedAt:        stats.StartedAt,
-		EndedAt:          time.Now(),
+		ID:           sessionID,
+		ProjectRoot:  projectRoot,
+		Summary:      summary,
+		InputTokens:  stats.InputTokens,
+		OutputTokens: stats.OutputTokens,
+		TurnCount:    stats.TurnCount,
+		StartedAt:    stats.StartedAt,
+		EndedAt:      time.Now(),
 	}
 	if err := s.repo.SaveSession(ctx, session); err != nil {
 		return fmt.Errorf("save session: %w", err)
@@ -304,8 +304,8 @@ func (s *LongTermMemoryService) BuildInjectionContext(
 	}
 
 	opts := domainmemory.SearchOptions{
-		Limit:  s.cfg.Injection.SearchLimit,
-		After:  time.Now().Add(-90 * 24 * time.Hour), // 最近 90 天
+		Limit: s.cfg.Injection.SearchLimit,
+		After: time.Now().Add(-90 * 24 * time.Hour), // 最近 90 天
 	}
 
 	result, err := s.SearchIndex(ctx, currentQuery, opts)
@@ -502,10 +502,10 @@ type SaveOptions struct {
 
 // SessionStats 会话统计（用于摘要保存）
 type SessionStats struct {
-	InputTokens    int
-	OutputTokens   int
-	TurnCount      int
-	StartedAt      time.Time
+	InputTokens  int
+	OutputTokens int
+	TurnCount    int
+	StartedAt    time.Time
 }
 
 // generateID 生成 8 位 hex 随机 ID

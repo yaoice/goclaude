@@ -15,18 +15,18 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	memoryapp "github.com/anthropics/goclaude/pkg/application/memory"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
+	memoryapp "github.com/yaoice/goclaude/pkg/application/memory"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
 )
 
 // MemoryLifecycleHooks 长期记忆生命周期钩子
 type MemoryLifecycleHooks struct {
-	svc        *memoryapp.LongTermMemoryService
-	cfg        appconfig.LongTermMemoryConfig
-	logger     *slog.Logger
-	projectRoot  string
-	lastQuery    string
+	svc           *memoryapp.LongTermMemoryService
+	cfg           appconfig.LongTermMemoryConfig
+	logger        *slog.Logger
+	projectRoot   string
+	lastQuery     string
 	toolCallCount int
 }
 
@@ -41,9 +41,9 @@ func NewMemoryLifecycleHooks(
 		logger = slog.Default()
 	}
 	return &MemoryLifecycleHooks{
-		svc:        svc,
-		cfg:        cfg,
-		logger:     logger,
+		svc:         svc,
+		cfg:         cfg,
+		logger:      logger,
 		projectRoot: projectRoot,
 	}
 }
@@ -94,22 +94,22 @@ func (h *MemoryLifecycleHooks) SessionStartHandler() hook.Handler {
 
 // toolNameTitleMap 工具名 → 观察记录标题模板
 var toolNameTitleMap = map[string]string{
-	"read_file":         "Read: %s",
-	"write_to_file":     "Edited: %s",
-	"replace_in_file":   "Edited: %s",
-	"execute_command":   "Command: %s",
-	"search_content":    "Searched: %s",
-	"codebase_search":   "Explored: %s",
-	"list_files":        "Listed: %s",
-	"file_search":       "Found: %s",
-	"web_search":        "Web: %s",
-	"web_fetch":         "Fetched: %s",
-	"delete_files":      "Deleted: %s",
-	"task":              "Subagent: %s",
-	"team_create":       "Team: %s",
-	"preview_url":       "Preview: %s",
-	"read_lints":        "Diagnostics: %s",
-	"Skill":             "Skill: %s",
+	"read_file":       "Read: %s",
+	"write_to_file":   "Edited: %s",
+	"replace_in_file": "Edited: %s",
+	"execute_command": "Command: %s",
+	"search_content":  "Searched: %s",
+	"codebase_search": "Explored: %s",
+	"list_files":      "Listed: %s",
+	"file_search":     "Found: %s",
+	"web_search":      "Web: %s",
+	"web_fetch":       "Fetched: %s",
+	"delete_files":    "Deleted: %s",
+	"task":            "Subagent: %s",
+	"team_create":     "Team: %s",
+	"preview_url":     "Preview: %s",
+	"read_lints":      "Diagnostics: %s",
+	"Skill":           "Skill: %s",
 }
 
 // PostToolUseHandler 返回 PostToolUse 事件处理器

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/skill"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/skill"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // helperSkillService 构造一个仅含 bundled skill 的 SkillService（避开磁盘 IO）

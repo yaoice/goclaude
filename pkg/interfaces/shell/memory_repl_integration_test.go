@@ -11,20 +11,20 @@ import (
 	"testing"
 	"time"
 
-	hooksapp "github.com/anthropics/goclaude/pkg/application/hooks"
-	memoryapp "github.com/anthropics/goclaude/pkg/application/memory"
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	domainmemory "github.com/anthropics/goclaude/pkg/domain/memory"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
-	sqlitemem "github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
+	hooksapp "github.com/yaoice/goclaude/pkg/application/hooks"
+	memoryapp "github.com/yaoice/goclaude/pkg/application/memory"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	domainmemory "github.com/yaoice/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
+	sqlitemem "github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
 )
 
 func testMemCfg() appconfig.LongTermMemoryConfig {
 	return appconfig.LongTermMemoryConfig{
 		Enabled: true,
 		Capture: appconfig.LongTermCaptureConfig{
-			AutoCaptureTools:  true,
+			AutoCaptureTools:   true,
 			MaxObservationSize: 8000,
 			MinCaptureChars:    10,
 		},
@@ -40,8 +40,8 @@ func testMemCfg() appconfig.LongTermMemoryConfig {
 		},
 		Eviction: appconfig.LongTermEvictionConfig{MinPriority: 5},
 		Expiration: appconfig.LongTermExpirationConfig{
-			DefaultTTLDays:      90,
-			LowPriorityTTLDays:  30,
+			DefaultTTLDays:       90,
+			LowPriorityTTLDays:   30,
 			CleanupIntervalHours: 0,
 		},
 		Privacy: appconfig.LongTermPrivacyConfig{
@@ -266,8 +266,8 @@ func TestREPL_FullLifecycle(t *testing.T) {
 	repl.HookReg.Run(ctx, hook.EventSessionEnd, &hook.Context{
 		SessionID: "sess-1",
 		Extra: map[string]interface{}{
-			"summary":     "分析 auth 模块测试覆盖，15 个测试, 65% 覆盖",
-			"turn_count":  3,
+			"summary":      "分析 auth 模块测试覆盖，15 个测试, 65% 覆盖",
+			"turn_count":   3,
 			"input_tokens": 1500,
 		},
 	})

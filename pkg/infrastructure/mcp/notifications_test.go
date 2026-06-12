@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
 )
 
 // 模拟 readLoop 内部派发：直接构造 ClientImpl 并调用 dispatchNotification

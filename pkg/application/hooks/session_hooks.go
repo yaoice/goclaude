@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
 )
 
 // ─────────────────────────────────────────────────────────────────
@@ -23,10 +23,10 @@ import (
 
 // DirectConnectConfig 直接连接配置
 type DirectConnectConfig struct {
-	WSURL      string
-	SessionID  string
-	AuthToken  string
-	Enabled    bool
+	WSURL     string
+	SessionID string
+	AuthToken string
+	Enabled   bool
 }
 
 // DirectConnectCallbacks 直接连接回调
@@ -575,12 +575,13 @@ func NewIDEConnectionResolver(tracker *hook.IDEStatusTracker) *IDEConnectionReso
 // ResolveStatus 根据 MCP client 列表解析 IDE 连接状态
 //
 // 对齐 TS 逻辑：
-//   const ideClient = mcpClients?.find(client => client.name === 'ide')
-//   if (!ideClient) return { status: null, ideName: null }
-//   const ideName = (config.type === 'sse-ide' || config.type === 'ws-ide') ? config.ideName : null
-//   if (ideClient.type === 'connected') return { status: 'connected', ideName }
-//   if (ideClient.type === 'pending') return { status: 'pending', ideName }
-//   return { status: 'disconnected', ideName }
+//
+//	const ideClient = mcpClients?.find(client => client.name === 'ide')
+//	if (!ideClient) return { status: null, ideName: null }
+//	const ideName = (config.type === 'sse-ide' || config.type === 'ws-ide') ? config.ideName : null
+//	if (ideClient.type === 'connected') return { status: 'connected', ideName }
+//	if (ideClient.type === 'pending') return { status: 'pending', ideName }
+//	return { status: 'disconnected', ideName }
 func (r *IDEConnectionResolver) ResolveStatus(clients []MCPClientInfo) hook.IDEConnectionInfo {
 	for _, client := range clients {
 		if client.Name != "ide" {

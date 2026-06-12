@@ -3,8 +3,8 @@ package application_test
 import (
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	wf "github.com/anthropics/goclaude/pkg/domain/workflow"
+	"github.com/yaoice/goclaude/pkg/application"
+	wf "github.com/yaoice/goclaude/pkg/domain/workflow"
 )
 
 func TestParseAndValidate_LinearDependency(t *testing.T) {

@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
 )
 
 // ReconnectPolicy 重连策略

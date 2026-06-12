@@ -20,8 +20,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/util/dotenv"
-	"github.com/anthropics/goclaude/pkg/util/settingsenv"
+	"github.com/yaoice/goclaude/pkg/util/dotenv"
+	"github.com/yaoice/goclaude/pkg/util/settingsenv"
 )
 
 // envStatus 描述一个变量的当前状态与来源。

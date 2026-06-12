@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 func newTestLayout(t *testing.T) Layout {

@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // ---- mock 工具：可观测被调用次数 ----------------------------------------------------

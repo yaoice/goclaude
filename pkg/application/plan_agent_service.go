@@ -1,10 +1,10 @@
 // Package application 提供 Plan Agent — AI 驱动的 workflow 定义生成器。
 //
 // PlanAgentService 桥接 AgentService（LLM 调用）和 Loader（文件保存）：
-//   1. 根据用户请求构建结构化 prompt
-//   2. 通过 AgentService.Run 调用 LLM 生成 JSON output
-//   3. 解析 → 验证 → 保存为 JSON 文件
-//   4. 返回完整的 workflow.Workflow 供后续执行
+//  1. 根据用户请求构建结构化 prompt
+//  2. 通过 AgentService.Run 调用 LLM 生成 JSON output
+//  3. 解析 → 验证 → 保存为 JSON 文件
+//  4. 返回完整的 workflow.Workflow 供后续执行
 package application
 
 import (
@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/workflow"
-	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/workflow"
+	workflowinfra "github.com/yaoice/goclaude/pkg/infrastructure/workflow"
 )
 
 // PlanAgentService AI 驱动的 workflow 定义生成器。
@@ -42,10 +42,10 @@ type PlanAgentDefaults struct {
 
 // PlanAgentResult Plan Agent 生成结果
 type PlanAgentResult struct {
-	Workflow   *workflow.Workflow
-	RawJSON    string
-	SavedPath  string
-	AutoSaved  bool
+	Workflow  *workflow.Workflow
+	RawJSON   string
+	SavedPath string
+	AutoSaved bool
 }
 
 // NewPlanAgentService 创建 Plan Agent 服务。
@@ -69,12 +69,12 @@ func NewPlanAgentService(
 // PlanFromRequest 从用户请求生成 workflow 定义。
 //
 // 执行流程：
-//   1. 构建 Plan Agent system prompt（含可用 agent 类型列表）
-//   2. 注册临时 "WorkflowPlanner" agent（system prompt = PlanAgentPrompt）
-//   3. 调用 AgentService.Run("WorkflowPlanner", ...) 触发 LLM
-//   4. 解析 LLM 输出的 JSON → workflow.Workflow
-//   5. 验证 workflow 合法性
-//   6. 可选保存到项目 workflows 目录
+//  1. 构建 Plan Agent system prompt（含可用 agent 类型列表）
+//  2. 注册临时 "WorkflowPlanner" agent（system prompt = PlanAgentPrompt）
+//  3. 调用 AgentService.Run("WorkflowPlanner", ...) 触发 LLM
+//  4. 解析 LLM 输出的 JSON → workflow.Workflow
+//  5. 验证 workflow 合法性
+//  6. 可选保存到项目 workflows 目录
 //
 // autoSave: 为 true 时自动保存 JSON 文件到项目目录
 func (s *PlanAgentService) PlanFromRequest(

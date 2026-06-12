@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/skill"
+	"github.com/yaoice/goclaude/pkg/domain/skill"
 )
 
 // 构建临时 skill 目录树

@@ -13,7 +13,7 @@ GOFMT       := gofmt
 GOLINT      := golangci-lint
 
 # 项目信息
-MODULE      := github.com/anthropics/goclaude
+MODULE      := github.com/yaoice/goclaude
 BINARY_NAME := goclaude
 MAIN_PATH   := ./cmd/goclaude/
 

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
-	teamfs "github.com/anthropics/goclaude/pkg/infrastructure/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
+	teamfs "github.com/yaoice/goclaude/pkg/infrastructure/team"
 )
 
 // AssignTask + ReportTask 的端到端：leader 派任务 → worker 收到 → 汇报 working/resolved →

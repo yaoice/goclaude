@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
 )
 
 // 模拟 MCP HTTP 服务器：接受 initialize / tools/list / tools/call

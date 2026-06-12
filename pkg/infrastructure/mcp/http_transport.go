@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
 )
 
 // HTTPTransport 基于 Streamable HTTP 的 MCP 传输

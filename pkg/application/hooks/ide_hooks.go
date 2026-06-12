@@ -10,7 +10,7 @@ package hooks
 import (
 	"sync"
 
-	"github.com/anthropics/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
 )
 
 // IDEIntegration IDE 集成管理器

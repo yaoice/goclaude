@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // 让 *REPL 可以直接作为 tool.ToolEventListener 注入到 Executor，

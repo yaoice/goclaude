@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
 )
 
 func startMCPExtrasServer(t *testing.T) *httptest.Server {

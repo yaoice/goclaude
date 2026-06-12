@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // TeamEngine 管理 team member 的 spawn/stop 生命周期。
@@ -35,8 +35,8 @@ type TeamEngine struct {
 
 	// 默认配置
 	defaultModel       string
-	defaultProjectRoot  string
-	workspaceRootFn     func() string // 动态获取 workspace 根目录（支持 /workspace 切换）
+	defaultProjectRoot string
+	workspaceRootFn    func() string // 动态获取 workspace 根目录（支持 /workspace 切换）
 	defaultMaxTurns    int
 	pollInterval       time.Duration
 	taskTimeout        time.Duration
@@ -98,19 +98,19 @@ func NewTeamEngine(
 		cfg.ShutdownTimeout = 30 * time.Second
 	}
 	return &TeamEngine{
-		agentSvc:          agentSvc,
-		teamSvc:           teamSvc,
-		factory:           factory,
-		logger:            logger.With(slog.String("component", "team_engine")),
-		workers:           make(map[string]*memberWorker),
-		teamWorkspaces:    make(map[string]string),
-		defaultModel:      cfg.DefaultModel,
+		agentSvc:           agentSvc,
+		teamSvc:            teamSvc,
+		factory:            factory,
+		logger:             logger.With(slog.String("component", "team_engine")),
+		workers:            make(map[string]*memberWorker),
+		teamWorkspaces:     make(map[string]string),
+		defaultModel:       cfg.DefaultModel,
 		defaultProjectRoot: cfg.ProjectRoot,
-		workspaceRootFn:   cfg.WorkspaceRootFn,
-		pollInterval:      cfg.PollInterval,
-		taskTimeout:       cfg.TaskTimeout,
-		shutdownTimeout:   cfg.ShutdownTimeout,
-		defaultMaxTurns:   cfg.MaxTurns,
+		workspaceRootFn:    cfg.WorkspaceRootFn,
+		pollInterval:       cfg.PollInterval,
+		taskTimeout:        cfg.TaskTimeout,
+		shutdownTimeout:    cfg.ShutdownTimeout,
+		defaultMaxTurns:    cfg.MaxTurns,
 	}
 }
 
@@ -190,7 +190,7 @@ func (e *TeamEngine) SpawnMember(ctx context.Context, teamName, memberName, agen
 		e.factory,
 		e.logger,
 	)
-		w.pollInterval = e.pollInterval
+	w.pollInterval = e.pollInterval
 	w.taskTimeout = e.taskTimeout
 	w.maxTurns = e.defaultMaxTurns
 

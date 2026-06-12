@@ -19,7 +19,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // resolveInitialPermissionMode 按 flag → yaml → default 优先级返回初始模式。

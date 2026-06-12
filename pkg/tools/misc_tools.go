@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // AskUserTool 向用户提问工具
@@ -19,13 +19,13 @@ type AskUserTool struct{}
 
 func NewAskUserTool() *AskUserTool { return &AskUserTool{} }
 
-func (t *AskUserTool) Name() string                            { return "ask_user" }
-func (t *AskUserTool) Aliases() []string                       { return nil }
-func (t *AskUserTool) Description() string                     { return "向用户提出问题并等待回答。" }
-func (t *AskUserTool) IsEnabled() bool                         { return true }
-func (t *AskUserTool) IsReadOnly(_ tool.Input) bool            { return true }
-func (t *AskUserTool) IsConcurrencySafe(_ tool.Input) bool     { return false }
-func (t *AskUserTool) Prompt() string                          { return "" }
+func (t *AskUserTool) Name() string                        { return "ask_user" }
+func (t *AskUserTool) Aliases() []string                   { return nil }
+func (t *AskUserTool) Description() string                 { return "向用户提出问题并等待回答。" }
+func (t *AskUserTool) IsEnabled() bool                     { return true }
+func (t *AskUserTool) IsReadOnly(_ tool.Input) bool        { return true }
+func (t *AskUserTool) IsConcurrencySafe(_ tool.Input) bool { return false }
+func (t *AskUserTool) Prompt() string                      { return "" }
 func (t *AskUserTool) ValidateInput(input tool.Input) error {
 	if strings.TrimSpace(input.GetString("question")) == "" {
 		return fmt.Errorf("question is required")
@@ -61,13 +61,13 @@ type TodoWriteTool struct{}
 
 func NewTodoWriteTool() *TodoWriteTool { return &TodoWriteTool{} }
 
-func (t *TodoWriteTool) Name() string                            { return "todo_write" }
-func (t *TodoWriteTool) Aliases() []string                       { return nil }
-func (t *TodoWriteTool) Description() string                     { return "创建或更新任务列表。" }
-func (t *TodoWriteTool) IsEnabled() bool                         { return true }
-func (t *TodoWriteTool) IsReadOnly(_ tool.Input) bool            { return false }
-func (t *TodoWriteTool) IsConcurrencySafe(_ tool.Input) bool     { return false }
-func (t *TodoWriteTool) Prompt() string                          { return "" }
+func (t *TodoWriteTool) Name() string                        { return "todo_write" }
+func (t *TodoWriteTool) Aliases() []string                   { return nil }
+func (t *TodoWriteTool) Description() string                 { return "创建或更新任务列表。" }
+func (t *TodoWriteTool) IsEnabled() bool                     { return true }
+func (t *TodoWriteTool) IsReadOnly(_ tool.Input) bool        { return false }
+func (t *TodoWriteTool) IsConcurrencySafe(_ tool.Input) bool { return false }
+func (t *TodoWriteTool) Prompt() string                      { return "" }
 func (t *TodoWriteTool) ValidateInput(input tool.Input) error {
 	if strings.TrimSpace(input.GetString("todos")) == "" {
 		return fmt.Errorf("todos is required (JSON array string)")
@@ -102,13 +102,13 @@ type WebSearchTool struct{}
 
 func NewWebSearchTool() *WebSearchTool { return &WebSearchTool{} }
 
-func (t *WebSearchTool) Name() string                            { return "web_search" }
-func (t *WebSearchTool) Aliases() []string                       { return nil }
-func (t *WebSearchTool) Description() string                     { return "搜索网络获取实时信息。" }
-func (t *WebSearchTool) IsEnabled() bool                         { return true }
-func (t *WebSearchTool) IsReadOnly(_ tool.Input) bool            { return true }
-func (t *WebSearchTool) IsConcurrencySafe(_ tool.Input) bool     { return true }
-func (t *WebSearchTool) Prompt() string                          { return "" }
+func (t *WebSearchTool) Name() string                        { return "web_search" }
+func (t *WebSearchTool) Aliases() []string                   { return nil }
+func (t *WebSearchTool) Description() string                 { return "搜索网络获取实时信息。" }
+func (t *WebSearchTool) IsEnabled() bool                     { return true }
+func (t *WebSearchTool) IsReadOnly(_ tool.Input) bool        { return true }
+func (t *WebSearchTool) IsConcurrencySafe(_ tool.Input) bool { return true }
+func (t *WebSearchTool) Prompt() string                      { return "" }
 func (t *WebSearchTool) ValidateInput(input tool.Input) error {
 	if strings.TrimSpace(input.GetString("query")) == "" {
 		return fmt.Errorf("query is required")
@@ -155,13 +155,13 @@ func NewWebFetchTool() *WebFetchTool {
 	}
 }
 
-func (t *WebFetchTool) Name() string                            { return "web_fetch" }
-func (t *WebFetchTool) Aliases() []string                       { return nil }
-func (t *WebFetchTool) Description() string                     { return "获取 URL 内容并转换为纯文本。" }
-func (t *WebFetchTool) IsEnabled() bool                         { return true }
-func (t *WebFetchTool) IsReadOnly(_ tool.Input) bool            { return true }
-func (t *WebFetchTool) IsConcurrencySafe(_ tool.Input) bool     { return true }
-func (t *WebFetchTool) Prompt() string                          { return "" }
+func (t *WebFetchTool) Name() string                        { return "web_fetch" }
+func (t *WebFetchTool) Aliases() []string                   { return nil }
+func (t *WebFetchTool) Description() string                 { return "获取 URL 内容并转换为纯文本。" }
+func (t *WebFetchTool) IsEnabled() bool                     { return true }
+func (t *WebFetchTool) IsReadOnly(_ tool.Input) bool        { return true }
+func (t *WebFetchTool) IsConcurrencySafe(_ tool.Input) bool { return true }
+func (t *WebFetchTool) Prompt() string                      { return "" }
 func (t *WebFetchTool) ValidateInput(input tool.Input) error {
 	url := strings.TrimSpace(input.GetString("url"))
 	if url == "" {

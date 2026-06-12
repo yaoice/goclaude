@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/filesystem"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/filesystem"
 )
 
 // FileReadTool 文件读取工具
@@ -18,7 +18,7 @@ func NewFileReadTool(fs *filesystem.Service) *FileReadTool {
 	return &FileReadTool{fs: fs}
 }
 
-func (t *FileReadTool) Name() string     { return "file_read" }
+func (t *FileReadTool) Name() string      { return "file_read" }
 func (t *FileReadTool) Aliases() []string { return []string{"Read"} }
 func (t *FileReadTool) Description() string {
 	return "读取文件内容。支持通过offset和limit参数读取文件的指定部分。"
@@ -35,10 +35,10 @@ func (t *FileReadTool) InputSchema() map[string]interface{} {
 	}
 }
 
-func (t *FileReadTool) IsEnabled() bool                    { return true }
-func (t *FileReadTool) IsReadOnly(input tool.Input) bool   { return true }
+func (t *FileReadTool) IsEnabled() bool                         { return true }
+func (t *FileReadTool) IsReadOnly(input tool.Input) bool        { return true }
 func (t *FileReadTool) IsConcurrencySafe(input tool.Input) bool { return true }
-func (t *FileReadTool) Prompt() string                     { return "" }
+func (t *FileReadTool) Prompt() string                          { return "" }
 func (t *FileReadTool) ValidateInput(input tool.Input) error {
 	if input.GetString("file_path") == "" {
 		return fmt.Errorf("file_path is required")

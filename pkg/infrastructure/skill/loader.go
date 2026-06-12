@@ -15,9 +15,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/skill"
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
-	"github.com/anthropics/goclaude/pkg/util/frontmatter"
+	"github.com/yaoice/goclaude/pkg/domain/skill"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/util/frontmatter"
 )
 
 // Loader 文件系统 Skill 加载器

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/filesystem"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/filesystem"
 )
 
 // GlobTool 文件模式匹配搜索工具
@@ -18,7 +18,7 @@ func NewGlobTool(workDir string) *GlobTool {
 	return &GlobTool{glob: filesystem.NewGlob(workDir)}
 }
 
-func (t *GlobTool) Name() string     { return "glob" }
+func (t *GlobTool) Name() string      { return "glob" }
 func (t *GlobTool) Aliases() []string { return []string{"Glob"} }
 func (t *GlobTool) Description() string {
 	return "使用glob模式搜索文件。返回匹配的文件路径列表。"
@@ -34,10 +34,10 @@ func (t *GlobTool) InputSchema() map[string]interface{} {
 	}
 }
 
-func (t *GlobTool) IsEnabled() bool                    { return true }
-func (t *GlobTool) IsReadOnly(input tool.Input) bool   { return true }
+func (t *GlobTool) IsEnabled() bool                         { return true }
+func (t *GlobTool) IsReadOnly(input tool.Input) bool        { return true }
 func (t *GlobTool) IsConcurrencySafe(input tool.Input) bool { return true }
-func (t *GlobTool) Prompt() string                     { return "" }
+func (t *GlobTool) Prompt() string                          { return "" }
 func (t *GlobTool) ValidateInput(input tool.Input) error {
 	if input.GetString("pattern") == "" {
 		return fmt.Errorf("pattern is required")
@@ -72,7 +72,7 @@ func NewGrepTool(workDir string) *GrepTool {
 	return &GrepTool{grep: filesystem.NewGrep(workDir)}
 }
 
-func (t *GrepTool) Name() string     { return "grep" }
+func (t *GrepTool) Name() string      { return "grep" }
 func (t *GrepTool) Aliases() []string { return []string{"Grep"} }
 func (t *GrepTool) Description() string {
 	return "使用正则表达式搜索文件内容（基于ripgrep）。"
@@ -90,10 +90,10 @@ func (t *GrepTool) InputSchema() map[string]interface{} {
 	}
 }
 
-func (t *GrepTool) IsEnabled() bool                    { return true }
-func (t *GrepTool) IsReadOnly(input tool.Input) bool   { return true }
+func (t *GrepTool) IsEnabled() bool                         { return true }
+func (t *GrepTool) IsReadOnly(input tool.Input) bool        { return true }
 func (t *GrepTool) IsConcurrencySafe(input tool.Input) bool { return true }
-func (t *GrepTool) Prompt() string                     { return "" }
+func (t *GrepTool) Prompt() string                          { return "" }
 func (t *GrepTool) ValidateInput(input tool.Input) error {
 	if input.GetString("pattern") == "" {
 		return fmt.Errorf("pattern is required")

@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/infrastructure/api/anthropic"
-	"github.com/anthropics/goclaude/pkg/infrastructure/api/deepseek"
 	"github.com/spf13/cobra"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/infrastructure/api/anthropic"
+	"github.com/yaoice/goclaude/pkg/infrastructure/api/deepseek"
 )
 
 // 模型 provider 选择

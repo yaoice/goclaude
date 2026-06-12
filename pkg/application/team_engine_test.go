@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // TestTeamEngine_SpawnAndShutdown 验证 member worker 的完整生命周期：

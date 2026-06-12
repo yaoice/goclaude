@@ -3,8 +3,8 @@ package cli
 import (
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
 )
 
 // 测试帮助：临时替换全局 loadedAppConfig，函数返回时自动恢复。

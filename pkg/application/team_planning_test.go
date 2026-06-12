@@ -3,9 +3,9 @@ package application_test
 import (
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/team"
-	teamfs "github.com/anthropics/goclaude/pkg/infrastructure/team"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/team"
+	teamfs "github.com/yaoice/goclaude/pkg/infrastructure/team"
 )
 
 // =============================================================================

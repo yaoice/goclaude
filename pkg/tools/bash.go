@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/shell"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/shell"
 )
 
 // BashTool Shell命令执行工具
@@ -17,7 +17,7 @@ func NewBashTool(executor *shell.Executor) *BashTool {
 	return &BashTool{executor: executor}
 }
 
-func (t *BashTool) Name() string     { return "bash" }
+func (t *BashTool) Name() string      { return "bash" }
 func (t *BashTool) Aliases() []string { return []string{"Bash"} }
 func (t *BashTool) Description() string {
 	return "在bash shell中执行命令。命令在工作目录中执行，支持超时控制。"
@@ -34,10 +34,10 @@ func (t *BashTool) InputSchema() map[string]interface{} {
 	}
 }
 
-func (t *BashTool) IsEnabled() bool                    { return true }
-func (t *BashTool) IsReadOnly(input tool.Input) bool   { return false }
+func (t *BashTool) IsEnabled() bool                         { return true }
+func (t *BashTool) IsReadOnly(input tool.Input) bool        { return false }
 func (t *BashTool) IsConcurrencySafe(input tool.Input) bool { return false }
-func (t *BashTool) Prompt() string                     { return "" }
+func (t *BashTool) Prompt() string                          { return "" }
 func (t *BashTool) ValidateInput(input tool.Input) error {
 	if input.GetString("command") == "" {
 		return fmt.Errorf("command is required")

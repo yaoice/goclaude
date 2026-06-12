@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
 )
 
 // SSETransport 基于 Server-Sent Events 的 MCP 传输（早期 MCP 双 endpoint 模式）

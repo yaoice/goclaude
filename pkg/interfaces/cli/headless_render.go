@@ -5,11 +5,11 @@
 //
 // 渲染风格：
 //
-//	  [1] ◌ web_fetch  https://example.com
-//	  [1] ✓ web_fetch  42ms
-//	  ┏━ coder · sonnet ━━━━━━━━━━━━━━━━━
-//	  ┃  Code Generation
-//	  ┗━ ✓ done · 1.2s · 5 steps ━━━━━━━━
+//	[1] ◌ web_fetch  https://example.com
+//	[1] ✓ web_fetch  42ms
+//	┏━ coder · sonnet ━━━━━━━━━━━━━━━━━
+//	┃  Code Generation
+//	┗━ ✓ done · 1.2s · 5 steps ━━━━━━━━
 package cli
 
 import (
@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 var (

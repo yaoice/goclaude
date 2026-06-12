@@ -6,7 +6,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/anthropics/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
 )
 
 // APIKeyVerifierFunc API key 验证函数类型
@@ -73,10 +73,11 @@ func NewAPIKeyVerifier(
 // initStatus 初始化状态（对齐 TS 的 useState 惰性初始化）
 //
 // 对齐逻辑：
-//   if (!isAnthropicAuthEnabled() || isClaudeAISubscriber()) return 'valid'
-//   const { key, source } = getAnthropicApiKeyWithSource({ skipRetrievingKeyFromApiKeyHelper: true })
-//   if (key || source === 'apiKeyHelper') return 'loading'
-//   return 'missing'
+//
+//	if (!isAnthropicAuthEnabled() || isClaudeAISubscriber()) return 'valid'
+//	const { key, source } = getAnthropicApiKeyWithSource({ skipRetrievingKeyFromApiKeyHelper: true })
+//	if (key || source === 'apiKeyHelper') return 'loading'
+//	return 'missing'
 func (v *apiKeyVerifier) initStatus() {
 	if !v.isAuthEnabled() || v.isSubscriber() {
 		v.status = hook.VerificationValid
@@ -119,14 +120,14 @@ func (v *apiKeyVerifier) Reverify() (hook.VerificationStatus, error) {
 // verify 核心验证逻辑。
 //
 // 对齐 TS 的 verify callback：
-//   1. auth 未启用 / subscriber → valid
-//   2. 预热 apiKeyHelper 缓存 → getApiKeyFromApiKeyHelper(getIsNonInteractiveSession())
-//   3. 获取 key → getAnthropicApiKeyWithSource()
-//   4. 无 key：
-//      - source === 'apiKeyHelper' → error（helper 未返回有效 key）
-//      - 其他 → missing
-//   5. 调用 verifyApiKey(key, false) → valid / invalid
-//   6. 捕获异常 → error（非认证错误的 API 错误）
+//  1. auth 未启用 / subscriber → valid
+//  2. 预热 apiKeyHelper 缓存 → getApiKeyFromApiKeyHelper(getIsNonInteractiveSession())
+//  3. 获取 key → getAnthropicApiKeyWithSource()
+//  4. 无 key：
+//     - source === 'apiKeyHelper' → error（helper 未返回有效 key）
+//     - 其他 → missing
+//  5. 调用 verifyApiKey(key, false) → valid / invalid
+//  6. 捕获异常 → error（非认证错误的 API 错误）
 func (v *apiKeyVerifier) verify(_ bool) (hook.VerificationStatus, error) {
 	// 步骤 1: 如果 auth 未启用或用户是 subscriber，直接返回 valid
 	if !v.isAuthEnabled() || v.isSubscriber() {

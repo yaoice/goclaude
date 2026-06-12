@@ -1,10 +1,10 @@
 package tools
 
 import (
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/filesystem"
-	"github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
-	"github.com/anthropics/goclaude/pkg/infrastructure/shell"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/filesystem"
+	"github.com/yaoice/goclaude/pkg/infrastructure/sandbox"
+	"github.com/yaoice/goclaude/pkg/infrastructure/shell"
 )
 
 // RegisterAll 注册所有工具到注册表

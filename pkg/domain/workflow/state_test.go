@@ -3,7 +3,7 @@ package workflow_test
 import (
 	"testing"
 
-	wf "github.com/anthropics/goclaude/pkg/domain/workflow"
+	wf "github.com/yaoice/goclaude/pkg/domain/workflow"
 )
 
 func TestWorkflowState_NodeLifecycle(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // stubProvider 仅实现 Send，返回预设字符串作为摘要

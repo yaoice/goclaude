@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // 关键不变量：构造一个 leader-only team file 并存盘，再读回来必须等价。

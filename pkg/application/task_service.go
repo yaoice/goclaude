@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/anthropics/goclaude/pkg/domain/task"
+	"github.com/yaoice/goclaude/pkg/domain/task"
 )
 
 // TaskService 任务管理应用服务

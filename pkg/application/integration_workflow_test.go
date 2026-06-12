@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/workflow"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/workflow"
 )
 
 // ============================================================================
@@ -913,18 +913,18 @@ func TestWorkflowOrchestration_SubagentIsolation(t *testing.T) {
 
 	// 注册两个 agent
 	svc.Registry().Register(&agent.Definition{
-		AgentType:       "AgentX",
-		WhenToUse:       "agent x",
-		SystemPrompt:            "you are X",
-		Source:                  agent.SourceBuiltIn,
-		AllowSubagentChaining:   false, // 不允许启用子 subagent
+		AgentType:             "AgentX",
+		WhenToUse:             "agent x",
+		SystemPrompt:          "you are X",
+		Source:                agent.SourceBuiltIn,
+		AllowSubagentChaining: false, // 不允许启用子 subagent
 	})
 	svc.Registry().Register(&agent.Definition{
-		AgentType:               "AgentY",
-		WhenToUse:               "agent y",
-		SystemPrompt:            "you are Y",
-		Source:                  agent.SourceBuiltIn,
-		AllowSubagentChaining:   false,
+		AgentType:             "AgentY",
+		WhenToUse:             "agent y",
+		SystemPrompt:          "you are Y",
+		Source:                agent.SourceBuiltIn,
+		AllowSubagentChaining: false,
 	})
 
 	// 验证：

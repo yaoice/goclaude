@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // ============================================================
@@ -26,12 +26,12 @@ type MemoryFilterConfig struct {
 	CustomRules []*memory.FilterRule `json:"custom_rules,omitempty"`
 
 	// 容量限制
-	MaxEntries     int `json:"max_entries"`     // 最大条目数（0=不限制，默认200）
-	MaxTotalBytes  int `json:"max_total_bytes"` // 最大总字节数（0=不限制，默认256KB）
+	MaxEntries    int `json:"max_entries"`     // 最大条目数（0=不限制，默认200）
+	MaxTotalBytes int `json:"max_total_bytes"` // 最大总字节数（0=不限制，默认256KB）
 
 	// 旧内容处理策略
 	EvictionPolicy string `json:"eviction_policy,omitempty"` // "lru" | "priority"（默认 "priority"）
-	AutoSummarize  bool   `json:"auto_summarize"`             // 淘汰前是否摘要压缩
+	AutoSummarize  bool   `json:"auto_summarize"`            // 淘汰前是否摘要压缩
 
 	// 相关性阈值
 	MinRelevanceScore float64 `json:"min_relevance_score"` // 最小相关度（0-1，低于此分数标记低相关）
@@ -44,10 +44,10 @@ type MemoryFilterConfig struct {
 // DefaultMemoryFilterConfig 返回推荐默认配置
 func DefaultMemoryFilterConfig() MemoryFilterConfig {
 	return MemoryFilterConfig{
-		MaxEntries:     200,
-		MaxTotalBytes:  256 * 1024, // 256KB
-		EvictionPolicy: "priority",
-		AutoSummarize:  true,
+		MaxEntries:        200,
+		MaxTotalBytes:     256 * 1024, // 256KB
+		EvictionPolicy:    "priority",
+		AutoSummarize:     true,
 		MinRelevanceScore: 0.1,
 		MinPriorityScore:  5,
 	}
@@ -59,17 +59,17 @@ func DefaultMemoryFilterConfig() MemoryFilterConfig {
 
 // MemoryFilterService 记忆过滤服务
 type MemoryFilterService struct {
-	mu          sync.RWMutex
-	cfg         MemoryFilterConfig
-	ruleEngine  *memory.RuleEngine
-	entries     map[string]*EntryWithMeta
-	accessLog   []string // 访问顺序记录（用于 LRU）
+	mu         sync.RWMutex
+	cfg        MemoryFilterConfig
+	ruleEngine *memory.RuleEngine
+	entries    map[string]*EntryWithMeta
+	accessLog  []string // 访问顺序记录（用于 LRU）
 }
 
 // EntryWithMeta 带内部元数据的条目
 type EntryWithMeta struct {
 	*memory.MemoryEntry
-	Filtered   bool   `json:"-"` // 是否被规则过滤
+	Filtered    bool   `json:"-"` // 是否被规则过滤
 	MatchedRule string `json:"-"` // 匹配的规则名
 }
 
@@ -194,6 +194,7 @@ func (s *MemoryFilterService) ScoreBatchRelevance(entries []*EntryWithMeta) {
 //   - user_directive → 基础 80
 //   - agent_note      → 基础 50
 //   - auto_extract    → 基础 30
+//
 // 类别加成：
 //   - project   → +10
 //   - reference → +5
@@ -243,13 +244,13 @@ func SortByPriority(entries []*EntryWithMeta, now time.Time) {
 
 // CapacityStatus 容量状态
 type CapacityStatus struct {
-	TotalEntries    int   `json:"total_entries"`
-	MaxEntries      int   `json:"max_entries"`
-	TotalBytes      int   `json:"total_bytes"`
-	MaxBytes        int   `json:"max_bytes"`
-	EntriesToEvict  int   `json:"entries_to_evict,omitempty"`
-	BytesToFree     int   `json:"bytes_to_free,omitempty"`
-	NeedsEviction   bool  `json:"needs_eviction"`
+	TotalEntries   int  `json:"total_entries"`
+	MaxEntries     int  `json:"max_entries"`
+	TotalBytes     int  `json:"total_bytes"`
+	MaxBytes       int  `json:"max_bytes"`
+	EntriesToEvict int  `json:"entries_to_evict,omitempty"`
+	BytesToFree    int  `json:"bytes_to_free,omitempty"`
+	NeedsEviction  bool `json:"needs_eviction"`
 }
 
 // CheckCapacity 检查容量状态
@@ -283,6 +284,7 @@ func (s *MemoryFilterService) CheckCapacity(entries []*EntryWithMeta) CapacitySt
 // 策略：
 //   - "priority": 按综合评分升序淘汰（最低分先删），直到满足容量
 //   - "lru":      按最近访问时间淘汰（最久未访问先删）
+//
 // 返回：保留的条目、被淘汰的条目
 func (s *MemoryFilterService) Evict(entries []*EntryWithMeta, now time.Time) (kept, evicted []*EntryWithMeta) {
 	withinCapacity := len(entries) <= s.cfg.MaxEntries && totalSize(entries) <= s.cfg.MaxTotalBytes
@@ -426,15 +428,15 @@ func SummarizeEvicted(evicted []*EntryWithMeta, now time.Time) *memory.MemoryEnt
 
 // ProcessResult 全流程处理结果
 type ProcessResult struct {
-	Kept        []*EntryWithMeta   `json:"kept"`
-	Filtered    []*EntryWithMeta   `json:"filtered"`
-	Evicted     []*EntryWithMeta   `json:"evicted"`
-	Summary     *memory.MemoryEntry `json:"summary,omitempty"`
-	Capacity    CapacityStatus     `json:"capacity"`
+	Kept     []*EntryWithMeta    `json:"kept"`
+	Filtered []*EntryWithMeta    `json:"filtered"`
+	Evicted  []*EntryWithMeta    `json:"evicted"`
+	Summary  *memory.MemoryEntry `json:"summary,omitempty"`
+	Capacity CapacityStatus      `json:"capacity"`
 }
 
 // ProcessFull 执行全流程：
-//   1. 规则引擎过滤 → 2. 相关性评分 → 3. 容量检查与淘汰 → 4. 摘要压缩
+//  1. 规则引擎过滤 → 2. 相关性评分 → 3. 容量检查与淘汰 → 4. 摘要压缩
 func (s *MemoryFilterService) ProcessFull(entries []*memory.MemoryEntry) ProcessResult {
 	now := time.Now()
 

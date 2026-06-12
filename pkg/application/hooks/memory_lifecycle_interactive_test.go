@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
-	"github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
-	memoryapp "github.com/anthropics/goclaude/pkg/application/memory"
+	memoryapp "github.com/yaoice/goclaude/pkg/application/memory"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
+	"github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
 )
 
 // ============================================================
@@ -26,7 +26,7 @@ func interactiveTestConfig() appconfig.LongTermMemoryConfig {
 	return appconfig.LongTermMemoryConfig{
 		Enabled: true,
 		Capture: appconfig.LongTermCaptureConfig{
-			AutoCaptureTools:  true,
+			AutoCaptureTools:   true,
 			MaxObservationSize: 8000,
 			MinCaptureChars:    10,
 		},
@@ -44,8 +44,8 @@ func interactiveTestConfig() appconfig.LongTermMemoryConfig {
 			MinPriority: 5,
 		},
 		Expiration: appconfig.LongTermExpirationConfig{
-			DefaultTTLDays:      90,
-			LowPriorityTTLDays:  30,
+			DefaultTTLDays:       90,
+			LowPriorityTTLDays:   30,
 			CleanupIntervalHours: 0,
 		},
 		Privacy: appconfig.LongTermPrivacyConfig{
@@ -124,7 +124,7 @@ func TestInteractive_SessionLifecycle(t *testing.T) {
 	reg.Run(ctx, hook.EventSessionEnd, &hook.Context{
 		SessionID: sessID,
 		Extra: map[string]interface{}{
-			"summary":      "分析了测试覆盖率，15个测试，覆盖65%",
+			"summary":       "分析了测试覆盖率，15个测试，覆盖65%",
 			"input_tokens":  1500,
 			"output_tokens": 400,
 			"turn_count":    3,

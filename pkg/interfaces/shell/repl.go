@@ -15,10 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	"github.com/anthropics/goclaude/pkg/domain/memory"
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // idleInterruptWindow 空闲态连续两次 Ctrl+C 判定为"退出"的时间窗口
@@ -256,7 +256,7 @@ func (r *REPL) Run(ctx context.Context) error {
 			r.HookReg.Run(context.Background(), hook.EventSessionEnd, &hook.Context{
 				SessionID: r.SessionID,
 				Extra: map[string]interface{}{
-					"summary":  fmt.Sprintf("REPL session ended with %d exchanges.", turnCount),
+					"summary":    fmt.Sprintf("REPL session ended with %d exchanges.", turnCount),
 					"turn_count": turnCount,
 				},
 			})
@@ -588,31 +588,31 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 					}
 				}
 
-		case query.ContentTypeToolResult:
-			flushFmt()
+			case query.ContentTypeToolResult:
+				flushFmt()
 
-			// PostToolUse: 自动捕获工具执行结果到长期记忆
-			if r.HookReg != nil {
-				toolName := ""
-				extra := map[string]interface{}{"result": b.Text}
-				if m, ok := toolUseIDToMeta[b.ToolUseID]; ok {
-					toolName = m.name
-					if m.partial != "" {
-						var input map[string]interface{}
-						if json.Unmarshal([]byte(m.partial), &input) == nil {
-							extra["tool_input"] = input
+				// PostToolUse: 自动捕获工具执行结果到长期记忆
+				if r.HookReg != nil {
+					toolName := ""
+					extra := map[string]interface{}{"result": b.Text}
+					if m, ok := toolUseIDToMeta[b.ToolUseID]; ok {
+						toolName = m.name
+						if m.partial != "" {
+							var input map[string]interface{}
+							if json.Unmarshal([]byte(m.partial), &input) == nil {
+								extra["tool_input"] = input
+							}
 						}
 					}
+					extra["is_error"] = b.IsError
+					r.HookReg.Run(ctx, hook.EventPostToolUse, &hook.Context{
+						SessionID: r.SessionID,
+						ToolName:  toolName,
+						Extra:     extra,
+					})
 				}
-				extra["is_error"] = b.IsError
-				r.HookReg.Run(ctx, hook.EventPostToolUse, &hook.Context{
-					SessionID: r.SessionID,
-					ToolName:  toolName,
-					Extra:     extra,
-				})
-			}
 
-			// 折叠工具
+				// 折叠工具
 				if m, ok := toolUseIDToMeta[b.ToolUseID]; ok && m.collapsed {
 					if b.IsError {
 						r.writeOut("      " + r.colorize("✗ "+m.name, colorError) + "\r\n")

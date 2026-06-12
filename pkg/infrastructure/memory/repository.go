@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	memory "github.com/anthropics/goclaude/pkg/domain/memory"
+	memory "github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // FileRepository 基于文件系统的实现

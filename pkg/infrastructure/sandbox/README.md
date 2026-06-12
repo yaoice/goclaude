@@ -74,8 +74,8 @@ goclaude --dangerously-skip-permissions
 package main
 
 import (
-    "github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
-    "github.com/anthropics/goclaude/pkg/infrastructure/shell"
+    "github.com/yaoice/goclaude/pkg/infrastructure/sandbox"
+    "github.com/yaoice/goclaude/pkg/infrastructure/shell"
 )
 
 func main() {

@@ -20,12 +20,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	wf "github.com/anthropics/goclaude/pkg/domain/workflow"
-	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	wf "github.com/yaoice/goclaude/pkg/domain/workflow"
+	workflowinfra "github.com/yaoice/goclaude/pkg/infrastructure/workflow"
 )
 
 // ============================================================================
@@ -35,9 +35,9 @@ import (
 // businessProvider 模拟带工具调用的真实 agent 行为。
 // 使用有序回复队列：每次 Stream 调用按序弹出下一个响应。
 type businessProvider struct {
-	mu       sync.Mutex
-	turns    []scriptTargetTurn // 全局有序回复队列
-	cursor   int
+	mu     sync.Mutex
+	turns  []scriptTargetTurn // 全局有序回复队列
+	cursor int
 }
 
 type scriptTargetTurn struct {
@@ -78,16 +78,20 @@ func (p *businessProvider) Stream(_ context.Context, _ *query.StreamParams) (<-c
 		}
 		if turn.toolName != "" {
 			ch <- query.StreamEvent{
-				Type:  query.EventContentBlockStart, Index: 0,
+				Type: query.EventContentBlockStart, Index: 0,
 				ContentBlock: &query.ContentBlock{Type: query.ContentTypeToolUse, ToolUseID: turn.toolID, ToolName: turn.toolName, Input: turn.toolInput},
 			}
 			ch <- query.StreamEvent{Type: query.EventContentBlockStop, Index: 0}
 			sr := turn.stopReason
-			if sr == "" { sr = query.StopReasonToolUse }
+			if sr == "" {
+				sr = query.StopReasonToolUse
+			}
 			ch <- query.StreamEvent{Type: query.EventMessageDelta, StopReason: sr, Usage: &query.Usage{InputTokens: 10, OutputTokens: 5}}
 		} else {
 			sr := turn.stopReason
-			if sr == "" { sr = query.StopReasonEndTurn }
+			if sr == "" {
+				sr = query.StopReasonEndTurn
+			}
 			sendTextEvents(ch, turn.text, sr)
 		}
 	}()
@@ -119,7 +123,6 @@ func (p *businessProvider) Send(_ context.Context, _ *query.SendParams) (*query.
 	return nil, nil, fmt.Errorf("not implemented")
 }
 
-
 // ============================================================================
 // Part B: 真实业务工具模拟
 // ============================================================================
@@ -139,7 +142,9 @@ func (t *businessTool) IsReadOnly(_ tool.Input) bool        { return t.readonly 
 func (t *businessTool) IsConcurrencySafe(_ tool.Input) bool { return true }
 func (t *businessTool) Prompt() string                      { return "" }
 func (t *businessTool) ValidateInput(_ tool.Input) error    { return nil }
-func (t *businessTool) InputSchema() map[string]interface{} { return map[string]interface{}{"type": "object"} }
+func (t *businessTool) InputSchema() map[string]interface{} {
+	return map[string]interface{}{"type": "object"}
+}
 func (t *businessTool) CheckPermissions(_ context.Context, _ tool.Input, _ *tool.PermissionContext) (tool.PermissionResult, error) {
 	return tool.PermissionResult{Behavior: tool.PermissionAllow}, nil
 }
@@ -161,15 +166,15 @@ type integrationTestSuite struct {
 	homeDir string
 	projDir string
 
-	registry  *tool.Registry
-	agentSvc  *application.AgentService
-	factory   application.AgentEngineFactory
-	budget    *query.TokenBudget
-	provider  *businessProvider
-	wfSvc     *application.WorkflowService
-	loader    *workflowinfra.Loader
-	planSvc   *application.PlanAgentService
-	logger    *slog.Logger
+	registry *tool.Registry
+	agentSvc *application.AgentService
+	factory  application.AgentEngineFactory
+	budget   *query.TokenBudget
+	provider *businessProvider
+	wfSvc    *application.WorkflowService
+	loader   *workflowinfra.Loader
+	planSvc  *application.PlanAgentService
+	logger   *slog.Logger
 
 	// 追踪
 	subagentEvents []application.SubagentEvent

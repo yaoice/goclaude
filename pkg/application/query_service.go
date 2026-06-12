@@ -5,8 +5,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // QueryService 查询引擎应用服务

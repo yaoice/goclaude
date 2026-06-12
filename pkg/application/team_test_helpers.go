@@ -9,10 +9,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	teamfs "github.com/anthropics/goclaude/pkg/infrastructure/team"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	teamfs "github.com/yaoice/goclaude/pkg/infrastructure/team"
 )
 
 // newTestTeamService 使用 tempDir 创建隔离的 TeamService。

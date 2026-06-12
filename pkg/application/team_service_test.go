@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
-	teamfs "github.com/anthropics/goclaude/pkg/infrastructure/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
+	teamfs "github.com/yaoice/goclaude/pkg/infrastructure/team"
 )
 
 func newTestService(t *testing.T) *TeamService {

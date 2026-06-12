@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
 )
 
 // EntrypointName is the memory entrypoint filename
@@ -87,8 +87,8 @@ func (OSFileSystem) ReadDir(path string, recursive bool) ([]DirEntry, error) {
 				return nil // skip errors
 			}
 			entries = append(entries, DirEntry{
-				Name: info.Name(),
-				Path: p,
+				Name:  info.Name(),
+				Path:  p,
 				IsDir: info.IsDir(),
 			})
 			return nil
@@ -103,8 +103,8 @@ func (OSFileSystem) ReadDir(path string, recursive bool) ([]DirEntry, error) {
 		}
 		for _, entry := range dirEntries {
 			entries = append(entries, DirEntry{
-				Name: entry.Name(),
-				Path: filepath.Join(path, entry.Name()),
+				Name:  entry.Name(),
+				Path:  filepath.Join(path, entry.Name()),
 				IsDir: entry.IsDir(),
 			})
 		}
@@ -126,11 +126,11 @@ func (OSFileSystem) Stat(path string) (FileInfo, error) {
 	}
 
 	return FileInfo{
-		Path:     path,
-		IsDir:    info.IsDir(),
+		Path:      path,
+		IsDir:     info.IsDir(),
 		IsSymlink: isSymlink,
-		ModTime:  info.ModTime(),
-		Size:     info.Size(),
+		ModTime:   info.ModTime(),
+		Size:      info.Size(),
 	}, nil
 }
 
@@ -198,9 +198,9 @@ type DirEntry struct {
 
 // FileInfo is file information.
 type FileInfo struct {
-	Path     string    `json:"path"`
-	IsDir    bool      `json:"is_dir"`
+	Path      string    `json:"path"`
+	IsDir     bool      `json:"is_dir"`
 	IsSymlink bool      `json:"is_symlink"`
-	ModTime  time.Time `json:"mod_time"`
-	Size     int64     `json:"size"`
+	ModTime   time.Time `json:"mod_time"`
+	Size      int64     `json:"size"`
 }

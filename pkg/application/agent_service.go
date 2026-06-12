@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	agentinfra "github.com/anthropics/goclaude/pkg/infrastructure/agent"
-	"github.com/anthropics/goclaude/pkg/infrastructure/memory"
-	"github.com/anthropics/goclaude/pkg/infrastructure/worktree"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	agentinfra "github.com/yaoice/goclaude/pkg/infrastructure/agent"
+	"github.com/yaoice/goclaude/pkg/infrastructure/memory"
+	"github.com/yaoice/goclaude/pkg/infrastructure/worktree"
 )
 
 // AgentService Subagent 应用服务

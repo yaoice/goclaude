@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/workflow"
+	"github.com/yaoice/goclaude/pkg/domain/workflow"
 )
 
 // ============================================================================
@@ -314,7 +314,7 @@ func TestDependencyOutputInjection_AirplaneWarFullDAG(t *testing.T) {
 			{
 				ID: "implement-collision-and-score", Name: "实现碰撞检测和计分",
 				SubagentType: "general-purpose", Prompt: "编写 game/utils.py",
-				DependsOn: []string{"implement-player-class", "implement-bullet-class", "implement-enemy-class"},
+				DependsOn:  []string{"implement-player-class", "implement-bullet-class", "implement-enemy-class"},
 				TimeoutSec: 120, FailureStrategy: workflow.FailureStrategyFailFast,
 			},
 			{

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // newRenderWithBuf 创建一个写到内存 buf 的渲染器，并强制关闭颜色，

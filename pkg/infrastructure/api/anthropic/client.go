@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 const (

@@ -9,15 +9,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	teamdomain "github.com/anthropics/goclaude/pkg/domain/team"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/compact"
-	"github.com/anthropics/goclaude/pkg/infrastructure/todo"
-	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
-	"github.com/anthropics/goclaude/pkg/interfaces/shell"
-	"github.com/anthropics/goclaude/pkg/tools"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	teamdomain "github.com/yaoice/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/compact"
+	"github.com/yaoice/goclaude/pkg/infrastructure/todo"
+	workflowinfra "github.com/yaoice/goclaude/pkg/infrastructure/workflow"
+	"github.com/yaoice/goclaude/pkg/interfaces/shell"
+	"github.com/yaoice/goclaude/pkg/tools"
 )
 
 // 本文件聚合 `goclaude run` 的核心：装配 QueryEngine + 工具 + skills + MCP + subagent，
@@ -269,8 +269,8 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	repl := shell.NewREPL(engine, modelName, flagProvider, cwd)
 	repl.Verbose = flagVerbose
 	repl.PermissionMode = string(permCtx.Mode)
-	repl.HookReg = wired.HookReg             // 长期记忆生命周期 hooks
-	repl.SessionID = sessionID               // 当前会话 ID
+	repl.HookReg = wired.HookReg // 长期记忆生命周期 hooks
+	repl.SessionID = sessionID   // 当前会话 ID
 	// 注入扩展能力管理服务
 	repl.Skills = &skillAdapter{svc: wired.SkillSvc}
 	repl.Agents = &agentAdapter{svc: wired.AgentSvc}

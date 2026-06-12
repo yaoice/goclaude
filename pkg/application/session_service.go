@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/session"
+	"github.com/yaoice/goclaude/pkg/domain/session"
 )
 
 // SessionService 会话管理应用服务

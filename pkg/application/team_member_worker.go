@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // MemberWorkerStatus 表示 team member goroutine 的当前状态。
@@ -25,9 +25,10 @@ const (
 // memberWorker 是一个在独立 goroutine 中运行的 team member。
 //
 // 生命周期：
-//   run() → poll inbox → 收到 task_assign → executeTask() → report → poll …
-//            ↑                                                  │
-//            └──────────────────────────────────────────────────┘
+//
+//	run() → poll inbox → 收到 task_assign → executeTask() → report → poll …
+//	         ↑                                                  │
+//	         └──────────────────────────────────────────────────┘
 //
 // 收到 shutdown_request 时发送 shutdown_response 并退出。
 type memberWorker struct {
@@ -36,7 +37,7 @@ type memberWorker struct {
 	agentType  string
 	model      string
 
-	teamSvc *TeamService
+	teamSvc  *TeamService
 	agentSvc *AgentService
 	factory  AgentEngineFactory
 	logger   *slog.Logger

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // HandleToolEvent 必须把 finish 事件缓存供后续 consume 使用，

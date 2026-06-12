@@ -1,9 +1,10 @@
 // Package sqlite 提供基于 SQLite+FTS5 的 LongTermRepository 实现
 //
 // 对齐 claude-mem 的三层渐进式搜索：
-//   Layer 1: SearchIndex  → FTS5 全文搜索，返回紧凑索引
-//   Layer 2: SearchTimeline → 按 ID 批量获取时间线上下文
-//   Layer 3: GetObservations → 获取完整记忆详情
+//
+//	Layer 1: SearchIndex  → FTS5 全文搜索，返回紧凑索引
+//	Layer 2: SearchTimeline → 按 ID 批量获取时间线上下文
+//	Layer 3: GetObservations → 获取完整记忆详情
 package sqlite
 
 import (
@@ -13,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // Repository 基于 SQLite 的 LongTermRepository 实现

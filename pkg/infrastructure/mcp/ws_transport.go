@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
-	"github.com/anthropics/goclaude/pkg/util/wsclient"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/util/wsclient"
 )
 
 // WSTransport 基于 WebSocket 的 MCP 传输（对齐 src TransportSchema.ws）

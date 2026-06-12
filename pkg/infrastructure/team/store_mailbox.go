@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // 本文件聚合 Mailbox（单个 agent 的 inbox 读写）：未读/追加/标记已读/等待未读。

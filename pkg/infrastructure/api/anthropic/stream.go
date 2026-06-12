@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // parseSSEStream 解析SSE流式响应

@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
 )
 
 // RateLimitWarning 速率限制警告追踪器
@@ -27,7 +27,7 @@ type RateLimitWarning struct {
 	limit       int
 	remaining   int
 	resetAt     time.Time
-	warnAt      float64       // 0.5 = warn at 50% remaining
+	warnAt      float64 // 0.5 = warn at 50% remaining
 	lastWarned  time.Time
 	minInterval time.Duration
 }

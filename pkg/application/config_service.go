@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/anthropics/goclaude/pkg/domain/config"
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
-	"github.com/anthropics/goclaude/pkg/infrastructure/persistence"
+	"github.com/yaoice/goclaude/pkg/domain/config"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/infrastructure/persistence"
 )
 
 // ConfigService 配置应用服务

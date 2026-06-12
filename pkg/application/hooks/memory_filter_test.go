@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // ============================================================

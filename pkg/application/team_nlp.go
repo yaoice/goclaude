@@ -14,7 +14,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // TeamSetupIntent 是 ParseTeamSetupIntent 的解析结果。
@@ -70,25 +70,25 @@ func ParseTeamSetupIntent(text string) *TeamSetupIntent {
 	if !triggered {
 		return nil
 	}
-	
+
 	intent := &TeamSetupIntent{
 		Members: make(map[string]string),
 		Tasks:   make([]TeamTaskIntent, 0),
 	}
-	
+
 	// 1. 提取团队名称
 	intent.TeamName = extractTeamName(text)
-	
+
 	// 2. 提取成员
 	intent.Members = extractMembers(text)
-	
+
 	// 3. 提取任务
 	intent.Tasks = extractTasks(text)
-	
+
 	if intent.TeamName == "" && len(intent.Members) == 0 && len(intent.Tasks) == 0 {
 		return nil
 	}
-	
+
 	return intent
 }
 
@@ -108,13 +108,13 @@ func extractTeamName(text string) string {
 		// 匹配 "名字叫 XXX"
 		regexp.MustCompile(`名\s*字\s*叫\s*"?([a-zA-Z0-9_\-\p{Han}]+)"?`),
 	}
-	
+
 	for _, re := range patterns {
 		if matches := re.FindStringSubmatch(text); len(matches) > 1 {
 			return strings.TrimSpace(matches[1])
 		}
 	}
-	
+
 	// 默认团队名
 	return "default-team"
 }
@@ -122,7 +122,7 @@ func extractTeamName(text string) string {
 // extractMembers 从文本中提取成员列表。
 func extractMembers(text string) map[string]string {
 	members := make(map[string]string)
-	
+
 	// 匹配模式： "成员：alice(researcher), bob(coder)" / "添加成员 alice 作为 researcher"
 	// 注意：括号需要转义，因为 ( 在正则中是特殊字符
 	patterns := []*regexp.Regexp{
@@ -130,7 +130,7 @@ func extractMembers(text string) map[string]string {
 		regexp.MustCompile(`添加成员\s+([a-zA-Z0-9_\p{Han}]+)\s*[\(（]([a-zA-Z0-9_\p{Han}]+)[\)）]`),
 		regexp.MustCompile(`([a-zA-Z0-9_\p{Han}]+)\s*[\(（]([a-zA-Z0-9_\p{Han}]+)[\)）]`),
 	}
-	
+
 	for _, re := range patterns {
 		if matches := re.FindAllStringSubmatch(text, -1); len(matches) > 0 {
 			for _, m := range matches {
@@ -145,7 +145,7 @@ func extractMembers(text string) map[string]string {
 			break
 		}
 	}
-	
+
 	// 如果没找到，尝试提取 "和 alice、bob 一起"
 	if len(members) == 0 {
 		re := regexp.MustCompile(`[和与、,，]\s*([a-zA-Z0-9_]+)`)
@@ -158,14 +158,14 @@ func extractMembers(text string) map[string]string {
 			}
 		}
 	}
-	
+
 	return members
 }
 
 // extractTasks 从文本中提取任务列表。
 func extractTasks(text string) []TeamTaskIntent {
 	var tasks []TeamTaskIntent
-	
+
 	// 匹配模式： "任务：xxx" / "创建任务 xxx" / "分配任务 xxx"
 	patterns := []*regexp.Regexp{
 		regexp.MustCompile(`任务[：:]\s*([^\n]+)`),
@@ -173,7 +173,7 @@ func extractTasks(text string) []TeamTaskIntent {
 		regexp.MustCompile(`分配任务\s+[""]?([^""\n]+)[""]?`),
 		regexp.MustCompile(`[0-9]+[\.、]\s*([^\n]+)`), // "1. xxx" / "1、xxx"
 	}
-	
+
 	for _, re := range patterns {
 		if matches := re.FindAllStringSubmatch(text, -1); len(matches) > 0 {
 			for _, m := range matches {
@@ -190,7 +190,7 @@ func extractTasks(text string) []TeamTaskIntent {
 			break
 		}
 	}
-	
+
 	return tasks
 }
 
@@ -202,18 +202,18 @@ func (i *TeamSetupIntent) ToAutoSetupTeamInput() AutoSetupTeamInput {
 		tasks = append(tasks, team.SharedTask{
 			Title:       t.Title,
 			Description: t.Description,
-			Status:       team.SharedTaskPending,
+			Status:      team.SharedTaskPending,
 			AssignedTo:  t.AssignedTo,
 		})
 	}
-	
+
 	input := AutoSetupTeamInput{
-		TeamName: i.TeamName,
+		TeamName:    i.TeamName,
 		LeadAgentID: "team-lead",
-		Members:  i.Members,
-		Tasks:    tasks,
+		Members:     i.Members,
+		Tasks:       tasks,
 	}
-	
+
 	return input
 }
 
@@ -223,7 +223,7 @@ func (i *TeamSetupIntent) ToToolInput() map[string]interface{} {
 		"team_name": i.TeamName,
 		"from":      "team-lead",
 	}
-	
+
 	if len(i.Members) > 0 {
 		members := make(map[string]interface{})
 		for name, role := range i.Members {
@@ -231,7 +231,7 @@ func (i *TeamSetupIntent) ToToolInput() map[string]interface{} {
 		}
 		out["members"] = members
 	}
-	
+
 	if len(i.Tasks) > 0 {
 		tasks := make([]interface{}, 0, len(i.Tasks))
 		for _, t := range i.Tasks {
@@ -246,7 +246,7 @@ func (i *TeamSetupIntent) ToToolInput() map[string]interface{} {
 		}
 		out["tasks"] = tasks
 	}
-	
+
 	return out
 }
 

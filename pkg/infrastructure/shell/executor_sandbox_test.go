@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
+	"github.com/yaoice/goclaude/pkg/infrastructure/sandbox"
 )
 
 // TestExecutorWithSandboxIntegration 验证 Executor 与 Sandbox 的集成

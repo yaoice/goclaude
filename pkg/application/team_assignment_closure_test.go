@@ -3,7 +3,7 @@ package application
 import (
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // NotifyTaskAssigned 应把一条 task_assign 消息投递到被分配者的 inbox，

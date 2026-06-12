@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/workflow"
+	"github.com/yaoice/goclaude/pkg/domain/workflow"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -284,10 +284,10 @@ func (s *WorkflowService) Execute(
 	startTime := time.Now()
 
 	s.publish(workflow.WorkflowEvent{
-		Phase:         workflow.WorkflowEventPhaseStart,
-		WorkflowName:  plan.WorkflowName,
-		TotalWaves:    len(plan.Waves),
-		Progress:      0,
+		Phase:        workflow.WorkflowEventPhaseStart,
+		WorkflowName: plan.WorkflowName,
+		TotalWaves:   len(plan.Waves),
+		Progress:     0,
 	})
 
 	// 创建可取消的 context，用于 fail_fast 场景

@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	wf "github.com/anthropics/goclaude/pkg/domain/workflow"
-	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
-	"github.com/anthropics/goclaude/pkg/interfaces/shell"
+	"github.com/yaoice/goclaude/pkg/application"
+	wf "github.com/yaoice/goclaude/pkg/domain/workflow"
+	workflowinfra "github.com/yaoice/goclaude/pkg/infrastructure/workflow"
+	"github.com/yaoice/goclaude/pkg/interfaces/shell"
 )
 
 // workflowAdapter 实现 shell.WorkflowManager 和 wf.WorkflowEventListener，

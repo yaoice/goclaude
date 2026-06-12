@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/skill"
-	skillinfra "github.com/anthropics/goclaude/pkg/infrastructure/skill"
+	"github.com/yaoice/goclaude/pkg/domain/skill"
+	skillinfra "github.com/yaoice/goclaude/pkg/infrastructure/skill"
 )
 
 // SkillService Skill 应用服务

@@ -3,9 +3,9 @@ package application
 import (
 	"log/slog"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // DefaultAgentEngineFactory 是 AgentEngineFactory 的默认实现

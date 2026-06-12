@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // parseSSEStream 解析 OpenAI/DeepSeek 风格的 SSE 流，并转换为领域 StreamEvent

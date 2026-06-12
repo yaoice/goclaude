@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // =============================================================================
@@ -24,13 +24,13 @@ import (
 // =============================================================================
 
 var (
-	ErrPlanNotApproved        = errors.New("execution plan has not been approved")
-	ErrPhaseNotPlanning       = errors.New("team is not in planning phase")
-	ErrPhaseNotExecuting      = errors.New("team is not in executing phase")
-	ErrNotLeader              = errors.New("only the team leader can perform this action")
-	ErrMaxReplansExceeded     = errors.New("maximum replan attempts exceeded")
-	ErrExecutionInProgress    = errors.New("cannot modify plan while execution is in progress")
-	ErrInvalidTransition      = errors.New("invalid phase transition")
+	ErrPlanNotApproved     = errors.New("execution plan has not been approved")
+	ErrPhaseNotPlanning    = errors.New("team is not in planning phase")
+	ErrPhaseNotExecuting   = errors.New("team is not in executing phase")
+	ErrNotLeader           = errors.New("only the team leader can perform this action")
+	ErrMaxReplansExceeded  = errors.New("maximum replan attempts exceeded")
+	ErrExecutionInProgress = errors.New("cannot modify plan while execution is in progress")
+	ErrInvalidTransition   = errors.New("invalid phase transition")
 )
 
 // =============================================================================
@@ -39,9 +39,9 @@ var (
 
 // InitiatePlanningInput 启动 Planning Phase 的入参。
 type InitiatePlanningInput struct {
-	TeamName    string
-	Objective   string // 团队目标描述
-	LeaderName  string // 发起规划的 leader
+	TeamName   string
+	Objective  string // 团队目标描述
+	LeaderName string // 发起规划的 leader
 }
 
 // InitiatePlanning 将团队切换到 Planning Phase，广播目标给所有成员。
@@ -76,12 +76,12 @@ func (s *TeamService) InitiatePlanning(in InitiatePlanningInput) (*team.File, er
 	// 创建初始计划
 	now := time.Now().UnixMilli()
 	f.Plan = &team.ExecutionPlan{
-		Objective: in.Objective,
-		Tasks:     make([]team.PlannedTask, 0),
+		Objective:   in.Objective,
+		Tasks:       make([]team.PlannedTask, 0),
 		Assignments: make([]team.PlanAssignment, 0),
-		CreatedAt: now,
-		UpdatedAt: now,
-		Status:    team.PlanDrafting,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		Status:      team.PlanDrafting,
 	}
 
 	// 切换阶段
@@ -156,8 +156,6 @@ Only after the leader approves the consolidated plan will Execution begin.`,
 
 	return f, nil
 }
-
-
 
 // =============================================================================
 // Proposal Collection
@@ -237,7 +235,7 @@ func (s *TeamService) CollectProposal(teamName, memberName string, proposal team
 // ApprovePlanInput 审批计划的入参。
 type ApprovePlanInput struct {
 	TeamName    string
-	LeaderName  string // 审批人（必须为 LeaderName）
+	LeaderName  string                // 审批人（必须为 LeaderName）
 	Assignments []team.PlanAssignment // 任务到成员的分配
 }
 
@@ -348,9 +346,9 @@ func (s *TeamService) ApprovePlan(in ApprovePlanInput) (*team.File, error) {
 
 // RejectPlanInput 驳回计划的入参。
 type RejectPlanInput struct {
-	TeamName string
+	TeamName   string
 	LeaderName string
-	Reason   string // 驳回原因
+	Reason     string // 驳回原因
 }
 
 // RejectPlan 驳回执行计划，团队停留在 Planning Phase。
@@ -476,9 +474,9 @@ func (s *TeamService) MarkCompleted(teamName string) error {
 
 // InitiateReplanInput 发起 re-plan 的入参。
 type InitiateReplanInput struct {
-	TeamName     string
-	FailedTaskID string
-	FailedMember string
+	TeamName      string
+	FailedTaskID  string
+	FailedMember  string
 	FailureReason string
 }
 

@@ -6,7 +6,7 @@
 // 格式选择原则：
 //   - YAML: 人类编写友好，支持注释（*.yaml, *.yml）
 //   - JSON:  AI/程序生成友好，严格语法（*.json）
-//   Plan Agent 自动生成的定义文件统一使用 JSON 格式（AI 输出可靠性更高）。
+//     Plan Agent 自动生成的定义文件统一使用 JSON 格式（AI 输出可靠性更高）。
 package workflow
 
 import (
@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/workflow"
+	"github.com/yaoice/goclaude/pkg/domain/workflow"
 	"gopkg.in/yaml.v3"
 )
 

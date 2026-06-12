@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // recordingSubagentListener 收集 SubagentEvent，断言 Phase/字段。
@@ -47,8 +47,8 @@ func (l *recordingSubagentListener) phases() []SubagentPhase {
 func TestFilterTools_ReservedToolsRemovedByDefault(t *testing.T) {
 	parent := []tool.Tool{
 		&recordTool{name: "read_file", readonly: true, concurrent: true},
-		&recordTool{name: "Agent"},     // reserved
-		&recordTool{name: "Task"},      // reserved
+		&recordTool{name: "Agent"}, // reserved
+		&recordTool{name: "Task"},  // reserved
 		&recordTool{name: "team_create"},
 		&recordTool{name: "send_message"},
 		&recordTool{name: "bash"},

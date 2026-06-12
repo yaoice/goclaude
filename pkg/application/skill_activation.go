@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // ExtractPathsFromInputs 从一组 tool input map 中收集可能的文件路径

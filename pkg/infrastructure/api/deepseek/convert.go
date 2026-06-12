@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // buildRequest 将领域层 query.StreamParams 转换为 DeepSeek (OpenAI 兼容) 请求体

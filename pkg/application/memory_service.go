@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 
-	memory "github.com/anthropics/goclaude/pkg/domain/memory"
+	memory "github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // MemoryService 记忆应用服务
 type MemoryService struct {
-	repo      memory.Repository
+	repo       memory.Repository
 	entrypoint *memory.EntrypointManager
 	autoMemDir string
 }
@@ -23,9 +23,9 @@ func NewMemoryService(repo memory.Repository) *MemoryService {
 // NewMemoryServiceWithDir 创建记忆服务（含 auto-memory 目录）
 func NewMemoryServiceWithDir(repo memory.Repository, autoMemDir string) *MemoryService {
 	return &MemoryService{
-		repo:        repo,
-		autoMemDir:  autoMemDir,
-		entrypoint:  memory.NewEntrypointManager(repo, autoMemDir),
+		repo:       repo,
+		autoMemDir: autoMemDir,
+		entrypoint: memory.NewEntrypointManager(repo, autoMemDir),
 	}
 }
 

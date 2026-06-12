@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anthropics/goclaude/pkg/domain/config"
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/domain/config"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
 )
 
 // ConfigStore 配置文件存储

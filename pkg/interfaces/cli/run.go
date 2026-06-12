@@ -11,22 +11,22 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	hooksapp "github.com/anthropics/goclaude/pkg/application/hooks"
-	memoryappsvc "github.com/anthropics/goclaude/pkg/application/memory"
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
-	"github.com/anthropics/goclaude/pkg/infrastructure/compact"
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
-	minfra "github.com/anthropics/goclaude/pkg/infrastructure/memory"
-	sqlitemem "github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
-	"github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
-	"github.com/anthropics/goclaude/pkg/infrastructure/todo"
-	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
-	"github.com/anthropics/goclaude/pkg/infrastructure/worktree"
-	"github.com/anthropics/goclaude/pkg/tools"
+	"github.com/yaoice/goclaude/pkg/application"
+	hooksapp "github.com/yaoice/goclaude/pkg/application/hooks"
+	memoryappsvc "github.com/yaoice/goclaude/pkg/application/memory"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
+	"github.com/yaoice/goclaude/pkg/infrastructure/compact"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
+	minfra "github.com/yaoice/goclaude/pkg/infrastructure/memory"
+	sqlitemem "github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
+	"github.com/yaoice/goclaude/pkg/infrastructure/sandbox"
+	"github.com/yaoice/goclaude/pkg/infrastructure/todo"
+	workflowinfra "github.com/yaoice/goclaude/pkg/infrastructure/workflow"
+	"github.com/yaoice/goclaude/pkg/infrastructure/worktree"
+	"github.com/yaoice/goclaude/pkg/tools"
 )
 
 var sanitizePathRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
@@ -349,17 +349,17 @@ func runFullQuery(cmd *cobra.Command, args []string) error {
 
 // AppContext 主 agent 共享的运行时上下文（聚合 Skill/MCP/Agent/Team/Memory 服务）
 type AppContext struct {
-	Registry        *tool.Registry
-	SkillSvc        *application.SkillService
-	MCPSvc          *application.MCPService
-	AgentSvc        *application.AgentService
-	TeamSvc         *application.TeamService
-	HookReg         *hook.Registry
-	MCPToolCount    int
-	MemorySvc       *application.MemoryService       // auto-memory entrypoint 管理
-	AutoMemDir      string                            // auto-memory 目录路径
-	LongTermMemorySvc *memoryappsvc.LongTermMemoryService // 长期记忆服务
-	MemoryLifecycleHooks *hooksapp.MemoryLifecycleHooks    // 长期记忆生命周期钩子
+	Registry             *tool.Registry
+	SkillSvc             *application.SkillService
+	MCPSvc               *application.MCPService
+	AgentSvc             *application.AgentService
+	TeamSvc              *application.TeamService
+	HookReg              *hook.Registry
+	MCPToolCount         int
+	MemorySvc            *application.MemoryService          // auto-memory entrypoint 管理
+	AutoMemDir           string                              // auto-memory 目录路径
+	LongTermMemorySvc    *memoryappsvc.LongTermMemoryService // 长期记忆服务
+	MemoryLifecycleHooks *hooksapp.MemoryLifecycleHooks      // 长期记忆生命周期钩子
 }
 
 // Close 释放 MCP 连接 + 长期记忆服务

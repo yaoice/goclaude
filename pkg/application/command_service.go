@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/anthropics/goclaude/pkg/domain/command"
+	"github.com/yaoice/goclaude/pkg/domain/command"
 )
 
 // CommandService 命令应用服务

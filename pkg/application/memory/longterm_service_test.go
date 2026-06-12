@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
-	"github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
+	"github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
 )
 
 // defaultTestConfig returns a test configuration with conservative defaults
@@ -16,7 +16,7 @@ func defaultTestConfig() appconfig.LongTermMemoryConfig {
 	return appconfig.LongTermMemoryConfig{
 		Enabled: true,
 		Capture: appconfig.LongTermCaptureConfig{
-			AutoCaptureTools:  true,
+			AutoCaptureTools:   true,
 			MaxObservationSize: 8000,
 			MinCaptureChars:    2,
 		},
@@ -36,8 +36,8 @@ func defaultTestConfig() appconfig.LongTermMemoryConfig {
 			MinPriority:   5,
 		},
 		Expiration: appconfig.LongTermExpirationConfig{
-			DefaultTTLDays:      7,
-			LowPriorityTTLDays:  3,
+			DefaultTTLDays:       7,
+			LowPriorityTTLDays:   3,
 			CleanupIntervalHours: 0,
 		},
 		Privacy: appconfig.LongTermPrivacyConfig{

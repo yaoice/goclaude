@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // 公共常量 -----------------------------------------------------------

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/infrastructure/sandbox"
+	"github.com/yaoice/goclaude/pkg/infrastructure/sandbox"
 )
 
 // Executor Shell命令执行器（支持沙箱）

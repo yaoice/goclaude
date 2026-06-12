@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/anthropics/goclaude/pkg/util/dotenv"
-	"github.com/anthropics/goclaude/pkg/util/settingsenv"
+	"github.com/yaoice/goclaude/pkg/util/dotenv"
+	"github.com/yaoice/goclaude/pkg/util/settingsenv"
 )
 
 // 本文件聚合 doctor 子命令（环境检查）。从 root.go 拆出以提升可读性；逻辑保持不变。

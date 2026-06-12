@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // ShowTranscript 进入 transcript 全屏只读模式

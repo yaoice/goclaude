@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	teamdomain "github.com/anthropics/goclaude/pkg/domain/team"
-	"github.com/anthropics/goclaude/pkg/tools"
+	"github.com/yaoice/goclaude/pkg/application"
+	teamdomain "github.com/yaoice/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/tools"
 )
 
 // startTeamLifecycle 在主进程启动时把当前会话作为 team member 注册，
@@ -20,9 +20,9 @@ import (
 // 行为：
 //   - rt.TeamName == "" || rt.AgentName == ""              → no-op，cleanup 是空函数。
 //   - rt.AgentName == teamdomain.LeaderName 或 "team-lead" → 假定 team_create 已经
-//                                                            把 leader 加进去，仅起心跳。
+//     把 leader 加进去，仅起心跳。
 //   - 其它情况                                              → 调用 svc.JoinTeam 自动加入；
-//                                                            team 不存在时打 warn，不阻塞。
+//     team 不存在时打 warn，不阻塞。
 //
 // cleanup 行为：
 //   - 取消心跳 goroutine

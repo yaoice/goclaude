@@ -3,9 +3,9 @@ package cli
 import (
 	"context"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/interfaces/shell"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/interfaces/shell"
 )
 
 // 本文件提供把 application/domain 层服务适配到 shell 包定义的 *Manager 接口的薄包装。

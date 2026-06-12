@@ -10,9 +10,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/team"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // =============================================================================

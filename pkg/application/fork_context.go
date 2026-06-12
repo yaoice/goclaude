@@ -1,7 +1,7 @@
 package application
 
 import (
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // FilterIncompleteToolCalls 过滤掉只有 tool_use 但没对应 tool_result 的 assistant 消息。

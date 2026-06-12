@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
 )
 
 // Scanner 规则文件扫描器
@@ -255,10 +255,10 @@ func (s *Scanner) parseMemoryFileContent(content string, filePath string, memory
 	}
 
 	info := &MemoryFileInfo{
-		Path:                  filePath,
-		Type:                  memoryType,
-		Content:               finalContent,
-		Globs:                 globs,
+		Path:                   filePath,
+		Type:                   memoryType,
+		Content:                finalContent,
+		Globs:                  globs,
 		ContentDiffersFromDisk: contentDiffersFromDisk,
 	}
 

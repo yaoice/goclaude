@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
-	"github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
-	memoryapp "github.com/anthropics/goclaude/pkg/application/memory"
+	memoryapp "github.com/yaoice/goclaude/pkg/application/memory"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
+	"github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
 )
 
 func newTestHooks(t *testing.T) *MemoryLifecycleHooks {
@@ -25,14 +25,14 @@ func newTestHooks(t *testing.T) *MemoryLifecycleHooks {
 	cfg := appconfig.LongTermMemoryConfig{
 		Enabled: true,
 		Capture: appconfig.LongTermCaptureConfig{
-			AutoCaptureTools:  true,
+			AutoCaptureTools:   true,
 			MaxObservationSize: 8000,
 			MinCaptureChars:    5,
 		},
 		Injection: appconfig.LongTermInjectionConfig{
-			AutoInject:       true,
-			MaxInjectTokens:  2000,
-			SearchLimit:      10,
+			AutoInject:        true,
+			MaxInjectTokens:   2000,
+			SearchLimit:       10,
 			MinRelevanceScore: 0.1,
 		},
 		Capacity: appconfig.LongTermCapacityConfig{
@@ -43,8 +43,8 @@ func newTestHooks(t *testing.T) *MemoryLifecycleHooks {
 			MinPriority: 5,
 		},
 		Expiration: appconfig.LongTermExpirationConfig{
-			DefaultTTLDays:      90,
-			LowPriorityTTLDays:  30,
+			DefaultTTLDays:       90,
+			LowPriorityTTLDays:   30,
 			CleanupIntervalHours: 0,
 		},
 		Privacy: appconfig.LongTermPrivacyConfig{

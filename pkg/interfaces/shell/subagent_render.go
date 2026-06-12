@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/application"
 )
 
 // 让 *REPL 同时也是 subagent 事件监听器。

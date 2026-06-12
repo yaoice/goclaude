@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/team"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // ----- AssignTaskTool -----
@@ -239,9 +239,9 @@ func (*WaitForMessageTool) InputSchema() map[string]interface{} {
 	return map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
-			"team_name":          map[string]interface{}{"type": "string"},
-			"from":               map[string]interface{}{"type": "string"},
-			"timeout_seconds":    map[string]interface{}{"type": "integer", "description": "Max wait seconds (default 30, max 300)."},
+			"team_name":       map[string]interface{}{"type": "string"},
+			"from":            map[string]interface{}{"type": "string"},
+			"timeout_seconds": map[string]interface{}{"type": "integer", "description": "Max wait seconds (default 30, max 300)."},
 		},
 	}
 }
@@ -272,12 +272,12 @@ func (t *WaitForMessageTool) Call(ctx context.Context, input tool.Input, _ *tool
 			errors.Is(err, context.Canceled) ||
 			err.Error() == "wait for unread: timeout" {
 			return tool.NewResult(jsonOut(map[string]interface{}{
-				"team_name":     teamName,
-				"agent":         agent,
-				"timed_out":     true,
-				"count":         0,
-				"messages":      []map[string]interface{}{},
-				"timeout_used":  timeoutSec,
+				"team_name":    teamName,
+				"agent":        agent,
+				"timed_out":    true,
+				"count":        0,
+				"messages":     []map[string]interface{}{},
+				"timeout_used": timeoutSec,
 			})), nil
 		}
 		if errors.Is(err, application.ErrTeamNotFound) || errors.Is(err, application.ErrMemberNotFound) {

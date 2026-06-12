@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	memory "github.com/anthropics/goclaude/pkg/domain/memory"
+	memory "github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // 本文件聚合 REPL 的本地 slash 命令分发（handleLocalCommand）及其辅助。

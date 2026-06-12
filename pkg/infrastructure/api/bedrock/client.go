@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // Client AWS Bedrock 客户端

@@ -1,6 +1,6 @@
 package agentinfra
 
-import "github.com/anthropics/goclaude/pkg/domain/agent"
+import "github.com/yaoice/goclaude/pkg/domain/agent"
 
 // BuiltInAgents 返回内置 agents 列表
 //
@@ -240,7 +240,7 @@ Your team membership and role will be provided in the first message.`
 		Source:       agent.SourceBuiltIn,
 		BaseDir:      "built-in",
 		IsTeamMember: true, // ← 核心标记：FilterTools 据此放行 send_message
-		MaxTurns:     200,   // team 任务可能涉及多成员通信，比普通 subagent 需要更多轮
+		MaxTurns:     200,  // team 任务可能涉及多成员通信，比普通 subagent 需要更多轮
 		// team-worker 不暴露给外部 AgentTool；leader 只通过 TeamEngine 使用它
 		Tools: []string{}, // 空 = 继承父全部（FilterTools 按 IsTeamMember 过滤）
 	}

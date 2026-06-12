@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // 本文件聚合 inbox 文件的底层 IO：读写、原子写、O_EXCL 锁。

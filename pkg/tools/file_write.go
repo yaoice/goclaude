@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/filesystem"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/filesystem"
 )
 
 // FileWriteTool 文件写入工具
@@ -19,7 +19,7 @@ func NewFileWriteTool(fs *filesystem.Service) *FileWriteTool {
 	return &FileWriteTool{fs: fs}
 }
 
-func (t *FileWriteTool) Name() string     { return "file_write" }
+func (t *FileWriteTool) Name() string      { return "file_write" }
 func (t *FileWriteTool) Aliases() []string { return []string{"Write"} }
 func (t *FileWriteTool) Description() string {
 	return "创建或覆写文件。将完整内容写入指定路径，自动创建父目录。"
@@ -35,10 +35,10 @@ func (t *FileWriteTool) InputSchema() map[string]interface{} {
 	}
 }
 
-func (t *FileWriteTool) IsEnabled() bool                    { return true }
-func (t *FileWriteTool) IsReadOnly(input tool.Input) bool   { return false }
+func (t *FileWriteTool) IsEnabled() bool                         { return true }
+func (t *FileWriteTool) IsReadOnly(input tool.Input) bool        { return false }
 func (t *FileWriteTool) IsConcurrencySafe(input tool.Input) bool { return false }
-func (t *FileWriteTool) Prompt() string                     { return "" }
+func (t *FileWriteTool) Prompt() string                          { return "" }
 func (t *FileWriteTool) ValidateInput(input tool.Input) error {
 	if input.GetString("file_path") == "" {
 		return fmt.Errorf("file_path is required")

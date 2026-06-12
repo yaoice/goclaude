@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // TestNaturalLanguageTeamCreation 测试自然语言触发团队创建
@@ -51,15 +51,15 @@ func TestNaturalLanguageTeamCreation(t *testing.T) {
 					t.Errorf("Unexpected error: %v", err)
 				}
 
-			if result == nil {
-				t.Fatal("Result should not be nil")
-			}
+				if result == nil {
+					t.Fatal("Result should not be nil")
+				}
 
-			// 解析结果
-			var output map[string]interface{}
-			if err := json.Unmarshal([]byte(result.Content), &output); err != nil {
-				t.Errorf("Failed to parse result: %v", err)
-			}
+				// 解析结果
+				var output map[string]interface{}
+				if err := json.Unmarshal([]byte(result.Content), &output); err != nil {
+					t.Errorf("Failed to parse result: %v", err)
+				}
 
 				success, _ := output["success"].(bool)
 				if success != tc.expected {
@@ -117,7 +117,7 @@ func TestNaturalLanguageTeamCreation(t *testing.T) {
 	// 5. 测试提取准确性
 	t.Run("Extraction accuracy", func(t *testing.T) {
 		input := "创建团队 TestTeam，成员有 alice(researcher) 和 bob(coder)，任务是实现登录功能"
-		
+
 		result, err := parseTool.Call(context.Background(), tool.Input{
 			"text": input,
 		}, nil)
@@ -174,7 +174,7 @@ func TestAutoSetupTeamWithParsedInput(t *testing.T) {
 	// 使用唯一团队名避免冲突
 	teamName := fmt.Sprintf("AutoTestTeam_%d_%d", time.Now().UnixNano(), os.Getpid())
 	t.Logf("Using team name: %s", teamName)
-	
+
 	// 0. 清理：如果团队已存在，先删除（强制删除）
 	deleteTool := NewTeamDeleteTool(svc, "", "test-leader")
 	deleteResult, deleteErr := deleteTool.Call(context.Background(), tool.Input{
@@ -183,7 +183,7 @@ func TestAutoSetupTeamWithParsedInput(t *testing.T) {
 		"force":     true,
 	}, nil)
 	t.Logf("Debug: deleteResult=%v, deleteErr=%v", deleteResult, deleteErr)
-	
+
 	// 确保测试结束时清理
 	t.Cleanup(func() {
 		deleteTool := NewTeamDeleteTool(svc, "", "test-leader")
@@ -194,7 +194,7 @@ func TestAutoSetupTeamWithParsedInput(t *testing.T) {
 		}, nil)
 		t.Logf("Cleaned up team: %s", teamName)
 	})
-	
+
 	// 1. 先解析自然语言
 	parseTool := NewParseTeamIntentTool(svc, "", "test-leader")
 	input := fmt.Sprintf("创建团队 %s，成员有 alice(researcher)，任务是测试自动设置", teamName)
@@ -236,13 +236,13 @@ func TestAutoSetupTeamWithParsedInput(t *testing.T) {
 
 	// 创建 auto_setup_team 工具
 	autoSetupTool := NewAutoSetupTeamTool(svc, "", "test-leader")
-	
+
 	// 调用 auto_setup_team
 	setupResult, err := autoSetupTool.Call(context.Background(), autoSetupInput, nil)
 	if err != nil {
 		t.Errorf("Auto setup failed: %v", err)
 	}
-	
+
 	// 检查返回结果是否为空
 	if setupResult == nil {
 		t.Fatal("setupResult is nil")
@@ -250,7 +250,7 @@ func TestAutoSetupTeamWithParsedInput(t *testing.T) {
 
 	// 验证结果（注意：tool.NewResult 返回的是 Content 字符串，可能是 JSON 也可能是错误消息）
 	t.Logf("Debug: setupResult.IsError=%v, Content=%s", setupResult.IsError, setupResult.Content)
-	
+
 	if setupResult.IsError {
 		t.Errorf("Auto setup should succeed, got error: %s", setupResult.Content)
 	}
@@ -272,12 +272,12 @@ func TestAutoSetupTeamWithParsedInput(t *testing.T) {
 // TestToolDescriptionContainsGuidance 测试工具描述是否包含使用指导
 func TestToolDescriptionContainsGuidance(t *testing.T) {
 	svc := application.NewTeamService()
-	
+
 	// 测试 parse_team_intent 描述
 	t.Run("parse_team_intent description", func(t *testing.T) {
 		tool := NewParseTeamIntentTool(svc, "", "")
 		desc := tool.Description()
-		
+
 		// 应该包含触发词示例
 		expectedKeywords := []string{
 			"创建团队",
@@ -285,7 +285,7 @@ func TestToolDescriptionContainsGuidance(t *testing.T) {
 			"WHEN TO USE",
 			"auto_setup_team",
 		}
-		
+
 		for _, keyword := range expectedKeywords {
 			if !contains(desc, keyword) {
 				t.Errorf("Description should contain %q, got: %s", keyword, desc)
@@ -297,7 +297,7 @@ func TestToolDescriptionContainsGuidance(t *testing.T) {
 	t.Run("auto_setup_team description", func(t *testing.T) {
 		tool := NewAutoSetupTeamTool(svc, "", "")
 		desc := tool.Description()
-		
+
 		// 应该包含使用说明
 		expectedKeywords := []string{
 			"parse_team_intent",
@@ -306,7 +306,7 @@ func TestToolDescriptionContainsGuidance(t *testing.T) {
 			"members",
 			"tasks",
 		}
-		
+
 		for _, keyword := range expectedKeywords {
 			if !contains(desc, keyword) {
 				t.Errorf("Description should contain %q, got: %s", keyword, desc)
@@ -319,10 +319,10 @@ func TestToolDescriptionContainsGuidance(t *testing.T) {
 func TestSystemPromptContainsTeamGuidance(t *testing.T) {
 	// 这个测试需要访问 builtin.go 中的 prompt 变量
 	// 由于 prompt 是局部变量，我们需要通过 agent.Definition 来获取
-	
+
 	// TODO: 如果需要，可以在 builtin.go 中导出 GetGeneralPurposePrompt() 函数
 	// 然后在这里测试
-	
+
 	t.Skip("Requires exporting prompt from builtin.go")
 }
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/application"
 )
 
 // captureStdout 收集 stdout 输出（REPL writeOut 走 stdout）。
@@ -255,4 +255,3 @@ func TestREPL_HandleSubagentEvent_FinishErrorFooter(t *testing.T) {
 		t.Fatalf("expected error message in %q", out)
 	}
 }
-

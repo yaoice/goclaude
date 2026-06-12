@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/skill"
+	"github.com/yaoice/goclaude/pkg/domain/skill"
 )
 
 func TestSkillService_RenderWith_AllVariables(t *testing.T) {

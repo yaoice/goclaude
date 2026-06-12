@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -10,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	hooksapp "github.com/anthropics/goclaude/pkg/application/hooks"
-	memoryapp "github.com/anthropics/goclaude/pkg/application/memory"
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	domainmemory "github.com/anthropics/goclaude/pkg/domain/memory"
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
-	sqlitemem "github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
+	hooksapp "github.com/yaoice/goclaude/pkg/application/hooks"
+	memoryapp "github.com/yaoice/goclaude/pkg/application/memory"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	domainmemory "github.com/yaoice/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
+	sqlitemem "github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
 )
 
 func main() {
@@ -79,14 +80,14 @@ func main() {
 	reg.Run(ctx, hook.EventPostToolUse, &hook.Context{
 		SessionID: "sess-001", ToolName: "read_file",
 		Extra: map[string]interface{}{
-			"result": "// handler/auth.go — 空文件，尚未实现认证逻辑\npackage auth\nfunc AuthMiddleware() {}",
+			"result":    "// handler/auth.go — 空文件，尚未实现认证逻辑\npackage auth\nfunc AuthMiddleware() {}",
 			"file_path": "/my-go-project/handler/auth.go",
 		},
 	})
 	reg.Run(ctx, hook.EventPostToolUse, &hook.Context{
 		SessionID: "sess-001", ToolName: "write_to_file",
 		Extra: map[string]interface{}{
-			"result": "Wrote auth/handler.go (45 lines) — JWT 中间件 + token 验证",
+			"result":      "Wrote auth/handler.go (45 lines) — JWT 中间件 + token 验证",
 			"target_file": "/my-go-project/auth/handler.go",
 		},
 	})
@@ -102,7 +103,7 @@ func main() {
 	reg.Run(ctx, hook.EventSessionEnd, &hook.Context{
 		SessionID: "sess-001",
 		Extra: map[string]interface{}{
-			"summary": "实现了 JWT 认证模块，包含 token 生成、验证中间件、单元测试，覆盖率 72.5%",
+			"summary":    "实现了 JWT 认证模块，包含 token 生成、验证中间件、单元测试，覆盖率 72.5%",
 			"turn_count": 3, "input_tokens": 1200, "output_tokens": 450,
 		},
 	})

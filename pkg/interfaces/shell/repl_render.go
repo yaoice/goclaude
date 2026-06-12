@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 // 本文件聚合 REPL 的终端渲染原语：prompt 构造、banner、助手头部、
@@ -131,8 +131,8 @@ const (
 	colorBold  = "\x1b[1m"
 
 	// 品牌色 / 主色调
-	colorBrand  = "\x1b[1;38;5;75m"  // 亮品蓝（标题/Logo）
-	colorPrompt = "\x1b[1;38;5;75m"  // 提示符
+	colorBrand  = "\x1b[1;38;5;75m" // 亮品蓝（标题/Logo）
+	colorPrompt = "\x1b[1;38;5;75m" // 提示符
 
 	// 语义色
 	colorSuccess = "\x1b[38;5;78m"  // 翠绿：成功
@@ -155,12 +155,12 @@ const (
 	colorMagenta    = "\x1b[38;5;177m" // 紫色
 
 	// 工具执行相关
-	colorToolName   = "\x1b[1;38;5;75m"  // 工具名（粗品蓝）
-	colorToolStatus = "\x1b[38;5;78m"    // 工具状态（成功绿）
-	colorElapsed    = "\x1b[38;5;245m"   // 耗时数字
-	colorStepNum    = "\x1b[38;5;75m"    // 步骤编号
-	colorOutput     = "\x1b[38;5;252m"   // 标准输出内容
-	colorErrOutput  = "\x1b[38;5;203m"   // 错误输出内容
+	colorToolName   = "\x1b[1;38;5;75m" // 工具名（粗品蓝）
+	colorToolStatus = "\x1b[38;5;78m"   // 工具状态（成功绿）
+	colorElapsed    = "\x1b[38;5;245m"  // 耗时数字
+	colorStepNum    = "\x1b[38;5;75m"   // 步骤编号
+	colorOutput     = "\x1b[38;5;252m"  // 标准输出内容
+	colorErrOutput  = "\x1b[38;5;203m"  // 错误输出内容
 
 	// 沙箱执行相关
 	colorSandboxCmd  = "\x1b[1;38;5;255m" // 沙箱内实际命令（亮白粗体，醒目）

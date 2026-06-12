@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/team"
 )
 
 // 本文件聚合 TeamService 的成员生命周期：建队、加入/重新激活、活跃/状态切换、
@@ -45,13 +45,13 @@ func (s *TeamService) CreateTeam(in CreateTeamInput) (*team.File, error) {
 	leadID := team.FormatAgentID(team.LeaderName, in.Name)
 	now := time.Now().UnixMilli()
 	f := &team.File{
-		Name:          in.Name,
-		Description:   in.Description,
-		CreatedAt:     now,
-		LeadAgentID:   leadID,
-		LeadSessionID: in.LeadSessionID,
-		Phase:         team.PhasePlanning, // Plan-then-Execute: start in Planning
-		MaxReplanAttempts: 3,              // default: max 3 replans
+		Name:              in.Name,
+		Description:       in.Description,
+		CreatedAt:         now,
+		LeadAgentID:       leadID,
+		LeadSessionID:     in.LeadSessionID,
+		Phase:             team.PhasePlanning, // Plan-then-Execute: start in Planning
+		MaxReplanAttempts: 3,                  // default: max 3 replans
 		Members: []team.Member{
 			{
 				AgentID:         leadID,

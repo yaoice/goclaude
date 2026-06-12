@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/memory"
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
-	rules "github.com/anthropics/goclaude/pkg/domain/rules"
+	"github.com/yaoice/goclaude/pkg/domain/memory"
+	rules "github.com/yaoice/goclaude/pkg/domain/rules"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
 )
 
 var sanitizePathRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
@@ -78,8 +78,8 @@ func (s *RulesService) GetMemoryFiles(ctx context.Context, forceIncludeExternal 
 		LocalSettingsEnabled:   true,
 		AutoMemoryEnabled:      memory.IsAutoMemoryEnabled(),
 		TeamMemoryEnabled:      false,
-		AutoMemDir: configdir.JoinPrimary(homeDir, "projects", sanitizeProjectKey(cwd), "memory"),
-		TeamMemDir: configdir.JoinPrimary(homeDir, "projects", sanitizeProjectKey(cwd), "memory", "team"),
+		AutoMemDir:             configdir.JoinPrimary(homeDir, "projects", sanitizeProjectKey(cwd), "memory"),
+		TeamMemDir:             configdir.JoinPrimary(homeDir, "projects", sanitizeProjectKey(cwd), "memory", "team"),
 	}
 
 	return s.LoadRules(ctx, opts)

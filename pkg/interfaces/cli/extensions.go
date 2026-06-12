@@ -10,10 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
-	teamdomain "github.com/anthropics/goclaude/pkg/domain/team"
-	mcpinfra "github.com/anthropics/goclaude/pkg/infrastructure/mcp"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
+	teamdomain "github.com/yaoice/goclaude/pkg/domain/team"
+	mcpinfra "github.com/yaoice/goclaude/pkg/infrastructure/mcp"
 )
 
 // newSkillsCmd 创建 `goclaude skills` 子命令

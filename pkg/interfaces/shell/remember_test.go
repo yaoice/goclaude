@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	memory "github.com/anthropics/goclaude/pkg/domain/memory"
+	memory "github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // ---------- mock MemoryManager ----------

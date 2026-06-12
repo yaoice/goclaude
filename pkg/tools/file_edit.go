@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/filesystem"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/filesystem"
 )
 
 // FileEditTool 文件编辑工具（搜索替换）
@@ -19,7 +19,7 @@ func NewFileEditTool(fs *filesystem.Service) *FileEditTool {
 	return &FileEditTool{fs: fs}
 }
 
-func (t *FileEditTool) Name() string     { return "file_edit" }
+func (t *FileEditTool) Name() string      { return "file_edit" }
 func (t *FileEditTool) Aliases() []string { return []string{"Edit"} }
 func (t *FileEditTool) Description() string {
 	return "对文件执行精确的字符串替换编辑。old_str必须在文件中唯一匹配。"
@@ -36,10 +36,10 @@ func (t *FileEditTool) InputSchema() map[string]interface{} {
 	}
 }
 
-func (t *FileEditTool) IsEnabled() bool                    { return true }
-func (t *FileEditTool) IsReadOnly(input tool.Input) bool   { return false }
+func (t *FileEditTool) IsEnabled() bool                         { return true }
+func (t *FileEditTool) IsReadOnly(input tool.Input) bool        { return false }
 func (t *FileEditTool) IsConcurrencySafe(input tool.Input) bool { return false }
-func (t *FileEditTool) Prompt() string                     { return "" }
+func (t *FileEditTool) Prompt() string                          { return "" }
 func (t *FileEditTool) ValidateInput(input tool.Input) error {
 	if input.GetString("file_path") == "" {
 		return fmt.Errorf("file_path is required")

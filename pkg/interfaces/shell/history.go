@@ -17,7 +17,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
 )
 
 const (

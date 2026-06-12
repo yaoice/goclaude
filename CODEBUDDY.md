@@ -4,7 +4,7 @@
 
 GoClaude is a Go reimplementation of the upstream TypeScript claude-code terminal AI assistant. It follows strict **DDD (Domain-Driven Design) four-layer architecture** with dependency inversion. The project has **87 test files** and builds a single binary at `./bin/goclaude`.
 
-Module: `github.com/anthropics/goclaude` (Go 1.22, no external CGO dependencies; uses embedded `modernc.org/sqlite`).
+Module: `github.com/yaoice/goclaude` (Go 1.22, no external CGO dependencies; uses embedded `modernc.org/sqlite`).
 
 ## Commands
 

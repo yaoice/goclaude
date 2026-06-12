@@ -15,9 +15,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/team"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/team"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // =============================================================================
@@ -120,13 +120,13 @@ func (t *InitiatePlanningTool) Call(_ context.Context, input tool.Input, _ *tool
 	}
 
 	return tool.NewResult(jsonOut(map[string]interface{}{
-		"success":         true,
-		"team_name":       in.TeamName,
-		"phase":           string(team.PhasePlanning),
-		"objective":       in.Objective,
+		"success":          true,
+		"team_name":        in.TeamName,
+		"phase":            string(team.PhasePlanning),
+		"objective":        in.Objective,
 		"members_notified": broadcasted,
-		"plan_id":         f.Plan.Tasks, // placeholder — plan has no explicit ID yet
-		"next_action":     "Members will review and submit proposals via collect_proposal. Wait for all members to submit, then call approve_plan.",
+		"plan_id":          f.Plan.Tasks, // placeholder — plan has no explicit ID yet
+		"next_action":      "Members will review and submit proposals via collect_proposal. Wait for all members to submit, then call approve_plan.",
 	})), nil
 }
 
@@ -196,10 +196,10 @@ func (*CollectProposalTool) InputSchema() map[string]interface{} {
 				"items": map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"title":                map[string]interface{}{"type": "string"},
-						"description":          map[string]interface{}{"type": "string"},
-						"dependsOn":            map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
-						"estimatedComplexity":  map[string]interface{}{"type": "string", "enum": []string{"low", "medium", "high"}},
+						"title":               map[string]interface{}{"type": "string"},
+						"description":         map[string]interface{}{"type": "string"},
+						"dependsOn":           map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}},
+						"estimatedComplexity": map[string]interface{}{"type": "string", "enum": []string{"low", "medium", "high"}},
 					},
 				},
 			},
@@ -396,14 +396,14 @@ func (t *ApprovePlanTool) Call(_ context.Context, input tool.Input, _ *tool.UseC
 	planJSON, _ := json.MarshalIndent(f.Plan, "", "  ")
 
 	return tool.NewResult(jsonOut(map[string]interface{}{
-		"success":         true,
-		"team_name":       in.TeamName,
-		"phase":           string(f.Phase),
-		"plan_status":     string(f.Plan.Status),
-		"tasks_count":     len(f.Plan.Tasks),
+		"success":           true,
+		"team_name":         in.TeamName,
+		"phase":             string(f.Phase),
+		"plan_status":       string(f.Plan.Status),
+		"tasks_count":       len(f.Plan.Tasks),
 		"assignments_count": len(f.Plan.Assignments),
-		"plan":            string(planJSON),
-		"next_action":     "Call start_execution to dispatch approved tasks to assigned members.",
+		"plan":              string(planJSON),
+		"next_action":       "Call start_execution to dispatch approved tasks to assigned members.",
 	})), nil
 }
 
@@ -574,12 +574,12 @@ func (t *StartExecutionTool) Call(_ context.Context, input tool.Input, _ *tool.U
 	}
 
 	return tool.NewResult(jsonOut(map[string]interface{}{
-		"success":       true,
-		"team_name":     teamName,
-		"phase":         string(f.Phase),
-		"tasks_dispatched": dispatched,
+		"success":           true,
+		"team_name":         teamName,
+		"phase":             string(f.Phase),
+		"tasks_dispatched":  dispatched,
 		"total_assignments": len(f.Plan.Assignments),
-		"message":       fmt.Sprintf("Dispatched %d tasks. Members will begin execution. Monitor with get_team_status.", dispatched),
+		"message":           fmt.Sprintf("Dispatched %d tasks. Members will begin execution. Monitor with get_team_status.", dispatched),
 	})), nil
 }
 
@@ -667,12 +667,12 @@ func (t *InitiateReplanTool) Call(_ context.Context, input tool.Input, _ *tool.U
 	}
 
 	return tool.NewResult(jsonOut(map[string]interface{}{
-		"success":        true,
-		"team_name":      in.TeamName,
-		"phase":          string(f.Phase),
-		"replan_count":   f.ReplanCount,
-		"message":        "Replan initiated. Members have been notified. They should submit revised proposals via collect_proposal.",
-		"next_action":    "Wait for members to submit revised proposals, then call approve_plan again.",
+		"success":      true,
+		"team_name":    in.TeamName,
+		"phase":        string(f.Phase),
+		"replan_count": f.ReplanCount,
+		"message":      "Replan initiated. Members have been notified. They should submit revised proposals via collect_proposal.",
+		"next_action":  "Wait for members to submit revised proposals, then call approve_plan again.",
 	})), nil
 }
 

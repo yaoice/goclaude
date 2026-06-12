@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/domain/memory"
 )
 
 // newTestRepo creates a SQLite Repository backed by a temp file, auto-cleaned.

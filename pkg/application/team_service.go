@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	teamfs "github.com/anthropics/goclaude/pkg/infrastructure/team"
+	teamfs "github.com/yaoice/goclaude/pkg/infrastructure/team"
 )
 
 // TeamService 是 team 子系统的应用层入口。

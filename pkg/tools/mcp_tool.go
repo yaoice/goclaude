@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // MCPTool 把单个 MCP 工具适配为本地 Tool 接口

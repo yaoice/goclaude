@@ -5,7 +5,7 @@
 package hooks
 
 import (
-	"github.com/anthropics/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
 )
 
 // PermissionManager 权限管理器（应用层编排）

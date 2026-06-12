@@ -8,7 +8,7 @@
 package cli
 
 import (
-	"github.com/anthropics/goclaude/pkg/infrastructure/appconfig"
+	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
 )
 
 var loadedAppConfig *appconfig.Config

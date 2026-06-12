@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // SkillTool 让 LLM 主动加载 skill 全文
@@ -72,7 +72,7 @@ func (t *SkillTool) InputSchema() map[string]interface{} {
 					"(e.g. 'commit-message', 'review-pr'). Aliases are accepted.",
 			},
 			"args": map[string]interface{}{
-				"type": "string",
+				"type":        "string",
 				"description": "Optional arguments string passed via ${ARGS} placeholder",
 			},
 		},

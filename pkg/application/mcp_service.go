@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
-	mcpinfra "github.com/anthropics/goclaude/pkg/infrastructure/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
+	mcpinfra "github.com/yaoice/goclaude/pkg/infrastructure/mcp"
 )
 
 // MCPService MCP 应用服务

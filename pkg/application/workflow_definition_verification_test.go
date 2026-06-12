@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/workflow"
-	workflowinfra "github.com/anthropics/goclaude/pkg/infrastructure/workflow"
+	"github.com/yaoice/goclaude/pkg/domain/workflow"
+	workflowinfra "github.com/yaoice/goclaude/pkg/infrastructure/workflow"
 )
 
 // ============================================================================

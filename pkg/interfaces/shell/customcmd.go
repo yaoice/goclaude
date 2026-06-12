@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/anthropics/goclaude/pkg/infrastructure/configdir"
-	"github.com/anthropics/goclaude/pkg/util/frontmatter"
+	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
+	"github.com/yaoice/goclaude/pkg/util/frontmatter"
 )
 
 // CustomCommand 用户自定义的 prompt-类 slash 命令

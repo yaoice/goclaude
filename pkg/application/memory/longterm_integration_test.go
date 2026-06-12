@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/memory"
-	"github.com/anthropics/goclaude/pkg/infrastructure/memory/sqlite"
+	"github.com/yaoice/goclaude/pkg/domain/memory"
+	"github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
 )
 
 // newIntegrationService creates a service for integration testing

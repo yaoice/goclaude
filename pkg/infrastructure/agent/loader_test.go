@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
 )
 
 func TestBuiltInAgents(t *testing.T) {

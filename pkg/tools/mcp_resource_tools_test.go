@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/mcp"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/mcp"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 func startMCPToolExtrasServer(t *testing.T) *httptest.Server {

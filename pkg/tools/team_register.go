@@ -2,8 +2,8 @@
 package tools
 
 import (
-	"github.com/anthropics/goclaude/pkg/application"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
 )
 
 // TeamRuntime 是 team 工具组的运行时身份。
@@ -36,7 +36,7 @@ type TeamRuntime struct {
 //   - wait_for_message                阻塞等待未读消息（替代轮询）
 //   - set_status                      声明 idle/working/blocked/error/done
 //   - heartbeat                       刷新心跳，证明成员存活
-//   【共享任务列表 CRUD】
+//     【共享任务列表 CRUD】
 //   - create_task                     在团队任务列表中创建新任务
 //   - update_task                     更新指定任务的状态 / 分配 / 描述
 //   - list_tasks                     列出团队任务列表（可选按状态过滤）
@@ -44,10 +44,10 @@ type TeamRuntime struct {
 //   - claim_task                     成员自主认领指定 pending 任务
 //   - claim_any_task                 成员自主认领任意 pending 任务（自动选择）
 //   - delete_task                    从任务列表中删除指定任务
-//   【自动化工具】
+//     【自动化工具】
 //   - auto_setup_team                 一键创建团队、添加成员、创建任务
 //   - auto_assign_task                自动将 pending 任务分配给空闲成员
-//   【Plan-then-Execute 工具】
+//     【Plan-then-Execute 工具】
 //   - initiate_planning               启动 Planning Phase，广播目标给成员
 //   - collect_proposal                成员提交任务提案
 //   - approve_plan                    leader 审批计划，转入 Executing Phase
@@ -59,7 +59,7 @@ func RegisterTeamTools(reg *tool.Registry, svc *application.TeamService, rt Team
 	if reg == nil || svc == nil {
 		return
 	}
-	
+
 	// 基础 6 个工具
 	baseTools := []tool.Tool{
 		NewTeamCreateTool(svc, rt.TeamName, rt.AgentName),
@@ -70,7 +70,7 @@ func RegisterTeamTools(reg *tool.Registry, svc *application.TeamService, rt Team
 		NewGetTeamStatusTool(svc, rt.TeamName, rt.AgentName),
 		NewParseTeamIntentTool(svc, rt.TeamName, rt.AgentName),
 	}
-	
+
 	// 进阶 5 个工具
 	advancedTools := []tool.Tool{
 		NewAssignTaskTool(svc, rt.TeamName, rt.AgentName),
@@ -79,7 +79,7 @@ func RegisterTeamTools(reg *tool.Registry, svc *application.TeamService, rt Team
 		NewSetMemberStatusTool(svc, rt.TeamName, rt.AgentName),
 		NewHeartbeatTool(svc, rt.TeamName, rt.AgentName),
 	}
-	
+
 	// 任务管理 9 个工具（共享任务列表 + 自动化）
 	taskTools := []tool.Tool{
 		NewCreateTaskTool(svc, rt.TeamName, rt.AgentName),

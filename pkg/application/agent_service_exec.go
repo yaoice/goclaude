@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/goclaude/pkg/domain/agent"
-	"github.com/anthropics/goclaude/pkg/domain/hook"
-	"github.com/anthropics/goclaude/pkg/domain/query"
-	"github.com/anthropics/goclaude/pkg/domain/tool"
-	"github.com/anthropics/goclaude/pkg/infrastructure/memory"
-	"github.com/anthropics/goclaude/pkg/infrastructure/worktree"
+	"github.com/yaoice/goclaude/pkg/domain/agent"
+	"github.com/yaoice/goclaude/pkg/domain/hook"
+	"github.com/yaoice/goclaude/pkg/domain/query"
+	"github.com/yaoice/goclaude/pkg/domain/tool"
+	"github.com/yaoice/goclaude/pkg/infrastructure/memory"
+	"github.com/yaoice/goclaude/pkg/infrastructure/worktree"
 )
 
 // 本文件聚合 AgentService 的执行路径与相关 helper：
@@ -474,7 +474,7 @@ func IsReservedToolAllowedForTeamMember(name string) bool {
 //     显式列出。例外：
 //     a) def.AllowSubagentChaining == true 时全部放行（高阶编排）。
 //     b) def.IsTeamMember == true 时，teamMemberAllowedTools 中的工具豁免放行，
-//        其余保留工具（Agent/Task/team_create/team_delete）仍剔除。
+//     其余保留工具（Agent/Task/team_create/team_delete）仍剔除。
 //  2. Definition.DisallowedTools 在保留集之后再做一次剔除。
 //  3. 若 Definition.Tools 非空 → 取白名单交集；为 nil → 继承父全部工具。
 //
