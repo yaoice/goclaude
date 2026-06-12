@@ -125,15 +125,15 @@ func (a *AfterFirstRender) Run() {
 
 // FileHistorySnapshot 文件历史快照
 type FileHistorySnapshot struct {
-	FilePath   string
-	Content    string
-	Timestamp  int64
+	FilePath  string
+	Content   string
+	Timestamp int64
 }
 
 // FileHistoryState 文件历史状态
 type FileHistoryState struct {
-	Snapshots  []FileHistorySnapshot
-	Enabled    bool
+	Snapshots []FileHistorySnapshot
+	Enabled   bool
 }
 
 // FileHistorySnapshotInit 文件历史初始化器

@@ -27,10 +27,10 @@ const (
 //   - Listener 负责将事件渲染为 CLI 友好格式（如 `⏵ tool` / `✔ tool 12ms`）
 //   - 多个工具并发执行时事件可能交错；每个 ToolUseID 上保证 Start→Finish 严格成对
 type ToolEvent struct {
-	Phase        ToolPhase
-	ToolName     string
-	ToolUseID    string
-	Input        Input
+	Phase     ToolPhase
+	ToolName  string
+	ToolUseID string
+	Input     Input
 	// InputSummary 工具参数的可读单行摘要（由 Executor 在分发 start 事件前填充）；
 	// 例如 bash → "ls -la src/"，file_read → "src/main.go"，grep → "\"func New\" in src/"。
 	// 空串表示无摘要（UI 应回退到 "..." 占位）。

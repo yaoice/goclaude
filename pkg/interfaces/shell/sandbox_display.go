@@ -31,10 +31,12 @@ type sandboxCommandInfo struct {
 // parseSandboxCommand 从 bash 工具的命令参数中解析沙箱信息。
 //
 // bwrap 典型格式：
-//   bwrap --die-with-parent --unshare-pid ... -- /usr/bin/bash -c "actual command"
+//
+//	bwrap --die-with-parent --unshare-pid ... -- /usr/bin/bash -c "actual command"
 //
 // 直接 bash 格式：
-//   some command here
+//
+//	some command here
 func parseSandboxCommand(command string, maxPreview int) sandboxCommandInfo {
 	if command == "" {
 		return sandboxCommandInfo{}
@@ -117,10 +119,12 @@ func extractBashCCommand(s string) string {
 // renderSandboxStepStart 渲染沙箱命令的启动行。
 //
 // 对于沙箱命令，显示：
-//   [N] ◌ bash  🔒 actual_command_here
+//
+//	[N] ◌ bash  🔒 actual_command_here
 //
 // 对于普通 bash 命令：
-//   [N] ◌ bash  command_here
+//
+//	[N] ◌ bash  command_here
 func (r *REPL) renderSandboxStepStart(step int, toolName, command string) string {
 	var sb strings.Builder
 
@@ -151,10 +155,11 @@ func (r *REPL) renderSandboxStepStart(step int, toolName, command string) string
 //
 // 成功：      ✓ done  1.2s
 // 失败：      ✗ fetch failed: connection timeout  1.2s
-//             ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-//             │ Error: fetch failed
-//             │ connection reset by peer
-//             ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+//
+//	╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+//	│ Error: fetch failed
+//	│ connection reset by peer
+//	╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 func (r *REPL) renderSandboxError(errText string, maxLines int) {
 	if errText == "" || maxLines <= 0 {
 		return

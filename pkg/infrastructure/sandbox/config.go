@@ -23,7 +23,7 @@ type Config struct {
 
 	// Command execution
 	AllowUnsandboxed bool     `json:"allow_unsandboxed" yaml:"allow_unsandboxed"`
-	ExcludedCommands  []string `json:"excluded_commands"  yaml:"excluded_commands"`
+	ExcludedCommands []string `json:"excluded_commands"  yaml:"excluded_commands"`
 
 	// Advanced
 	EnableWeakerNestedSandbox bool `json:"enable_weaker_nested_sandbox" yaml:"enable_weaker_nested_sandbox"`
@@ -41,11 +41,11 @@ type FsWriteConfig struct {
 }
 
 type NetworkConfig struct {
-	AllowedDomains   []string `json:"allowed_domains"   yaml:"allowed_domains"`
-	DeniedDomains    []string `json:"denied_domains"    yaml:"denied_domains"`
-	AllowUnixSockets bool     `json:"allow_unix_sockets" yaml:"allow_unix_sockets"`
-	AllowLocalBinding bool    `json:"allow_local_binding" yaml:"allow_local_binding"`
-	DisableNetwork   bool     `json:"disable_network"     yaml:"disable_network"`
+	AllowedDomains    []string `json:"allowed_domains"   yaml:"allowed_domains"`
+	DeniedDomains     []string `json:"denied_domains"    yaml:"denied_domains"`
+	AllowUnixSockets  bool     `json:"allow_unix_sockets" yaml:"allow_unix_sockets"`
+	AllowLocalBinding bool     `json:"allow_local_binding" yaml:"allow_local_binding"`
+	DisableNetwork    bool     `json:"disable_network"     yaml:"disable_network"`
 }
 
 // DefaultConfig returns a default sandbox config (sandbox disabled by default).
@@ -61,24 +61,24 @@ func DefaultConfig() *Config {
 			Deny:  []string{"~/.ssh", "~/.aws", "~/.config/gcloud"},
 		},
 		Network: NetworkConfig{
-			AllowedDomains:   []string{},
-			DeniedDomains:    []string{},
-			AllowUnixSockets: false,
+			AllowedDomains:    []string{},
+			DeniedDomains:     []string{},
+			AllowUnixSockets:  false,
 			AllowLocalBinding: true,
-			DisableNetwork:   false,
+			DisableNetwork:    false,
 		},
-		AllowUnsandboxed:        true,
+		AllowUnsandboxed:          true,
 		EnableWeakerNestedSandbox: false,
-		IgnoreViolations:         false,
+		IgnoreViolations:          false,
 	}
 }
 
 // Sandbox wraps command execution with OS-level isolation.
 type Sandbox struct {
-	config     *Config
-	platform   Platform
-	workDir    string
-	timeout    time.Duration
+	config      *Config
+	platform    Platform
+	workDir     string
+	timeout     time.Duration
 	initialized bool
 }
 

@@ -282,6 +282,13 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	repl.Teams = &teamAdapter{svc: wired.TeamSvc}
 	repl.Workflows = workflows
 	repl.Memory = wired.MemorySvc // /remember /memory 命令依赖
+	if app.PromptEnhancer.Enabled {
+		enhancer := application.NewPromptEnhancer(provider, modelName)
+		enhancer.SetTimeout(app.PromptEnhancer.Timeout)
+		enhancer.SetMaxTokens(app.PromptEnhancer.MaxTokens)
+		enhancer.SetTemperature(app.PromptEnhancer.Temperature)
+		repl.PromptEnhancer = enhancer
+	}
 
 	// 共享的 todo 存储：避免 /workspace 切换时重置 todo 清单
 	todoStore := todo.NewMemoryStore()

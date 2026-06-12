@@ -99,6 +99,10 @@ type REPL struct {
 	Workflows WorkflowManager
 	Memory    MemoryManager // 记忆入口管理器（/remember /memory）
 
+	// PromptEnhancer 提示词优化服务（/enhance-prompt 命令使用）
+	// nil 时 /enhance-prompt 不可用
+	PromptEnhancer *application.PromptEnhancer
+
 	// CustomCommands 用户/项目自定义 prompt-类 slash 命令注册表
 	// 由 NewREPL 自动从 ~/.claude/commands/ 与 <cwd>/.claude/commands/ 加载
 	CustomCommands *CustomCommands

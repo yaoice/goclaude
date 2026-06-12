@@ -20,11 +20,11 @@ type Model struct {
 	// 消息列表
 	messages []ChatMessage
 	// 用户输入
-	input    string
+	input string
 	// 状态栏信息
-	status   StatusInfo
+	status StatusInfo
 	// 当前模式
-	mode     Mode
+	mode Mode
 
 	// 登录页面
 	loginPage LoginPage
@@ -52,11 +52,11 @@ type ChatMessage struct {
 
 // StatusInfo 状态栏信息
 type StatusInfo struct {
-	Model       string
-	TokenCount  int
-	CostUSD     float64
-	TurnCount   int
-	Mode        string
+	Model      string
+	TokenCount int
+	CostUSD    float64
+	TurnCount  int
+	Mode       string
 }
 
 // NewModel 创建TUI主模型

@@ -80,4 +80,3 @@ func TestRenderTaskToolLineASCII(t *testing.T) {
 		t.Fatalf("ascii ready chevron should be 'v': %q", line)
 	}
 }
-

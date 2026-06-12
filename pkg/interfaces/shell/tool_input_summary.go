@@ -176,16 +176,17 @@ func dispatchSummary(name string, m map[string]interface{}) string {
 // summarizeBashCommand 把多行 bash 命令折叠为单行可读摘要。
 //
 // 策略：
-//   1. 去除开头的注释行（# ...），但保留注释内容作为"意图说明"
-//   2. 将多行命令折叠为首个有意义的命令行
-//   3. 如果命令以注释开头，显示 "# 注释 → 首条命令"
+//  1. 去除开头的注释行（# ...），但保留注释内容作为"意图说明"
+//  2. 将多行命令折叠为首个有意义的命令行
+//  3. 如果命令以注释开头，显示 "# 注释 → 首条命令"
 //
 // 示例：
-//   输入：  "# 安装依赖\ncd /tmp && npm install\necho done"
-//   输出：  "# 安装依赖 → cd /tmp && npm install"
 //
-//   输入：  "cd /data/workspace && go build ./..."
-//   输出：  "cd /data/workspace && go build ./..."
+//	输入：  "# 安装依赖\ncd /tmp && npm install\necho done"
+//	输出：  "# 安装依赖 → cd /tmp && npm install"
+//
+//	输入：  "cd /data/workspace && go build ./..."
+//	输出：  "cd /data/workspace && go build ./..."
 func summarizeBashCommand(cmd string) string {
 	if cmd == "" {
 		return ""

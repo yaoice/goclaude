@@ -42,7 +42,10 @@ type Editor struct {
 	// 渲染
 	prompt     string
 	contPrompt string // 续行提示符
-	lastLines  int    // 上次 redraw 写出的可见行数
+	lastLines  int    // 上次 redraw 写出的物理行总数（含折行）
+	// lastCursorRow 上次 redraw 结束时光标所在的物理行（0 起，含版本行）。
+	// clearRendered 依此上移回到渲染区顶部，是正确处理长行折行的关键。
+	lastCursorRow int
 
 	// 状态
 	inPaste bool
@@ -69,6 +72,12 @@ type Editor struct {
 	//
 	// 回调内部应负责暂离 raw 模式 + 重绘 prompt 等。
 	OnExternalEditor func(current string) (newText string, replace bool)
+
+	// 提示词优化版本管理（Ctrl+G 切换，/enhance-prompt 命令使用）
+	origText        string // 原始提示词文本
+	enhancedText    string // 优化后的文本
+	showingEnhanced bool   // 当前是否显示优化版本
+	preserveContent bool   // ReadLine 开始时保留当前缓冲区（用于 /enhance-prompt 回填后继续编辑）
 }
 
 // Completer 按当前输入与光标位置给出补全建议
@@ -133,10 +142,18 @@ func (e *Editor) EnableBracketedPaste(enable bool) {
 // 调用前要求 term 已进入原始模式。
 func (e *Editor) ReadLine(prompt string) (string, error) {
 	e.prompt = prompt
-	e.buf = e.buf[:0]
+	// 如果 preserveContent 为 true，保留当前缓冲区内容（由 /enhance-prompt 等回填场景设置）
+	if e.preserveContent {
+		e.preserveContent = false
+		// 保留版本信息以便 Ctrl+G 切换
+	} else {
+		e.buf = e.buf[:0]
+		e.ClearVersions()
+	}
 	e.pos = 0
 	e.mark = ""
 	e.lastLines = 0
+	e.lastCursorRow = 0
 	if e.history != nil {
 		e.history.Reset()
 	}
@@ -186,6 +203,7 @@ func (e *Editor) ReadLine(prompt string) (string, error) {
 		case KeyCtrlC:
 			e.writeRaw("^C\r\n")
 			e.lastLines = 0
+			e.lastCursorRow = 0
 			return "", ErrInterrupted
 
 		case KeyEsc:
@@ -197,6 +215,7 @@ func (e *Editor) ReadLine(prompt string) (string, error) {
 			if len(e.buf) == 0 {
 				e.writeRaw("\r\n")
 				e.lastLines = 0
+				e.lastCursorRow = 0
 				return "", io.EOF
 			}
 			e.deleteForward()
@@ -273,6 +292,7 @@ func (e *Editor) ReadLine(prompt string) (string, error) {
 			// 清屏并重绘
 			e.writeRaw("\x1b[2J\x1b[H")
 			e.lastLines = 0
+			e.lastCursorRow = 0
 			e.redraw()
 
 		case KeyCtrlR:
@@ -286,6 +306,11 @@ func (e *Editor) ReadLine(prompt string) (string, error) {
 				e.lastLines = 0
 				e.OnCtrlO()
 				// 回调结束后重新渲染 prompt 区
+				e.redraw()
+			}
+		case KeyCtrlG:
+			if e.HasVersions() {
+				e.ToggleVersion()
 				e.redraw()
 			}
 		case KeyCtrlXE:
@@ -310,4 +335,55 @@ func (e *Editor) endRender() {
 	e.redraw()
 	e.writeRaw("\r\n")
 	e.lastLines = 0
+	e.lastCursorRow = 0
+	// 提交/取消时清除版本存储
+	e.ClearVersions()
+}
+
+// SetVersions 设置原始和优化版本（由 /enhance-prompt 命令调用）
+//
+// 设置后自动切到优化版本显示，并标记 preserveContent 使 ReadLine 保留当前缓冲。
+func (e *Editor) SetVersions(orig, enhanced string) {
+	e.origText = orig
+	e.enhancedText = enhanced
+	e.showingEnhanced = true
+	e.preserveContent = true
+	e.setBuf(enhanced)
+}
+
+// ToggleVersion 在原始版本和优化版本之间切换显示
+func (e *Editor) ToggleVersion() {
+	if !e.HasVersions() {
+		return
+	}
+	e.showingEnhanced = !e.showingEnhanced
+	if e.showingEnhanced {
+		e.setBuf(e.enhancedText)
+	} else {
+		e.setBuf(e.origText)
+	}
+}
+
+// HasVersions 检查是否有可切换的版本
+func (e *Editor) HasVersions() bool {
+	return e.origText != "" && e.enhancedText != ""
+}
+
+// ClearVersions 清除版本存储（每次 ReadLine 开始时自动调用）
+func (e *Editor) ClearVersions() {
+	e.origText = ""
+	e.enhancedText = ""
+	e.showingEnhanced = false
+}
+
+// GetCurrentVersionState 返回当前显示的版本标签（用于状态栏）
+// 返回值: "enhanced", "original", ""（无版本）
+func (e *Editor) GetCurrentVersionState() string {
+	if !e.HasVersions() {
+		return ""
+	}
+	if e.showingEnhanced {
+		return "enhanced"
+	}
+	return "original"
 }

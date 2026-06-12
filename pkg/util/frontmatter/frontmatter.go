@@ -63,8 +63,8 @@ func findFrontmatterEnd(s string) int {
 //   - key: "value"       （带引号的标量）
 //   - key: [a, b, c]     （行内数组）
 //   - key:               （后续行 - value 形式的数组）
-//     - item1
-//     - item2
+//   - item1
+//   - item2
 //   - key: |             （多行字符串：折叠/字面均按字面处理）
 //     line1
 //     line2
@@ -76,10 +76,10 @@ func parseYAMLSubset(text string) (Data, error) {
 	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
 
 	var (
-		currentKey       string
-		currentArr       []string
-		currentLiteral   *strings.Builder
-		literalIndent    int
+		currentKey     string
+		currentArr     []string
+		currentLiteral *strings.Builder
+		literalIndent  int
 	)
 
 	flush := func() {

@@ -164,9 +164,9 @@ func TestTrackedEnvVars_CoversRuntimeKnobs(t *testing.T) {
 // stripANSI 去掉 ANSI 转义序列。
 func TestStripANSI(t *testing.T) {
 	cases := map[string]string{
-		"":                            "",
-		"hello":                       "hello",
-		"\x1b[36mcyan\x1b[0m":         "cyan",
+		"":                             "",
+		"hello":                        "hello",
+		"\x1b[36mcyan\x1b[0m":          "cyan",
 		"\x1b[1;33mbold yellow\x1b[0m": "bold yellow",
 		// 单字节 ESC X
 		"a\x1bXb": "ab",

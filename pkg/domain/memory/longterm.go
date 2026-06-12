@@ -15,20 +15,20 @@ import (
 
 // LongTermMemory 长期记忆实体 —— 对齐 claude-mem 的 observation + summary 概念
 type LongTermMemory struct {
-	ID          int64     `json:"id"`
-	SessionID   string    `json:"session_id"`
-	Type        string    `json:"type"` // "observation" | "summary" | "preference"
-	Title       string    `json:"title"`
-	Content     string    `json:"content"`
-	Category    string    `json:"category"` // "project" | "user" | "reference" | "feedback"
-	Source      string    `json:"source"`   // "user_directive" | "auto_extract" | "agent_note" | "tool_use"
-	ToolName    string    `json:"tool_name,omitempty"`
-	Priority    int       `json:"priority"` // 0-100
-	Tags        string    `json:"tags"`     // comma-separated
-	CreatedAt   time.Time `json:"created_at"`
-	ExpiresAt   time.Time `json:"expires_at,omitempty"` // 零值表示永不过期
-	ByteSize    int       `json:"byte_size"`
-	AccessCount int       `json:"access_count"`
+	ID           int64     `json:"id"`
+	SessionID    string    `json:"session_id"`
+	Type         string    `json:"type"` // "observation" | "summary" | "preference"
+	Title        string    `json:"title"`
+	Content      string    `json:"content"`
+	Category     string    `json:"category"` // "project" | "user" | "reference" | "feedback"
+	Source       string    `json:"source"`   // "user_directive" | "auto_extract" | "agent_note" | "tool_use"
+	ToolName     string    `json:"tool_name,omitempty"`
+	Priority     int       `json:"priority"` // 0-100
+	Tags         string    `json:"tags"`     // comma-separated
+	CreatedAt    time.Time `json:"created_at"`
+	ExpiresAt    time.Time `json:"expires_at,omitempty"` // 零值表示永不过期
+	ByteSize     int       `json:"byte_size"`
+	AccessCount  int       `json:"access_count"`
 	LastAccessed time.Time `json:"last_accessed"`
 }
 
@@ -56,17 +56,17 @@ func (m *LongTermMemory) TotalScore(now time.Time) float64 {
 
 // LongTermSession 记忆会话 —— 对齐 claude-mem 的 sessions 表
 type LongTermSession struct {
-	ID             string    `json:"id"`
-	WorkingDir     string    `json:"working_dir"`
-	ProjectRoot    string    `json:"project_root"`
-	Model          string    `json:"model"`
-	Summary        string    `json:"summary"` // AI 生成的会话摘要
-	InputTokens    int       `json:"input_tokens"`
-	OutputTokens   int       `json:"output_tokens"`
-	TurnCount      int       `json:"turn_count"`
-	ObservationCount int     `json:"observation_count"`
-	StartedAt      time.Time `json:"started_at"`
-	EndedAt        time.Time `json:"ended_at,omitempty"`
+	ID               string    `json:"id"`
+	WorkingDir       string    `json:"working_dir"`
+	ProjectRoot      string    `json:"project_root"`
+	Model            string    `json:"model"`
+	Summary          string    `json:"summary"` // AI 生成的会话摘要
+	InputTokens      int       `json:"input_tokens"`
+	OutputTokens     int       `json:"output_tokens"`
+	TurnCount        int       `json:"turn_count"`
+	ObservationCount int       `json:"observation_count"`
+	StartedAt        time.Time `json:"started_at"`
+	EndedAt          time.Time `json:"ended_at,omitempty"`
 }
 
 // ============================================================

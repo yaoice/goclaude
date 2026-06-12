@@ -22,12 +22,14 @@ type FS interface {
 // OsFS 真实文件系统实现
 type OsFS struct{}
 
-func (OsFS) ReadFile(path string) ([]byte, error)                   { return os.ReadFile(path) }
-func (OsFS) WriteFile(path string, data []byte, perm os.FileMode) error { return os.WriteFile(path, data, perm) }
-func (OsFS) Stat(path string) (os.FileInfo, error)                  { return os.Stat(path) }
-func (OsFS) MkdirAll(path string, perm os.FileMode) error           { return os.MkdirAll(path, perm) }
-func (OsFS) Remove(path string) error                               { return os.Remove(path) }
-func (OsFS) ReadDir(path string) ([]os.DirEntry, error)             { return os.ReadDir(path) }
+func (OsFS) ReadFile(path string) ([]byte, error) { return os.ReadFile(path) }
+func (OsFS) WriteFile(path string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(path, data, perm)
+}
+func (OsFS) Stat(path string) (os.FileInfo, error)        { return os.Stat(path) }
+func (OsFS) MkdirAll(path string, perm os.FileMode) error { return os.MkdirAll(path, perm) }
+func (OsFS) Remove(path string) error                     { return os.Remove(path) }
+func (OsFS) ReadDir(path string) ([]os.DirEntry, error)   { return os.ReadDir(path) }
 
 // Service 文件系统服务
 type Service struct {

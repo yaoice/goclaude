@@ -44,7 +44,7 @@ func TestTruncateEntrypointContent_LineTruncation(t *testing.T) {
 func TestTruncateEntrypointContent_ByteTruncation(t *testing.T) {
 	// 创建超过25KB的内容（少于200行）
 	line := strings.Repeat("x", 300) // 300 bytes per line
-	lines := make([]string, 100)   // 100 lines * 300 bytes = 30KB
+	lines := make([]string, 100)     // 100 lines * 300 bytes = 30KB
 	for i := range lines {
 		lines[i] = line
 	}

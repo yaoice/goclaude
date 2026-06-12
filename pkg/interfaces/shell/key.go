@@ -48,6 +48,7 @@ const (
 	KeyCtrlD  // EOF / 退出
 	KeyCtrlR  // 历史反向搜索（暂未实现完整功能，先占位）
 	KeyCtrlO  // 切换 transcript 全屏只读模式
+	KeyCtrlG  // 提示词优化版本切换（原始 ↔ 优化）
 	KeyCtrlXE // Ctrl+X Ctrl+E：调用外部编辑器
 )
 
@@ -112,6 +113,8 @@ func (k Key) String() string {
 		return "<C-r>"
 	case KeyCtrlO:
 		return "<C-o>"
+	case KeyCtrlG:
+		return "<C-g>"
 	case KeyCtrlXE:
 		return "<C-x C-e>"
 	}

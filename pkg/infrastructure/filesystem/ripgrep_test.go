@@ -222,9 +222,9 @@ func TestParseRipgrepJSON_TolerantOfMalformedLines(t *testing.T) {
 func TestGlob_Match_BaseNamePattern(t *testing.T) {
 	dir := t.TempDir()
 	makeTree(t, dir, map[string]string{
-		"a.go":          "",
-		"sub/b.go":      "",
-		"sub/c.txt":     "",
+		"a.go":                 "",
+		"sub/b.go":             "",
+		"sub/c.txt":            "",
 		"node_modules/skip.go": "",
 	})
 	results, err := NewGlob(dir).Match(GlobOptions{Pattern: "*.go"})
@@ -269,10 +269,10 @@ func TestGlob_Match_DoubleStarRecursive(t *testing.T) {
 func TestGlob_Match_SkipsNoiseDirs(t *testing.T) {
 	dir := t.TempDir()
 	makeTree(t, dir, map[string]string{
-		"src/a.go":               "",
-		"node_modules/x/y.go":    "",
-		"vendor/lib.go":          "",
-		".git/hooks/pre-commit":  "",
+		"src/a.go":              "",
+		"node_modules/x/y.go":   "",
+		"vendor/lib.go":         "",
+		".git/hooks/pre-commit": "",
 	})
 	results, _ := NewGlob(dir).Match(GlobOptions{Pattern: "*.go"})
 	for _, p := range results {

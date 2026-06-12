@@ -65,6 +65,7 @@ var builtinCommands = []helpCommand{
 	{name: "/workflow", argHint: "[list|plan|run|status|cancel] [args]", desc: "Manage workflows: list, plan (AI-generate), run, status, cancel"},
 	{name: "/remember", argHint: "", desc: "Directly persist a memory to MEMORY.md (auto-extracts title)"},
 	{name: "/memory", argHint: "list|add|del|search [args]", desc: "Manage memories: list, add, delete by ID, search"},
+	{name: "/enhance-prompt", argHint: "<text>", desc: "Enhance a prompt via AI; Ctrl+G to toggle original/enhanced"},
 }
 
 // helpShortcut 描述 /help 中一条快捷键。
@@ -85,6 +86,7 @@ var helpShortcuts = []helpShortcut{
 	{"Ctrl-U / Ctrl-K", "Delete to line start / end"},
 	{"Ctrl-L", "Clear screen"},
 	{"Ctrl-O", "Open transcript fullscreen viewer"},
+	{"Ctrl-G", "Toggle between original and enhanced prompt versions"},
 	{"Ctrl-R", "Reverse incremental history search"},
 	{"Ctrl-X Ctrl-E", "Edit current input in $EDITOR"},
 	{"Esc", "Cancel current generation; clear input when idle"},

@@ -61,8 +61,8 @@ func Dial(rawURL string, headers http.Header) (*Conn, error) {
 	}
 
 	var (
-		host       = u.Host
-		secure     bool
+		host        = u.Host
+		secure      bool
 		defaultPort = "80"
 	)
 	switch strings.ToLower(u.Scheme) {

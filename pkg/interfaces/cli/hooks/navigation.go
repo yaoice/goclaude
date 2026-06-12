@@ -13,22 +13,22 @@ type TeamMateState struct {
 type SelectionMode string
 
 const (
-	SelectionNone          SelectionMode = "none"
+	SelectionNone           SelectionMode = "none"
 	SelectionSelectingAgent SelectionMode = "selecting-agent"
 	SelectionViewingAgent   SelectionMode = "viewing-agent"
 )
 
 // NavigationState 导航状态
 type NavigationState struct {
-	ViewSelectionMode    SelectionMode
-	SelectedAgentIndex   int // -1 = leader, 0..n = teammate, n+1 = hide
-	ViewingAgentID       string
-	ExpandedView         string
+	ViewSelectionMode     SelectionMode
+	SelectedAgentIndex    int // -1 = leader, 0..n = teammate, n+1 = hide
+	ViewingAgentID        string
+	ExpandedView          string
 	OnOpenBackgroundTasks func()
-	OnEnterTeammateView  func(teammateID string)
-	OnExitTeammateView   func()
-	OnKillTeammate       func(teammateID string)
-	OnAbortCurrentWork   func(teammateID string)
+	OnEnterTeammateView   func(teammateID string)
+	OnExitTeammateView    func()
+	OnKillTeammate        func(teammateID string)
+	OnAbortCurrentWork    func(teammateID string)
 }
 
 // BackgroundNavigation 后台任务导航

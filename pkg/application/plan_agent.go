@@ -19,11 +19,11 @@ import (
 // PlanAgentPrompt 构建 Plan Agent 的系统提示词。
 //
 // 核心要求（对齐 oh-my-openagent）：
-//   1. 依赖图分析（每任务的 blocking/dependent 关系）
-//   2. 并行波次分解（识别哪些任务可安全并行）
-//   3. 分类推荐（subagent_type 路由）
-//   4. 技能建议（预加载 skills）
-//   5. 输出纯 JSON（无 markdown 包裹，可直接解析）
+//  1. 依赖图分析（每任务的 blocking/dependent 关系）
+//  2. 并行波次分解（识别哪些任务可安全并行）
+//  3. 分类推荐（subagent_type 路由）
+//  4. 技能建议（预加载 skills）
+//  5. 输出纯 JSON（无 markdown 包裹，可直接解析）
 //
 // availableAgents: 当前可用的 subagent 类型列表
 // userRequest: 用户对 workflow 目标的自然语言描述

@@ -23,11 +23,11 @@ type MemoryEntry struct {
 	ID          string    `json:"id"`
 	Title       string    `json:"title"`
 	Content     string    `json:"content"`
-	Source      string    `json:"source"` // "user_directive" | "auto_extract" | "agent_note"
+	Source      string    `json:"source"`             // "user_directive" | "auto_extract" | "agent_note"
 	Category    string    `json:"category,omitempty"` // "project" | "user" | "reference" | "feedback"
 	Tags        []string  `json:"tags,omitempty"`
-	Priority    int       `json:"priority"`    // 0-100, 越高越重要
-	Relevance   float64   `json:"relevance"`    // 0.0-1.0 与当前上下文的相关度
+	Priority    int       `json:"priority"`  // 0-100, 越高越重要
+	Relevance   float64   `json:"relevance"` // 0.0-1.0 与当前上下文的相关度
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	AccessCount int       `json:"access_count"` // 被读取次数
@@ -52,11 +52,11 @@ func (e *MemoryEntry) TotalScore(now time.Time) float64 {
 type RuleAction string
 
 const (
-	ActionInclude  RuleAction = "include"  // 强制保留
-	ActionExclude  RuleAction = "exclude"  // 强制丢弃
-	ActionBoost    RuleAction = "boost"    // 提升优先级
-	ActionDemote   RuleAction = "demote"   // 降低优先级
-	ActionTag      RuleAction = "tag"      // 添加标签
+	ActionInclude RuleAction = "include" // 强制保留
+	ActionExclude RuleAction = "exclude" // 强制丢弃
+	ActionBoost   RuleAction = "boost"   // 提升优先级
+	ActionDemote  RuleAction = "demote"  // 降低优先级
+	ActionTag     RuleAction = "tag"     // 添加标签
 )
 
 // RuleMatchType 规则匹配类型

@@ -13,7 +13,7 @@ import (
 type Platform string
 
 const (
-	PlatformLinux        Platform = "linux"
+	PlatformLinux       Platform = "linux"
 	PlatformMacOS       Platform = "macos"
 	PlatformWSL2        Platform = "wsl"
 	PlatformWindows     Platform = "windows"

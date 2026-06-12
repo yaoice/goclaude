@@ -9,7 +9,7 @@ import (
 // ParseFrontmatter parses the frontmatter in a Markdown file
 func ParseFrontmatter(content string, filePath string) (Frontmatter, string) {
 	fm := Frontmatter{}
-	
+
 	trimmed := strings.TrimLeft(content, "\n\r\t ")
 	if !strings.HasPrefix(trimmed, "---") {
 		return fm, content
@@ -20,29 +20,29 @@ func ParseFrontmatter(content string, filePath string) (Frontmatter, string) {
 	var frontmatterLines []string
 	var remainingLines []string
 	foundClosing := false
-	
+
 	for i, line := range lines {
 		if foundClosing {
 			remainingLines = lines[i:]
 			break
 		}
-		
+
 		trimmedLine := strings.TrimSpace(line)
 		if trimmedLine == "---" {
 			foundClosing = true
 			continue
 		}
-		
+
 		frontmatterLines = append(frontmatterLines, line)
 	}
-	
+
 	if !foundClosing {
 		return fm, content
 	}
-	
+
 	rawFrontmatter := strings.Join(frontmatterLines, "\n")
 	fm.Raw = rawFrontmatter
-	
+
 	for _, line := range frontmatterLines {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
@@ -68,11 +68,11 @@ func ParseFrontmatter(content string, filePath string) (Frontmatter, string) {
 			fm.Paths = value
 		}
 	}
-	
+
 	remaining := strings.Join(remainingLines, "\n")
 	remaining = strings.TrimPrefix(remaining, "\n")
 	remaining = strings.TrimPrefix(remaining, "\r\n")
-	
+
 	return fm, remaining
 }
 
@@ -163,16 +163,16 @@ func StripHtmlComments(content string) (string, bool) {
 	}
 
 	output := strings.Join(result, "\n")
-	
+
 	// Collapse multiple consecutive newlines to at most 2 (one blank line)
 	for strings.Contains(output, "\n\n\n") {
 		output = strings.Replace(output, "\n\n\n", "\n\n", -1)
 	}
-	
+
 	if strings.HasSuffix(content, "\n") {
 		output = output + "\n"
 	}
-	
+
 	return output, stripped
 }
 

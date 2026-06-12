@@ -264,5 +264,3 @@ func escapedString(s string) string {
 func CleanupProfile(profilePath string) error {
 	return os.Remove(profilePath)
 }
-
-
