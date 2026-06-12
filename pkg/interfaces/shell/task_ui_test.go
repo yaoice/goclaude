@@ -3,35 +3,7 @@ package shell
 import (
 	"strings"
 	"testing"
-
-	"github.com/yaoice/goclaude/pkg/domain/query"
 )
-
-// approxTokens 与 estimateSessionTokens 的基本不变量。
-func TestApproxTokensAndEstimate(t *testing.T) {
-	if got := approxTokens(""); got != 0 {
-		t.Fatalf("empty string should be 0 tokens, got %d", got)
-	}
-	if got := approxTokens("hello world 123456"); got <= 0 {
-		t.Fatalf("non-empty string should be >0 tokens, got %d", got)
-	}
-}
-
-// 估算区间必须满足 low<=high 且非负，并随上下文增长而增长。
-func TestEstimateSessionTokens(t *testing.T) {
-	small := []query.Message{query.NewTextMessage(query.RoleUser, "hi")}
-	lowS, highS := estimateSessionTokens(small)
-	if lowS < 0 || highS < lowS {
-		t.Fatalf("invalid range: low=%d high=%d", lowS, highS)
-	}
-
-	big := []query.Message{query.NewTextMessage(query.RoleUser, strings.Repeat("x", 8000))}
-	lowB, highB := estimateSessionTokens(big)
-	if lowB <= lowS || highB <= highS {
-		t.Fatalf("larger context should yield larger estimate: small(%d,%d) big(%d,%d)",
-			lowS, highS, lowB, highB)
-	}
-}
 
 // 工具图标映射：命令类走 IsCommand；mcp__ 走 🔨 + 去前缀名；搜索类走 Tool Search；未知走默认。
 func TestTaskToolGlyph(t *testing.T) {
@@ -109,11 +81,3 @@ func TestRenderTaskToolLineASCII(t *testing.T) {
 	}
 }
 
-// 头部预估文案格式校验。
-func TestSessionEstimateText(t *testing.T) {
-	r := &REPL{useColor: false, useASCII: false}
-	txt := r.sessionEstimateText([]query.Message{query.NewTextMessage(query.RoleUser, "hello")})
-	if !strings.Contains(txt, "本次会话预计消耗") || !strings.Contains(txt, "tokens") || !strings.Contains(txt, "~") {
-		t.Fatalf("estimate text format wrong: %q", txt)
-	}
-}

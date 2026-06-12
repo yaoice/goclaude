@@ -12,13 +12,15 @@ type TokenBudget struct {
 	// compactThreshold 触发压缩的阈值比例（0.0-1.0）
 	compactThreshold float64
 
-	// currentInputTokens 当前输入token使用量
+	// currentInputTokens 当前轮 API 调用的输入 token 数（反映实际上下文窗口大小）
+	// 注意：不做跨轮累加，因为每轮 InputTokens 已包含完整对话历史；
+	// 累加会导致同一上下文被重复计数 N 轮，提前误触发压缩。
 	currentInputTokens int
-	// currentOutputTokens 当前输出token使用量
+	// currentOutputTokens 当前轮 API 调用的输出 token 数
 	currentOutputTokens int
-	// totalInputTokens 累计输入token数
+	// totalInputTokens 累计输入token数（跨轮累加，用于统计）
 	totalInputTokens int
-	// totalOutputTokens 累计输出token数
+	// totalOutputTokens 累计输出token数（跨轮累加，用于统计）
 	totalOutputTokens int
 }
 
@@ -34,6 +36,11 @@ func NewTokenBudget(maxContext int, threshold float64) *TokenBudget {
 }
 
 // RecordUsage 记录一次API调用的token使用量
+//
+// currentInputTokens 仅保留最新一轮的输入 token 数（反映实际上下文窗口大小），
+// 不做跨轮累加。因为每轮 API 的 InputTokens 已包含完整对话历史，累加会导致
+// ShouldCompact 将同一上下文重复计数 N 轮后提前误触发。
+// totalInputTokens / totalOutputTokens 保持跨轮累加，用于 GetStats 统计。
 func (tb *TokenBudget) RecordUsage(usage *Usage) {
 	if usage == nil {
 		return
@@ -41,8 +48,8 @@ func (tb *TokenBudget) RecordUsage(usage *Usage) {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
 
-	tb.currentInputTokens += usage.InputTokens
-	tb.currentOutputTokens += usage.OutputTokens
+	tb.currentInputTokens = usage.InputTokens
+	tb.currentOutputTokens = usage.OutputTokens
 	tb.totalInputTokens += usage.InputTokens
 	tb.totalOutputTokens += usage.OutputTokens
 }

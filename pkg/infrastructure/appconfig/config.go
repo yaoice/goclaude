@@ -81,11 +81,12 @@ type ProviderConfig struct {
 
 // EngineConfig 查询引擎参数
 type EngineConfig struct {
-	MaxTurns       int           `yaml:"max_turns"`
-	TokenBudget    int           `yaml:"token_budget"`
-	AutoCompact    bool          `yaml:"auto_compact"`
-	MaxRetries     int           `yaml:"max_retries"`
-	RetryBaseDelay time.Duration `yaml:"retry_base_delay"`
+	MaxTurns          int           `yaml:"max_turns"`
+	TokenBudget       int           `yaml:"token_budget"`
+	AutoCompact       bool          `yaml:"auto_compact"`
+	CompactThreshold  float64       `yaml:"compact_threshold"`
+	MaxRetries        int           `yaml:"max_retries"`
+	RetryBaseDelay    time.Duration `yaml:"retry_base_delay"`
 }
 
 // ToolsConfig 工具运行参数
@@ -298,10 +299,11 @@ func DefaultConfig() *Config {
 			},
 		},
 		Engine: EngineConfig{
-			MaxTurns:    100,
-			TokenBudget: 200000,
-			AutoCompact: true,
-			MaxRetries:  3,
+			MaxTurns:         100,
+			TokenBudget:      200000,
+			AutoCompact:      true,
+			CompactThreshold: 0.8,
+			MaxRetries:       3,
 		},
 		Tools: ToolsConfig{
 			MaxConcurrency: 10,

@@ -488,8 +488,8 @@ func (r *REPL) runOnce(parent context.Context, userInput string) {
 	}()
 
 	// 实时打印（带 markdown 流式格式化）
-	// 头部展示助手标识 + 本次会话预计消耗 Credits 估算。
-	r.printAssistantHeader(r.sessionEstimateText(msgs))
+	// 头部展示助手标识。
+	r.printAssistantHeader()
 	var assistantText strings.Builder
 	startedAt := time.Now()
 

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-GoClaude is a Go reimplementation of the upstream TypeScript claude-code terminal AI assistant. It follows strict **DDD (Domain-Driven Design) four-layer architecture** with dependency inversion. The project has **87 test files** and builds a single binary at `./bin/goclaude`.
+GoClaude is a Go reimplementation of the upstream TypeScript claude-code terminal AI assistant. It follows strict **DDD (Domain-Driven Design) four-layer architecture** with dependency inversion. The project has **88 test files** across ~210 non-test Go source files, and builds a single binary at `./bin/goclaude`.
 
 Module: `github.com/yaoice/goclaude` (Go 1.22, no external CGO dependencies; uses embedded `modernc.org/sqlite`).
 
@@ -80,12 +80,11 @@ The core business logic, entirely free of external dependencies:
 | **`task/`** | Task lifecycle (pending → running → complete/failed). |
 | **`mcp/`** | MCP (Model Context Protocol) types and JSON-RPC message definitions. |
 | **`config/`** | Configuration models: `GlobalConfig` (user-level, stored per-project key) and `ProjectConfig` (project-level, YAML). |
-| **`permission/`** | Permission system with modes (allow/deny/ask) and path-based rule matching. |
 | **`agent/`** | Sub-agent definitions and lifecycle. |
 | **`team/`** | Multi-agent team coordination: coordinator, members, task assignment, message passing. |
 | **`skill/`** | Skill definitions and conditional activation rules. |
 | **`rules/`** | Rule files loading and precedence model. |
-| **`hook/`** | Hook lifecycle events and callback definitions. |
+| **`hook/`** | Hook lifecycle events, callback definitions, and permission types (allow/deny/ask modes with path-based rules). |
 | **`memory/`** | Long-term memory persistence model. |
 | **`session/`** | Session state and lifecycle. |
 | **`workflow/`** | Workflow engine: `Definition`, `Engine`, and `State` — declarative multi-step agent workflows. |
@@ -114,10 +113,10 @@ Orchestrates domain logic. Top-level service files + two sub-packages:
 | `config_service.go`, `session_service.go`, `memory_service.go`, `rules_service.go`, `command_service.go`, `task_service.go` | Corresponding domain orchestrations. |
 
 ### `hooks/` Sub-package
-Hook lifecycle implementations (11 files): `session_lifecycle.go`, `message_hooks.go`, `permission_hooks.go`, `notification_hooks.go`, `diff_hooks.go`, `ide_hooks.go`, `vim_hooks.go`, `terminal_hooks.go`, `memory_lifecycle.go`, `memory_filter.go`, `api_key_verifier.go`, `history_search.go`, `session_hooks.go`.
+Hook lifecycle implementations (13 source files + 3 test files): `session_lifecycle.go`, `message_hooks.go`, `permission_hooks.go`, `notification_hooks.go`, `diff_hooks.go`, `ide_hooks.go`, `vim_hooks.go`, `terminal_hooks.go`, `memory_lifecycle.go`, `memory_filter.go`, `api_key_verifier.go`, `history_search.go`, `session_hooks.go`.
 
 ### `memory/` Sub-package
-- `longterm_service.go` — Long-term memory persistence service with SQLite backend.
+- `longterm_service.go` — Long-term memory persistence service with SQLite backend (+ 2 integration test files).
 
 ---
 
@@ -154,12 +153,12 @@ Implements domain interfaces with real I/O:
 
 ## Interfaces Layer (`pkg/interfaces/`)
 
-### CLI (`cli/`) — 15 source files + 1 sub-package
+### CLI (`cli/`) — 14 source files + 1 sub-package
 Cobra command definitions: `root.go`, `chat.go`, `run.go`, `root_doctor.go`, `root_repl.go`, `appcfg.go`, `extensions.go`, `permission_mode.go`, `logging.go`, `prettylog.go`, `headless_render.go`, `shell_adapter.go`, `team_lifecycle.go`, `workflow_adapter.go`, `cli/hooks/navigation.go`.
 
 Key commands: `chat`, `run`, `doctor`, `repl`, `config`, `agent`, `team`, `mcp`, `skill`, `workflow`.
 
-### Shell REPL (`shell/`) — 51 source files (34 non-test + 17 test)
+### Shell REPL (`shell/`) — 54 source files (34 non-test + 20 test)
 Interactive terminal: line editor (`editor*.go`), markdown rendering with syntax highlighting (`markdown.go`, `highlight.go`), dialog system (`dialog*.go`, `agents_dialog.go`, `mcp_dialog.go`, `skills_dialog.go`), tab completion (`completer.go`), history (`history.go`), streaming code display, sub-agent progress rendering, permission dialogs, transcript output, tool rendering, sandbox display, and workflow REPL integration.
 
 ### TUI (`tui/`) — 2 files
@@ -190,7 +189,7 @@ Concrete tool implementations registered with the domain `Registry`:
 | **`frontmatter/`** | Markdown YAML frontmatter extraction. |
 | **`settingsenv/`** | Bridges `settings.json` values to environment variables. |
 | **`wsclient/`** | WebSocket client with reconnection. |
-| **`hooks/`** | Shared hook utilities used across application and interfaces layers. |
+| **`hooks/`** | Shared hook utilities (clipboard, deferred execution, lifecycle, queue, timer) used across application and interfaces layers. |
 
 ---
 
@@ -217,7 +216,7 @@ Concrete tool implementations registered with the domain `Registry`:
 
 ## Test Structure
 
-- **87 test files** total across the project (counted as `*_test.go`)
+- **88 test files** total across the project (counted as `*_test.go`)
 - Unit tests co-located with source in `pkg/` (Go convention)
 - Integration tests: `tests/integration/e2e_integration_test.go`
 - E2E scripts: `tests/e2e/` (expect-based REPL smoke tests, MCP echo server)
@@ -225,4 +224,5 @@ Concrete tool implementations registered with the domain `Registry`:
 ## Entry Points
 
 - `cmd/goclaude/main.go` — Main binary entry point
+- `cmd/goclaude/main_test.go` — Main binary tests
 - `cmd/prove_memory/prove_memory.go` — Long-term memory end-to-end verification tool (build-tag gated)

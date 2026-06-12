@@ -63,6 +63,9 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	if !cmd.Flags().Changed("max-context-kb") && app.Engine.TokenBudget > 0 {
 		replMaxContextKB = app.Engine.TokenBudget / 1000
 	}
+	if app.Engine.CompactThreshold > 0 {
+		replCompactThreshold = app.Engine.CompactThreshold
+	}
 	if !cmd.Flags().Changed("no-compact") {
 		replNoCompact = !app.Engine.AutoCompact
 	}
@@ -108,7 +111,7 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	executor.SetPermissionContext(permCtx)
 	// 注：tool.UseContext 在 REPL 构建后注入，使 AskUser 可走 cooked 模式
 
-	budget := query.NewTokenBudget(replMaxContextKB*1000, 0.8)
+	budget := query.NewTokenBudget(replMaxContextKB*1000, replCompactThreshold)
 	cfg := query.DefaultConfig()
 	cfg.Model = modelName
 	cfg.MaxTurns = replMaxTurns

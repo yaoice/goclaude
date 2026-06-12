@@ -19,10 +19,11 @@ var (
 	flagProvider string
 
 	// REPL 专用标志
-	replNoMCP        bool
-	replNoCompact    bool
-	replMaxTurns     int
-	replMaxContextKB int
+	replNoMCP           bool
+	replNoCompact       bool
+	replMaxTurns        int
+	replMaxContextKB    int
+	replCompactThreshold float64
 
 	// Team 集成标志（REPL 与 run 子命令共用）：
 	//   --team-name N --agent-name A     启动时自动 JoinTeam(N, A)，
