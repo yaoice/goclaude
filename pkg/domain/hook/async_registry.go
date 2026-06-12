@@ -18,17 +18,17 @@ import (
 
 // PendingAsyncHook 待处理的异步 hook
 type PendingAsyncHook struct {
-	ProcessID               string
-	HookID                  string
-	HookName                string
-	HookEvent               string // Event 类型 或 "StatusLine" / "FileSuggestion"
-	ToolName                string
-	PluginID                string
-	StartTime               time.Time
-	Timeout                 time.Duration
-	Command                 string
-	ResponseAttachmentSent  bool
-	StopProgressInterval    func()
+	ProcessID              string
+	HookID                 string
+	HookName               string
+	HookEvent              string // Event 类型 或 "StatusLine" / "FileSuggestion"
+	ToolName               string
+	PluginID               string
+	StartTime              time.Time
+	Timeout                time.Duration
+	Command                string
+	ResponseAttachmentSent bool
+	StopProgressInterval   func()
 
 	// 进程输出访问器
 	GetStdout func() string
@@ -99,9 +99,9 @@ type AsyncResponse struct {
 }
 
 type checkResult struct {
-	response    *AsyncResponse // non-nil means response found
-	removeID    string         // non-empty means remove this hook
-	isSkip      bool
+	response       *AsyncResponse // non-nil means response found
+	removeID       string         // non-empty means remove this hook
+	isSkip         bool
 	isSessionStart bool
 }
 

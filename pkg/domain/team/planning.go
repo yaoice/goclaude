@@ -355,12 +355,12 @@ type PlanProposal struct {
 
 // PlanValidationSummary 计划验证结果摘要。
 type PlanValidationSummary struct {
-	Valid           bool     `json:"valid"`
-	TotalTasks      int      `json:"totalTasks"`
-	TotalAssignments int     `json:"totalAssignments"`
-	UnassignedTasks []string `json:"unassignedTasks,omitempty"`
-	Errors          []string `json:"errors,omitempty"`
-	Warnings        []string `json:"warnings,omitempty"`
+	Valid            bool     `json:"valid"`
+	TotalTasks       int      `json:"totalTasks"`
+	TotalAssignments int      `json:"totalAssignments"`
+	UnassignedTasks  []string `json:"unassignedTasks,omitempty"`
+	Errors           []string `json:"errors,omitempty"`
+	Warnings         []string `json:"warnings,omitempty"`
 }
 
 // SummarizeValidation 生成验证摘要。

@@ -195,15 +195,15 @@ func TestShouldUseSandbox(t *testing.T) {
 	defer sb.Cleanup()
 
 	tests := []struct {
-		command          string
+		command            string
 		dangerouslyDisable bool
-		want             bool
+		want               bool
 	}{
 		{"ls -la", false, true},
 		{"cd /tmp", false, false}, // excluded
-		{"pwd", false, false},      // excluded
+		{"pwd", false, false},     // excluded
 		{"git status", false, true},
-		{"ls -la", true, false},    // dangerouslyDisable=true, allowUnsandboxed=true
+		{"ls -la", true, false}, // dangerouslyDisable=true, allowUnsandboxed=true
 	}
 
 	for _, tt := range tests {
@@ -301,7 +301,7 @@ func TestExpandPath(t *testing.T) {
 	home, _ := os.UserHomeDir()
 
 	tests := []struct {
-		input    string
+		input      string
 		wantPrefix string
 	}{
 		{"~", home},
@@ -319,8 +319,8 @@ func TestExpandPath(t *testing.T) {
 func TestMatchesPattern(t *testing.T) {
 	tests := []struct {
 		command string
-		pattern  string
-		want     bool
+		pattern string
+		want    bool
 	}{
 		{"cd /tmp", "cd *", true},
 		{"pwd", "pwd", true},
@@ -425,5 +425,3 @@ func contains(s, substr string) bool {
 	}
 	return false
 }
-
-

@@ -40,19 +40,20 @@ import (
 //
 // 字段命名采用大写 Go 风格；YAML 键采用 snake_case，由本包内部映射处理。
 type Config struct {
-	API            APIConfig                  `yaml:"api"`
-	Providers      map[string]ProviderConfig  `yaml:"providers"`
-	Engine         EngineConfig               `yaml:"engine"`
-	Tools          ToolsConfig                `yaml:"tools"`
-	MCP            MCPConfig                  `yaml:"mcp"`
-	AgentTeams     AgentTeamsConfig           `yaml:"agent_teams"`
-	Permissions    PermissionsConfig          `yaml:"permissions"`
-	Sandbox        SandboxConfig              `yaml:"sandbox"`
-	Session        SessionConfig              `yaml:"session"`
-	TUI            TUIConfig                  `yaml:"tui"`
-	SystemPrompt   SystemPromptConfig         `yaml:"system_prompt"`
-	Workspace      WorkspaceConfig            `yaml:"workspace"`
-	LongTermMemory LongTermMemoryConfig       `yaml:"longterm_memory"`
+	API            APIConfig                 `yaml:"api"`
+	Providers      map[string]ProviderConfig `yaml:"providers"`
+	Engine         EngineConfig              `yaml:"engine"`
+	Tools          ToolsConfig               `yaml:"tools"`
+	MCP            MCPConfig                 `yaml:"mcp"`
+	AgentTeams     AgentTeamsConfig          `yaml:"agent_teams"`
+	Permissions    PermissionsConfig         `yaml:"permissions"`
+	Sandbox        SandboxConfig             `yaml:"sandbox"`
+	Session        SessionConfig             `yaml:"session"`
+	TUI            TUIConfig                 `yaml:"tui"`
+	SystemPrompt   SystemPromptConfig        `yaml:"system_prompt"`
+	Workspace      WorkspaceConfig           `yaml:"workspace"`
+	LongTermMemory LongTermMemoryConfig      `yaml:"longterm_memory"`
+	PromptEnhancer PromptEnhancerConfig       `yaml:"prompt_enhancer"`
 
 	// LoadedFrom 记录配置实际从哪些文件加载（按加载顺序）
 	// 仅诊断用途（goclaude doctor 展示）。
@@ -61,12 +62,12 @@ type Config struct {
 
 // APIConfig 主 Provider 与模型参数
 type APIConfig struct {
-	Provider    string  `yaml:"provider"`     // anthropic | deepseek
-	Model       string  `yaml:"model"`        // 默认模型名
-	MaxTokens   int     `yaml:"max_tokens"`   // 单次最大输出 token
-	Temperature float64 `yaml:"temperature"`  // 采样温度
-	TopP        float64 `yaml:"top_p"`        // 核采样
-	Stream      bool    `yaml:"stream"`       // 是否使用流式
+	Provider    string  `yaml:"provider"`    // anthropic | deepseek
+	Model       string  `yaml:"model"`       // 默认模型名
+	MaxTokens   int     `yaml:"max_tokens"`  // 单次最大输出 token
+	Temperature float64 `yaml:"temperature"` // 采样温度
+	TopP        float64 `yaml:"top_p"`       // 核采样
+	Stream      bool    `yaml:"stream"`      // 是否使用流式
 }
 
 // ProviderConfig 各 Provider 的传输与重试参数
@@ -81,20 +82,20 @@ type ProviderConfig struct {
 
 // EngineConfig 查询引擎参数
 type EngineConfig struct {
-	MaxTurns          int           `yaml:"max_turns"`
-	TokenBudget       int           `yaml:"token_budget"`
-	AutoCompact       bool          `yaml:"auto_compact"`
-	CompactThreshold  float64       `yaml:"compact_threshold"`
-	MaxRetries        int           `yaml:"max_retries"`
-	RetryBaseDelay    time.Duration `yaml:"retry_base_delay"`
+	MaxTurns         int           `yaml:"max_turns"`
+	TokenBudget      int           `yaml:"token_budget"`
+	AutoCompact      bool          `yaml:"auto_compact"`
+	CompactThreshold float64       `yaml:"compact_threshold"`
+	MaxRetries       int           `yaml:"max_retries"`
+	RetryBaseDelay   time.Duration `yaml:"retry_base_delay"`
 }
 
 // ToolsConfig 工具运行参数
 type ToolsConfig struct {
-	MaxConcurrency  int           `yaml:"max_concurrency"`
-	MaxResultSize   int           `yaml:"max_result_size"`
-	Timeout         time.Duration `yaml:"timeout"`
-	UseBuiltinGrep  bool          `yaml:"use_builtin_grep"`
+	MaxConcurrency int           `yaml:"max_concurrency"`
+	MaxResultSize  int           `yaml:"max_result_size"`
+	Timeout        time.Duration `yaml:"timeout"`
+	UseBuiltinGrep bool          `yaml:"use_builtin_grep"`
 }
 
 // MCPConfig MCP 子系统参数
@@ -114,15 +115,16 @@ type MCPConfig struct {
 //     通过 Agent 工具把任务下发给单一 subagent 独立执行（上下文隔离的纯读 RPC）。
 //
 // 默认 true（保持历史行为）。优先级（高→低）：
-//   CLI --agent-teams > 环境变量 GOCLAUDE_AGENT_TEAMS > YAML agent_teams.enabled
+//
+//	CLI --agent-teams > 环境变量 GOCLAUDE_AGENT_TEAMS > YAML agent_teams.enabled
 type AgentTeamsConfig struct {
 	Enabled bool `yaml:"enabled"`
 }
 
 // PermissionsConfig 权限/审批参数
 type PermissionsConfig struct {
-	Mode             string `yaml:"mode"` // default | acceptEdits | plan | bypass
-	AutoApproveRead  bool   `yaml:"auto_approve_read"`
+	Mode            string `yaml:"mode"` // default | acceptEdits | plan | bypass
+	AutoApproveRead bool   `yaml:"auto_approve_read"`
 }
 
 // SandboxConfig Bash 沙箱参数（Linux: bwrap / macOS: sandbox-exec）
@@ -229,16 +231,16 @@ type LongTermMemoryConfig struct {
 
 // LongTermCaptureConfig 记忆捕获配置
 type LongTermCaptureConfig struct {
-	AutoCaptureTools  bool `yaml:"auto_capture_tools"`
-	MaxObservationSize int `yaml:"max_observation_size"`
-	MinCaptureChars   int  `yaml:"min_capture_chars"`
+	AutoCaptureTools   bool `yaml:"auto_capture_tools"`
+	MaxObservationSize int  `yaml:"max_observation_size"`
+	MinCaptureChars    int  `yaml:"min_capture_chars"`
 }
 
 // LongTermInjectionConfig 上下文注入配置
 type LongTermInjectionConfig struct {
-	AutoInject       bool    `yaml:"auto_inject"`
-	MaxInjectTokens  int     `yaml:"max_inject_tokens"`
-	SearchLimit      int     `yaml:"search_limit"`
+	AutoInject        bool    `yaml:"auto_inject"`
+	MaxInjectTokens   int     `yaml:"max_inject_tokens"`
+	SearchLimit       int     `yaml:"search_limit"`
 	MinRelevanceScore float64 `yaml:"min_relevance_score"`
 }
 
@@ -257,8 +259,8 @@ type LongTermEvictionConfig struct {
 
 // LongTermExpirationConfig 过期策略配置
 type LongTermExpirationConfig struct {
-	DefaultTTLDays     int `yaml:"default_ttl_days"`
-	LowPriorityTTLDays int `yaml:"low_priority_ttl_days"`
+	DefaultTTLDays       int `yaml:"default_ttl_days"`
+	LowPriorityTTLDays   int `yaml:"low_priority_ttl_days"`
 	CleanupIntervalHours int `yaml:"cleanup_interval_hours"`
 }
 
@@ -266,6 +268,18 @@ type LongTermExpirationConfig struct {
 type LongTermPrivacyConfig struct {
 	AutoExcludePatterns bool `yaml:"auto_exclude_patterns"`
 	StripPrivateTags    bool `yaml:"strip_private_tags"`
+}
+
+// PromptEnhancerConfig /enhance-prompt 提示词优化配置
+type PromptEnhancerConfig struct {
+	// Enabled 是否启用 /enhance-prompt 命令
+	Enabled bool `yaml:"enabled"`
+	// Timeout 单次优化 API 调用超时
+	Timeout time.Duration `yaml:"timeout"`
+	// MaxTokens 优化返回最大 token 数
+	MaxTokens int `yaml:"max_tokens"`
+	// Temperature 优化调用温度（建议较低，保证输出稳定）
+	Temperature float64 `yaml:"temperature"`
 }
 
 // DefaultConfig 返回内置兜底默认值
@@ -375,14 +389,20 @@ func DefaultConfig() *Config {
 				MinPriority:   5,
 			},
 			Expiration: LongTermExpirationConfig{
-				DefaultTTLDays:      90,
-				LowPriorityTTLDays:  30,
+				DefaultTTLDays:       90,
+				LowPriorityTTLDays:   30,
 				CleanupIntervalHours: 24,
 			},
 			Privacy: LongTermPrivacyConfig{
 				AutoExcludePatterns: true,
 				StripPrivateTags:    true,
 			},
+		},
+		PromptEnhancer: PromptEnhancerConfig{
+			Enabled:     true,
+			Timeout:     30 * time.Second,
+			MaxTokens:   4096,
+			Temperature: 0.3,
 		},
 	}
 }

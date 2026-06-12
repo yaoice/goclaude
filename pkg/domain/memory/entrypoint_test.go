@@ -16,9 +16,9 @@ func newMockRepo() *mockRepo {
 	return &mockRepo{files: make(map[string]string)}
 }
 
-func (r *mockRepo) Load(ctx context.Context, path string) (*Memory, error)       { return nil, nil }
-func (r *mockRepo) Save(ctx context.Context, m *Memory) error                     { return nil }
-func (r *mockRepo) Exists(ctx context.Context, path string) bool                  { return false }
+func (r *mockRepo) Load(ctx context.Context, path string) (*Memory, error) { return nil, nil }
+func (r *mockRepo) Save(ctx context.Context, m *Memory) error              { return nil }
+func (r *mockRepo) Exists(ctx context.Context, path string) bool           { return false }
 func (r *mockRepo) ReadDir(ctx context.Context, path string, recursive bool) ([]DirEntry, error) {
 	return nil, nil
 }

@@ -46,7 +46,7 @@ var titleRe = regexp.MustCompile(`^##\s+(.+)$`)
 
 // EntryItem 单条记忆条目
 type EntryItem struct {
-	ID        string    `json:"id"`        // 16 位 hex 唯一 ID
+	ID        string    `json:"id"`         // 16 位 hex 唯一 ID
 	Title     string    `json:"title"`      // 记忆标题
 	Content   string    `json:"content"`    // 记忆内容（不含标题和元数据）
 	Category  string    `json:"category"`   // project | user | reference | feedback
@@ -58,8 +58,8 @@ type EntryItem struct {
 
 // EntrypointManager 管理 MEMORY.md 的读写与条目操作
 type EntrypointManager struct {
-	repo       Repository
-	memoryDir  string
+	repo           Repository
+	memoryDir      string
 	entrypointPath string
 }
 

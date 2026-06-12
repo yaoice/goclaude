@@ -60,6 +60,9 @@ func applyMap(cfg *Config, m map[string]interface{}) {
 	if ltm, ok := getMap(m, "longterm_memory"); ok {
 		applyLongTermMemory(&cfg.LongTermMemory, ltm)
 	}
+	if pe, ok := getMap(m, "prompt_enhancer"); ok {
+		applyPromptEnhancer(&cfg.PromptEnhancer, pe)
+	}
 }
 
 func applyAPI(c *APIConfig, m map[string]interface{}) {
@@ -497,4 +500,19 @@ func getDuration(m map[string]interface{}, key string) (time.Duration, bool) {
 		return time.Duration(n * float64(time.Second)), true
 	}
 	return 0, false
+}
+
+func applyPromptEnhancer(c *PromptEnhancerConfig, m map[string]interface{}) {
+	if v, ok := getBool(m, "enabled"); ok {
+		c.Enabled = v
+	}
+	if v, ok := getDuration(m, "timeout"); ok {
+		c.Timeout = v
+	}
+	if v, ok := getInt(m, "max_tokens"); ok {
+		c.MaxTokens = v
+	}
+	if v, ok := getFloat(m, "temperature"); ok {
+		c.Temperature = v
+	}
 }

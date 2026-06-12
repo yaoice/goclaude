@@ -55,14 +55,14 @@ func resolvePath(path string, homeDir string) string {
 }
 
 var (
-	runProvider     string
-	runModel        string
-	runMaxTurns     int
-	runNoMCP        bool
+	runProvider         string
+	runModel            string
+	runMaxTurns         int
+	runNoMCP            bool
 	runNoCompact        bool
 	runMaxContextKB     int
 	runCompactThreshold float64
-	runWorkflow     string
+	runWorkflow         string
 )
 
 // newRunCmd 创建 `goclaude run` 子命令

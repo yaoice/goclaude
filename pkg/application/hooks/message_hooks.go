@@ -51,7 +51,9 @@ func (mr *MessageReducer) AddMessage(groupID, role, msg string) {
 		if g.ID == groupID {
 			mr.groups[i].Messages = append(mr.groups[i].Messages, msg)
 			mr.mu.Unlock()
-			if mr.onChange != nil { mr.onChange(mr.groups) }
+			if mr.onChange != nil {
+				mr.onChange(mr.groups)
+			}
 			return
 		}
 	}
@@ -69,7 +71,9 @@ func (mr *MessageReducer) AddToolCall(groupID string, call ToolCall) {
 		if g.ID == groupID {
 			mr.groups[i].ToolCalls = append(mr.groups[i].ToolCalls, call)
 			mr.mu.Unlock()
-			if mr.onChange != nil { mr.onChange(mr.groups) }
+			if mr.onChange != nil {
+				mr.onChange(mr.groups)
+			}
 			return
 		}
 	}
@@ -95,10 +99,10 @@ func (mr *MessageReducer) Clear() {
 // TurnCounter Turn 计数器
 // Equivalent of useTurnDiffs / turn-related hooks
 type TurnCounter struct {
-	mu        sync.RWMutex
-	count     int
-	max       int
-	onChange  func(count, max int)
+	mu       sync.RWMutex
+	count    int
+	max      int
+	onChange func(count, max int)
 }
 
 // NewTurnCounter 创建 turn 计数器
@@ -113,7 +117,9 @@ func (tc *TurnCounter) Inc() {
 	cb := tc.onChange
 	c, m := tc.count, tc.max
 	tc.mu.Unlock()
-	if cb != nil { cb(c, m) }
+	if cb != nil {
+		cb(c, m)
+	}
 }
 
 // Count 当前计数
@@ -143,7 +149,7 @@ func (tc *TurnCounter) OnChange(fn func(count, max int)) { tc.onChange = fn }
 // StreamingStatus 流式状态追踪
 // Equivalent of useStreamingStatus
 type StreamingStatus struct {
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 	streaming bool
 	toolName  string
 	onChange  func(streaming bool, toolName string)
@@ -160,7 +166,9 @@ func (ss *StreamingStatus) SetStreaming(streaming bool, toolName string) {
 	ss.toolName = toolName
 	cb := ss.onChange
 	ss.mu.Unlock()
-	if changed && cb != nil { cb(streaming, toolName) }
+	if changed && cb != nil {
+		cb(streaming, toolName)
+	}
 }
 
 // IsStreaming 是否在流式传输中

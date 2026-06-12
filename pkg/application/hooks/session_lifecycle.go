@@ -20,15 +20,15 @@ const blurDelayMs = 5 * time.Minute
 
 // AwaySummary 离开摘要管理器
 type AwaySummary struct {
-	mu             sync.Mutex
-	timer          *time.Timer
-	abortCh        chan struct{}
-	pending        bool
-	blurred        bool
-	isLoading      bool
-	messages       []AwayMessage
-	generateFn     func(messages []AwayMessage, signal <-chan struct{}) (string, error)
-	onAddMessage   func(summaryText string)
+	mu           sync.Mutex
+	timer        *time.Timer
+	abortCh      chan struct{}
+	pending      bool
+	blurred      bool
+	isLoading    bool
+	messages     []AwayMessage
+	generateFn   func(messages []AwayMessage, signal <-chan struct{}) (string, error)
+	onAddMessage func(summaryText string)
 }
 
 // AwayMessage 用于摘要的消息格式
@@ -162,19 +162,19 @@ func (a *AwaySummary) abort() {
 
 // CancelRequestState 取消请求状态
 type CancelRequestState struct {
-	AbortSignal   func() bool // returns true if aborted
-	OnCancel      func()
-	OnKillAgents  func(count int)
+	AbortSignal       func() bool // returns true if aborted
+	OnCancel          func()
+	OnKillAgents      func(count int)
 	HasQueuedCommands func() bool
-	PopCommand    func()
+	PopCommand        func()
 }
 
 // CancelRequestHandler 取消请求处理器
 type CancelRequestHandler struct {
-	mu          sync.Mutex
-	state       CancelRequestState
-	lastKillAt  time.Time
-	killWindow  time.Duration
+	mu         sync.Mutex
+	state      CancelRequestState
+	lastKillAt time.Time
+	killWindow time.Duration
 }
 
 const defaultKillConfirmWindow = 3 * time.Second
@@ -228,5 +228,3 @@ func (c *CancelRequestHandler) HandleKillAgents() (confirmed bool) {
 	c.lastKillAt = now
 	return false // first press, need confirmation
 }
-
-

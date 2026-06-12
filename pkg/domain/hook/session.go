@@ -130,9 +130,9 @@ type ReconnectEvent struct {
 type ReconnectState string
 
 const (
-	ReconnectStateIdle        ReconnectState = "idle"
-	ReconnectStateConnected   ReconnectState = "connected"
+	ReconnectStateIdle         ReconnectState = "idle"
+	ReconnectStateConnected    ReconnectState = "connected"
 	ReconnectStateReconnecting ReconnectState = "reconnecting"
-	ReconnectStateFailed      ReconnectState = "failed"
-	ReconnectStateClosed      ReconnectState = "closed"
+	ReconnectStateFailed       ReconnectState = "failed"
+	ReconnectStateClosed       ReconnectState = "closed"
 )

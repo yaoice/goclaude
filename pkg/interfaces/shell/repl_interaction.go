@@ -23,8 +23,9 @@ import (
 //   - ctx 取消或 done 关闭 → 退出
 //
 // 此 goroutine 与 ReadLine 通过 generating 标志协调 stdin 所有权：
-//   generating=true  → stdinCancelLoop 持有 stdin
-//   generating=false → ReadLine 持有 stdin（stdinCancelLoop 主动休眠让出）
+//
+//	generating=true  → stdinCancelLoop 持有 stdin
+//	generating=false → ReadLine 持有 stdin（stdinCancelLoop 主动休眠让出）
 func (r *REPL) stdinCancelLoop(ctx context.Context, done <-chan struct{}) {
 	buf := make([]byte, 1)
 	for {

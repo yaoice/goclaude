@@ -444,10 +444,10 @@ func renderTableRow(line string) string {
 // 与 repl_render.go 的语义色系统互补；这些色用于 Markdown 行内/行首结构着色。
 
 const (
-	colorAccent     = "\x1b[38;5;75m"  // 列表点/序号（品蓝）
-	colorInlineCode = "\x1b[38;5;214m" // 行内代码（琥珀）
-	colorCodeBlock  = "\x1b[38;5;252m" // 代码块内容（亮灰）
-	colorString     = "\x1b[38;5;78m"  // 字符串/勾选 ✓（翠绿）
+	colorAccent     = "\x1b[38;5;75m"   // 列表点/序号（品蓝）
+	colorInlineCode = "\x1b[38;5;214m"  // 行内代码（琥珀）
+	colorCodeBlock  = "\x1b[38;5;252m"  // 代码块内容（亮灰）
+	colorString     = "\x1b[38;5;78m"   // 字符串/勾选 ✓（翠绿）
 	colorLink       = "\x1b[4;38;5;75m" // 链接文本（下划线品蓝）
 	colorAgentName  = "\x1b[1;38;5;75m" // subagent 名（粗品蓝）
 )

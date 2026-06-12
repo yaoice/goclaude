@@ -14,15 +14,15 @@ import (
 
 // HookExecutionEvent 表示一次 hook 执行事件
 type HookExecutionEvent struct {
-	Type        string `json:"type"`        // "started" / "progress" / "response"
-	HookID      string `json:"hookId"`
-	HookName    string `json:"hookName"`
-	HookEvent   string `json:"hookEvent"`
-	Stdout      string `json:"stdout,omitempty"`
-	Stderr      string `json:"stderr,omitempty"`
-	Output      string `json:"output,omitempty"`
-	ExitCode    *int   `json:"exitCode,omitempty"`
-	Outcome     string `json:"outcome,omitempty"` // "success" / "error" / "cancelled"
+	Type      string `json:"type"` // "started" / "progress" / "response"
+	HookID    string `json:"hookId"`
+	HookName  string `json:"hookName"`
+	HookEvent string `json:"hookEvent"`
+	Stdout    string `json:"stdout,omitempty"`
+	Stderr    string `json:"stderr,omitempty"`
+	Output    string `json:"output,omitempty"`
+	ExitCode  *int   `json:"exitCode,omitempty"`
+	Outcome   string `json:"outcome,omitempty"` // "success" / "error" / "cancelled"
 }
 
 // ExecutionEventHandler hook 执行事件的处理函数
@@ -36,10 +36,10 @@ var alwaysEmittedEvents = map[string]bool{
 
 // executionEventBus hook 执行事件总线（单例）
 type executionEventBus struct {
-	mu            sync.RWMutex
-	handler       ExecutionEventHandler
-	pending       []*HookExecutionEvent
-	allEnabled    bool
+	mu         sync.RWMutex
+	handler    ExecutionEventHandler
+	pending    []*HookExecutionEvent
+	allEnabled bool
 }
 
 const maxPendingEvents = 100

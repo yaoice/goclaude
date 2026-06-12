@@ -96,10 +96,10 @@ func (q *Queue[T]) OnChange(fn func()) {
 
 // CommandQueue 命令队列
 type CommandQueue struct {
-	queue    *Queue[string]
-	mu       sync.RWMutex
-	subs     map[int]chan []string
-	nextID   int
+	queue  *Queue[string]
+	mu     sync.RWMutex
+	subs   map[int]chan []string
+	nextID int
 }
 
 var globalCommandQueue = NewCommandQueue()

@@ -67,12 +67,12 @@ type Settings interface {
 type SettingsSource string
 
 const (
-	SourcePlugin  SettingsSource = "plugin"   // 最低优先级
-	SourceUser    SettingsSource = "user"     // ~/.goclaude/settings.json
-	SourceProject SettingsSource = "project"  // .goclaude/settings.json
-	SourceLocal   SettingsSource = "local"    // .goclaude/settings.local.json
-	SourceFlag    SettingsSource = "flag"     // SDK inline / file
-	SourcePolicy  SettingsSource = "policy"   // 最高优先级
+	SourcePlugin  SettingsSource = "plugin"  // 最低优先级
+	SourceUser    SettingsSource = "user"    // ~/.goclaude/settings.json
+	SourceProject SettingsSource = "project" // .goclaude/settings.json
+	SourceLocal   SettingsSource = "local"   // .goclaude/settings.local.json
+	SourceFlag    SettingsSource = "flag"    // SDK inline / file
+	SourcePolicy  SettingsSource = "policy"  // 最高优先级
 )
 
 // SettingsData 单层设置数据

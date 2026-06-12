@@ -22,8 +22,8 @@ type Notification struct {
 	Type        string
 	Title       string
 	Body        string
-	Level       string    // "info", "warning", "error"
-	Priority    int       // 0=low, 1=normal, 2=high
+	Level       string // "info", "warning", "error"
+	Priority    int    // 0=low, 1=normal, 2=high
 	CreatedAt   time.Time
 	ExpiresAt   *time.Time
 	Dismissible bool

@@ -1,10 +1,15 @@
 package shell
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/yaoice/goclaude/pkg/application"
+	"github.com/yaoice/goclaude/pkg/domain/query"
 )
 
 func TestHistoryAppendDedupe(t *testing.T) {
@@ -142,7 +147,7 @@ func TestKeyStringSmoke(t *testing.T) {
 		KeyLeft, KeyRight, KeyUp, KeyDown, KeyHome, KeyEnd,
 		KeyAltLeft, KeyAltRight,
 		KeyCtrlA, KeyCtrlE, KeyCtrlK, KeyCtrlU, KeyCtrlW, KeyCtrlL,
-		KeyCtrlC, KeyCtrlD, KeyCtrlR,
+		KeyCtrlC, KeyCtrlD, KeyCtrlR, KeyCtrlO, KeyCtrlG, KeyCtrlXE,
 	}
 	for _, kt := range cases {
 		if s := (Key{Type: kt}).String(); s == "" {
@@ -357,5 +362,193 @@ func TestRenderHelp_ConfigurationSourcesSection(t *testing.T) {
 		if !strings.Contains(text, want) {
 			t.Fatalf("/help configuration sources must contain %q\n%s", want, text)
 		}
+	}
+}
+
+// TestEditor_SetVersions_Toggle_Clear 测试 Editor 的版本管理功能
+func TestEditor_SetVersions_Toggle_Clear(t *testing.T) {
+	e := NewEditor(NewTerminal(), nil, nil, nil)
+
+	// 初始状态
+	if e.HasVersions() {
+		t.Error("expected no versions initially")
+	}
+	if e.GetCurrentVersionState() != "" {
+		t.Errorf("expected empty state, got %q", e.GetCurrentVersionState())
+	}
+
+	// 设置版本
+	e.SetVersions("原始提示词", "优化后的提示词")
+	if !e.HasVersions() {
+		t.Error("expected has versions after SetVersions")
+	}
+	if e.GetCurrentVersionState() != "enhanced" {
+		t.Errorf("expected 'enhanced', got %q", e.GetCurrentVersionState())
+	}
+	if string(e.buf) != "优化后的提示词" {
+		t.Errorf("expected enhanced text in buffer, got %q", string(e.buf))
+	}
+	if !e.preserveContent {
+		t.Error("expected preserveContent to be true after SetVersions")
+	}
+
+	// 切换到原始版本
+	e.ToggleVersion()
+	if e.GetCurrentVersionState() != "original" {
+		t.Errorf("expected 'original' after toggle, got %q", e.GetCurrentVersionState())
+	}
+	if string(e.buf) != "原始提示词" {
+		t.Errorf("expected original text in buffer, got %q", string(e.buf))
+	}
+
+	// 再切回优化版本
+	e.ToggleVersion()
+	if e.GetCurrentVersionState() != "enhanced" {
+		t.Errorf("expected 'enhanced' after second toggle, got %q", e.GetCurrentVersionState())
+	}
+	if string(e.buf) != "优化后的提示词" {
+		t.Errorf("expected enhanced text in buffer, got %q", string(e.buf))
+	}
+
+	// 清除版本
+	e.ClearVersions()
+	if e.HasVersions() {
+		t.Error("expected no versions after ClearVersions")
+	}
+	if e.GetCurrentVersionState() != "" {
+		t.Errorf("expected empty state after clear, got %q", e.GetCurrentVersionState())
+	}
+}
+
+// TestEditor_ToggleVersion_NoVersions 无版本时切换应 no-op
+func TestEditor_ToggleVersion_NoVersions(t *testing.T) {
+	e := NewEditor(NewTerminal(), nil, nil, nil)
+
+	// 设置普通缓冲区内容
+	e.setBuf("普通文本")
+	e.ToggleVersion() // 应 no-op
+	if string(e.buf) != "普通文本" {
+		t.Error("expected buffer unchanged when no versions")
+	}
+}
+
+// TestREPL_HandleEnhancePromptCmd_NoEnhancer 测试未注入 PromptEnhancer 时的行为
+func TestREPL_HandleEnhancePromptCmd_NoEnhancer(t *testing.T) {
+	r := &REPL{useColor: false, Editor: NewEditor(NewTerminal(), nil, nil, nil)}
+	r.handleEnhancePromptCmd("")
+	// 不应 panic，不应修改编辑器
+	if r.Editor.HasVersions() {
+		t.Error("expected no versions when enhancer not available")
+	}
+}
+
+// TestREPL_HandleEnhancePromptCmd_EmptyArgs 测试空参数时的帮助信息
+func TestREPL_HandleEnhancePromptCmd_EmptyArgs(t *testing.T) {
+	prov := &stubProviderForTest{}
+	enhancer := application.NewPromptEnhancer(prov, "test-model")
+	r := &REPL{useColor: false, PromptEnhancer: enhancer, Editor: NewEditor(NewTerminal(), nil, nil, nil)}
+	r.handleEnhancePromptCmd("")
+	// 不应 panic
+}
+
+// stubProviderForTest 用于 shell 测试的简单 provider
+type stubProviderForTest struct{}
+
+func (s *stubProviderForTest) Stream(ctx context.Context, params *query.StreamParams) (<-chan query.StreamEvent, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *stubProviderForTest) Send(ctx context.Context, params *query.SendParams) (*query.Message, *query.Usage, error) {
+	return nil, nil, errors.New("not implemented")
+}
+
+func TestREPL_HandleEnhancePromptCmd_Success(t *testing.T) {
+	original := "帮我写个排序"
+	enhanced := "请帮我实现一个冒泡排序函数，使用 Go 语言"
+
+	prov := &stubEnhanceProvider{
+		enhanced: enhanced,
+	}
+	enhancer := application.NewPromptEnhancer(prov, "test-model")
+
+	r := &REPL{
+		useColor:       false,
+		PromptEnhancer: enhancer,
+		Editor:         NewEditor(NewTerminal(), nil, nil, nil),
+	}
+
+	r.handleEnhancePromptCmd(original)
+
+	// 验证编辑器版本已设置
+	if !r.Editor.HasVersions() {
+		t.Fatal("expected editor has versions after enhance")
+	}
+	if r.Editor.GetCurrentVersionState() != "enhanced" {
+		t.Errorf("expected showing enhanced, got %q", r.Editor.GetCurrentVersionState())
+	}
+
+	// 切换回原始版本
+	r.Editor.ToggleVersion()
+	if r.Editor.GetCurrentVersionState() != "original" {
+		t.Errorf("expected showing original after toggle, got %q", r.Editor.GetCurrentVersionState())
+	}
+
+	// 再切回优化版本
+	r.Editor.ToggleVersion()
+	if r.Editor.GetCurrentVersionState() != "enhanced" {
+		t.Errorf("expected showing enhanced after second toggle, got %q", r.Editor.GetCurrentVersionState())
+	}
+}
+
+// stubEnhanceProvider 模拟成功优化的 provider
+type stubEnhanceProvider struct {
+	enhanced string
+}
+
+func (s *stubEnhanceProvider) Stream(ctx context.Context, params *query.StreamParams) (<-chan query.StreamEvent, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *stubEnhanceProvider) Send(ctx context.Context, params *query.SendParams) (*query.Message, *query.Usage, error) {
+	return &query.Message{
+		Role: query.RoleAssistant,
+		Content: []query.ContentBlock{
+			{Type: query.ContentTypeText, Text: s.enhanced},
+		},
+	}, &query.Usage{}, nil
+}
+
+func TestREPL_HandleEnhancePromptCmd_APIError(t *testing.T) {
+	prov := &stubProviderForTest{} // Send returns error
+	enhancer := application.NewPromptEnhancer(prov, "test-model")
+
+	r := &REPL{
+		useColor:       false,
+		PromptEnhancer: enhancer,
+		Editor:         NewEditor(NewTerminal(), nil, nil, nil),
+	}
+
+	r.handleEnhancePromptCmd("test prompt")
+
+	// 验证编辑器没有版本（失败时不应修改编辑器）
+	if r.Editor.HasVersions() {
+		t.Error("expected no versions after failed enhance")
+	}
+}
+
+func TestREPL_HandleEnhancePromptCmd_WhitespaceOnly(t *testing.T) {
+	prov := &stubEnhanceProvider{enhanced: "should not be used"}
+	enhancer := application.NewPromptEnhancer(prov, "test-model")
+
+	r := &REPL{
+		useColor:       false,
+		PromptEnhancer: enhancer,
+		Editor:         NewEditor(NewTerminal(), nil, nil, nil),
+	}
+
+	// 空白内容不应触发 API 调用
+	r.handleEnhancePromptCmd("   ")
+	if r.Editor.HasVersions() {
+		t.Error("expected no versions for whitespace-only input")
 	}
 }

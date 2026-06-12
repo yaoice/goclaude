@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	DirExistsGuidance  = "This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence)."
+	DirExistsGuidance = "This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence)."
 	DirsExistGuidance = "Both directories already exist — write to them directly with the Write tool (do not run mkdir or check for their existence)."
 )
 

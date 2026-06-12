@@ -109,6 +109,8 @@ func (r *REPL) handleLocalCommand(line string) (exit bool, expandedPrompt string
 		r.writeOut(r.handleRememberCmd(args))
 	case "/memory":
 		r.writeOut(r.handleMemoryCmd(args))
+	case "/enhance-prompt":
+		r.handleEnhancePromptCmd(args)
 	default:
 		// 尝试自定义 prompt-类命令
 		if r.CustomCommands != nil {
@@ -693,4 +695,45 @@ func highlightMatch(text, keyword string, maxLen int) string {
 	}
 
 	return preview
+}
+
+// handleEnhancePromptCmd 处理 /enhance-prompt 命令
+//
+// 用法：/enhance-prompt <原始提示词>
+//
+// 使用独立的轻量 API 调用优化用户输入的提示词，不影响主对话的 token 预算。
+// 优化后的文本回填到编辑器缓冲区，同时保留原始版本。
+// 用户可通过 Ctrl+G 在原始版本和优化版本之间切换。
+func (r *REPL) handleEnhancePromptCmd(args string) {
+	if r.PromptEnhancer == nil {
+		r.writeOut(r.colorize("（提示词优化服务未启用）\r\n", colorYellow))
+		return
+	}
+
+	original := strings.TrimSpace(args)
+	if original == "" {
+		r.writeOut(r.colorize("用法: /enhance-prompt <原始提示词>\r\n", colorYellow))
+		r.writeOut(r.colorize("示例: /enhance-prompt 帮我写一个排序函数\r\n", colorDim))
+		r.writeOut(r.colorize("优化后可用 Ctrl+G 在原始/优化版本间切换，确认后按 Enter 发送\r\n", colorDim))
+		return
+	}
+
+	// 显示优化中状态
+	r.writeOut(r.colorize("  ⏳ 正在优化提示词…\r\n", colorCyan))
+
+	ctx := context.Background()
+	enhanced, err := r.PromptEnhancer.Enhance(ctx, original)
+	if err != nil {
+		r.writeOut(r.colorize(fmt.Sprintf("  ✗ 优化失败: %v\r\n", err), colorError))
+		r.writeOut(r.colorize("  原始提示词已保留，可直接发送或重试\r\n", colorDim))
+		return
+	}
+
+	// 回填到编辑器：设置双版本 + 显示优化版本
+	r.Editor.SetVersions(original, enhanced)
+
+	r.writeOut(r.colorize("  ✓ 提示词已优化\r\n", colorGreen))
+	r.writeOut(r.colorize(fmt.Sprintf("  原始: %s\r\n", truncOneLine(original, 60)), colorDim))
+	r.writeOut(r.colorize(fmt.Sprintf("  优化: %s\r\n", truncOneLine(enhanced, 60)), colorDim))
+	r.writeOut(r.colorize("  Ctrl+G 切换版本 · 按 Enter 发送当前版本 · Esc 取消\r\n", colorDim))
 }

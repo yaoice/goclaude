@@ -167,25 +167,25 @@ func (e *ValidationError) Error() string {
 
 // NodeResult 单个节点执行结果
 type NodeResult struct {
-	NodeID     string        `json:"node_id"`
-	Status     NodeStatus    `json:"status"`
-	Output     string        `json:"output,omitempty"`
-	Error      string        `json:"error,omitempty"`
-	AgentID    string        `json:"agent_id,omitempty"`
-	Elapsed    time.Duration `json:"elapsed"`
-	Turns      int           `json:"turns"`
-	StartedAt  time.Time     `json:"started_at"`
-	EndedAt    time.Time     `json:"ended_at"`
+	NodeID    string        `json:"node_id"`
+	Status    NodeStatus    `json:"status"`
+	Output    string        `json:"output,omitempty"`
+	Error     string        `json:"error,omitempty"`
+	AgentID   string        `json:"agent_id,omitempty"`
+	Elapsed   time.Duration `json:"elapsed"`
+	Turns     int           `json:"turns"`
+	StartedAt time.Time     `json:"started_at"`
+	EndedAt   time.Time     `json:"ended_at"`
 }
 
 // WorkflowResult 整条 workflow 的执行汇总
 type WorkflowResult struct {
-	WorkflowName string        `json:"workflow_name"`
+	WorkflowName string         `json:"workflow_name"`
 	Status       WorkflowStatus `json:"status"`
-	TotalNodes   int           `json:"total_nodes"`
-	Completed    int           `json:"completed"`
-	Failed       int           `json:"failed"`
-	Skipped      int           `json:"skipped"`
-	Elapsed      time.Duration `json:"elapsed"`
-	NodeResults  []*NodeResult `json:"node_results,omitempty"`
+	TotalNodes   int            `json:"total_nodes"`
+	Completed    int            `json:"completed"`
+	Failed       int            `json:"failed"`
+	Skipped      int            `json:"skipped"`
+	Elapsed      time.Duration  `json:"elapsed"`
+	NodeResults  []*NodeResult  `json:"node_results,omitempty"`
 }

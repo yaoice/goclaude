@@ -7,17 +7,18 @@
 // Usage: bwrap [options] -- command args...
 //
 // Key flags:
-//   --ro-bind SRC DST   : read-only bind mount
-//   --bind SRC DST       : read-write bind mount
-//   --tmpfs PATH          : mount tmpfs at PATH
-//   --proc PATH           : mount procfs at PATH
-//   --dev PATH            : mount devtmpfs at PATH
-//   --unshare-net         : isolate network
-//   --unshare-pid         : unshare PID namespace
-//   --unshare-uts         : unshare UTS namespace
-//   --unshare-ipc         : unshare IPC namespace
-//   --die-with-parent     : kill child if bwrap dies
-//   --new-session         : create new session
+//
+//	--ro-bind SRC DST   : read-only bind mount
+//	--bind SRC DST       : read-write bind mount
+//	--tmpfs PATH          : mount tmpfs at PATH
+//	--proc PATH           : mount procfs at PATH
+//	--dev PATH            : mount devtmpfs at PATH
+//	--unshare-net         : isolate network
+//	--unshare-pid         : unshare PID namespace
+//	--unshare-uts         : unshare UTS namespace
+//	--unshare-ipc         : unshare IPC namespace
+//	--die-with-parent     : kill child if bwrap dies
+//	--new-session         : create new session
 package sandbox
 
 import (
@@ -72,9 +73,9 @@ func (s *Sandbox) wrapWithBwrap(ctx context.Context, command string) *exec.Cmd {
 // buildBwrapArgs builds the bwrap argument list.
 //
 // ORDER MATTERS (last-match-wins):
-//   1. Bind essential dirs (so they are accessible)
-//   2. --ro-bind / / (read-only root, overlays #1)
-//   3. Bind writable paths (overlay read-only, last-match-wins)
+//  1. Bind essential dirs (so they are accessible)
+//  2. --ro-bind / / (read-only root, overlays #1)
+//  3. Bind writable paths (overlay read-only, last-match-wins)
 func (s *Sandbox) buildBwrapArgs() []string {
 	cfg := s.config
 	args := []string{}

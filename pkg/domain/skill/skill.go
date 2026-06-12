@@ -27,12 +27,12 @@ const (
 type LoadedFrom string
 
 const (
-	LoadedFromSkills           LoadedFrom = "skills"
-	LoadedFromCommandsLegacy   LoadedFrom = "commands_DEPRECATED"
-	LoadedFromPlugin           LoadedFrom = "plugin"
-	LoadedFromManaged          LoadedFrom = "managed"
-	LoadedFromBundled          LoadedFrom = "bundled"
-	LoadedFromMCP              LoadedFrom = "mcp"
+	LoadedFromSkills         LoadedFrom = "skills"
+	LoadedFromCommandsLegacy LoadedFrom = "commands_DEPRECATED"
+	LoadedFromPlugin         LoadedFrom = "plugin"
+	LoadedFromManaged        LoadedFrom = "managed"
+	LoadedFromBundled        LoadedFrom = "bundled"
+	LoadedFromMCP            LoadedFrom = "mcp"
 )
 
 // Frontmatter Skill 文件 frontmatter 字段集合（对齐 parseSkillFrontmatterFields）

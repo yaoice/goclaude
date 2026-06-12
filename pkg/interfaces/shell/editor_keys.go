@@ -75,6 +75,7 @@ func (e *Editor) reverseSearch() error {
 		// 写换行隔开
 		e.writeRaw("\r\n")
 		e.lastLines = 0
+		e.lastCursorRow = 0
 		if accept && hasMatch {
 			e.setBuf(matched)
 		} else {
@@ -161,6 +162,8 @@ func (e *Editor) readKey() (Key, error) {
 		return Key{Type: KeyCtrlE}, nil
 	case 0x06:
 		return Key{Type: KeyCtrlF}, nil
+	case 0x07:
+		return Key{Type: KeyCtrlG}, nil
 	case 0x08, 0x7f:
 		return Key{Type: KeyBackspace}, nil
 	case 0x09:

@@ -17,7 +17,7 @@ const (
 	MaxEntrypointLines  = 200
 	MaxEntrypointBytes  = 25000
 	FrontmatterMaxLines = 30
-	MaxMemoryFiles     = 200
+	MaxMemoryFiles      = 200
 )
 
 // ---------- 类型定义 ----------
@@ -34,21 +34,21 @@ type Memory struct {
 	Content   string     `json:"content"`
 	Path      string     `json:"path"`
 	Type      MemoryType `json:"type"`
-	UpdatedAt time.Time `json:"updated_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 type MemoryHeader struct {
 	Filename    string     `json:"filename"`
 	FilePath    string     `json:"file_path"`
-	MtimeMs    int64      `json:"mtime_ms"`
+	MtimeMs     int64      `json:"mtime_ms"`
 	Description string     `json:"description,omitempty"`
 	Type        MemoryType `json:"type,omitempty"`
 }
 
 type TruncationResult struct {
-	Content           string `json:"content"`
-	LineCount         int    `json:"line_count"`
-	ByteCount         int    `json:"byte_count"`
+	Content          string `json:"content"`
+	LineCount        int    `json:"line_count"`
+	ByteCount        int    `json:"byte_count"`
 	WasLineTruncated bool   `json:"was_line_truncated"`
 	WasByteTruncated bool   `json:"was_byte_truncated"`
 }
@@ -80,11 +80,11 @@ type DirEntry struct {
 }
 
 type FileInfo struct {
-	Path     string    `json:"path"`
-	IsDir    bool      `json:"is_dir"`
+	Path      string    `json:"path"`
+	IsDir     bool      `json:"is_dir"`
 	IsSymlink bool      `json:"is_symlink"`
-	ModTime  time.Time `json:"mod_time"`
-	Size     int64     `json:"size"`
+	ModTime   time.Time `json:"mod_time"`
+	Size      int64     `json:"size"`
 }
 
 // ---------- 核心函数 ----------
@@ -225,7 +225,7 @@ func ScanMemoryFiles(memoryDir string, repo Repository) ([]MemoryHeader, error) 
 		header := MemoryHeader{
 			Filename: filename,
 			FilePath: entry.Path,
-			MtimeMs: info.ModTime.UnixMilli(),
+			MtimeMs:  info.ModTime.UnixMilli(),
 		}
 		headers = append(headers, header)
 	}
