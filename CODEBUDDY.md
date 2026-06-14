@@ -129,6 +129,7 @@ Implements domain interfaces with real I/O:
 |---------|---------|
 | **`api/anthropic/`** | Anthropic API client with SSE streaming. |
 | **`api/deepseek/`** | DeepSeek API client (OpenAI-compatible protocol). |
+| **`api/kimi/`** | Kimi (Moonshot) API client (OpenAI-compatible protocol). |
 | **`api/bedrock/`** | AWS Bedrock API provider. |
 | **`api/vertex/`** | GCP Vertex AI API provider. |
 | **`sandbox/`** | Command sandboxing: Linux uses `bwrap` (bubblewrap), macOS uses `sandbox-exec`. Restricts file/network access. |

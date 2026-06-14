@@ -13,12 +13,14 @@ import (
 	"github.com/yaoice/goclaude/pkg/domain/query"
 	"github.com/yaoice/goclaude/pkg/infrastructure/api/anthropic"
 	"github.com/yaoice/goclaude/pkg/infrastructure/api/deepseek"
+	"github.com/yaoice/goclaude/pkg/infrastructure/api/kimi"
 )
 
 // 模型 provider 选择
 const (
 	providerAnthropic = "anthropic"
 	providerDeepSeek  = "deepseek"
+	providerKimi      = "kimi"
 )
 
 var (
@@ -42,15 +44,17 @@ func newChatCmd() *cobra.Command {
 支持的Provider:
   - anthropic  (默认, 需要 ANTHROPIC_API_KEY)
   - deepseek   (需要 DEEPSEEK_API_KEY)
+  - kimi       (需要 KIMI_API_KEY)
 
 示例:
   ` + "`" + `goclaude chat "解释一下DDD" ` + "`" + `
-  ` + "`" + `goclaude chat -p deepseek -m deepseek-chat "写一个快速排序"` + "`",
+  ` + "`" + `goclaude chat -p deepseek -m deepseek-chat "写一个快速排序"` + "`" + `
+  ` + "`" + `goclaude chat -p kimi -m kimi-k2.6 "你好"` + "`" + ``,
 		Args: cobra.MinimumNArgs(1),
 		RunE: runChat,
 	}
 
-	cmd.Flags().StringVarP(&chatProvider, "provider", "p", providerDeepSeek, "AI Provider: anthropic | deepseek")
+	cmd.Flags().StringVarP(&chatProvider, "provider", "p", providerDeepSeek, "AI Provider: anthropic | deepseek | kimi")
 	cmd.Flags().StringVarP(&chatModel, "chat-model", "M", "", "模型名（覆盖 --model 全局标志）")
 	cmd.Flags().StringVarP(&chatSystem, "system", "s", "", "系统提示词")
 	return cmd
@@ -220,8 +224,41 @@ func buildProvider(name string) (query.AIProvider, string, error) {
 		}
 		return deepseek.NewClient(ccfg), defaultModel, nil
 
+	case providerKimi:
+		key := firstNonEmpty(
+			os.Getenv("KIMI_API_KEY"),
+			os.Getenv("MOONSHOT_API_KEY"),
+		)
+		if key == "" {
+			return nil, "", fmt.Errorf("missing KIMI_API_KEY (export KIMI_API_KEY=sk-xxx)")
+		}
+		ccfg := kimi.DefaultClientConfig(key)
+		if pc, ok := cfg.Providers[providerKimi]; ok {
+			if pc.BaseURL != "" {
+				ccfg.BaseURL = pc.BaseURL
+			}
+			if pc.Timeout > 0 {
+				ccfg.Timeout = pc.Timeout
+			}
+			if pc.MaxRetries > 0 {
+				ccfg.MaxRetries = pc.MaxRetries
+			}
+			if pc.RetryBaseDelay > 0 {
+				ccfg.RetryBaseDelay = pc.RetryBaseDelay
+			}
+		}
+		defaultModel := kimi.ModelK2
+		if pc, ok := cfg.Providers[providerKimi]; ok && pc.DefaultModel != "" {
+			defaultModel = pc.DefaultModel
+		}
+		// 全局 api.model 覆盖 provider 默认（支持 kimi-k2.6 等）
+		if cfg.API.Model != "" {
+			defaultModel = cfg.API.Model
+		}
+		return kimi.NewClient(ccfg), defaultModel, nil
+
 	default:
-		return nil, "", fmt.Errorf("unsupported provider: %s (supported: anthropic, deepseek)", name)
+		return nil, "", fmt.Errorf("unsupported provider: %s (supported: anthropic, deepseek, kimi)", name)
 	}
 }
 

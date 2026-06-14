@@ -311,6 +311,13 @@ func DefaultConfig() *Config {
 				MaxRetries:     3,
 				RetryBaseDelay: 1 * time.Second,
 			},
+			"kimi": {
+				BaseURL:        "https://api.moonshot.cn/v1",
+				DefaultModel:   "kimi-k2.6",
+				Timeout:        300 * time.Second,
+				MaxRetries:     3,
+				RetryBaseDelay: 1 * time.Second,
+			},
 		},
 		Engine: EngineConfig{
 			MaxTurns:         100,

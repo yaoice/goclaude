@@ -86,7 +86,7 @@ GoClaude 是一个运行在终端中的 AI 编程助手。它通过 **Query Engi
 
 | 能力域 | 说明 |
 |:---|:---|
-| **模型接入** | Anthropic（SSE 流式）、DeepSeek（OpenAI 兼容）、AWS Bedrock、GCP Vertex AI |
+| **模型接入** | Anthropic（SSE 流式）、DeepSeek（OpenAI 兼容）、Kimi（OpenAI 兼容）、AWS Bedrock、GCP Vertex AI |
 | **工具系统** | `file_read` / `file_write` / `file_edit`、`bash`、`glob`、`grep`、`agent`、`skill`、`mcp`、`team` 等内置工具 |
 | **MCP 协议** | stdio / HTTP / SSE / WebSocket 四种传输，支持 JSON-RPC 动态工具注册 |
 | **Skills 系统** | 多来源按需加载，条件激活，可扩展自定义专业能力 |
@@ -217,6 +217,7 @@ GoClaude 通过环境变量读取 API Key。创建 `.env` 文件（参考 `.env.
 # .env
 DEEPSEEK_API_KEY=sk-your-deepseek-api-key
 # ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key
+# KIMI_API_KEY=sk-your-kimi-api-key
 ```
 
 **环境变量加载优先级**（从高到低）：
@@ -316,6 +317,8 @@ permissions:
 providers:
   deepseek:
     base_url: https://your-proxy.example.com
+  kimi:
+    base_url: https://api.moonshot.cn/v1
     timeout: 300s
     max_retries: 3
 ```
@@ -990,7 +993,7 @@ hooks:
 
 | 标志 | 默认值 | 说明 |
 |:---|:---:|:---|
-| `-p, --provider` | `deepseek` | Provider |
+| `-p, --provider` | `deepseek` | Provider (deepseek / anthropic / kimi) |
 | `-m, --model` | `deepseek-chat` | 模型 |
 | `-v, --verbose` | `false` | 详细日志 |
 | `--env-file` | — | 额外 `.env`（可重复） |
@@ -1008,6 +1011,8 @@ hooks:
 | DeepSeek | `deepseek-chat` | V3 通用对话（默认） |
 | DeepSeek | `deepseek-reasoner` | R1 推理模型（支持 thinking） |
 | DeepSeek | `deepseek-coder` | 代码专项 |
+| Kimi | `kimi-k2.6` | Kimi K2 多模态模型 |
+| Kimi | `Kimi K2.7 Code` | Kimi K2 代码专项 |
 | Anthropic | `claude-sonnet-4-20250514` | Claude Sonnet 4 |
 | Anthropic | `claude-opus-4-20250514` | Claude Opus 4（待验证） |
 | AWS Bedrock | — | 🔨 接口已定义，待完整实现 |
@@ -1081,7 +1086,7 @@ GoClaude 遵循严格的 **DDD 四层架构**：
 
 | 原则 | 说明 |
 |:---|:---|
-| **依赖倒置（DIP）** | 领域层只定义接口，基础设施层提供实现。`query.AIProvider` 由 `anthropic.Client` / `deepseek.Client` 实现 |
+| **依赖倒置（DIP）** | 领域层只定义接口，基础设施层提供实现。`query.AIProvider` 由 `anthropic.Client` / `deepseek.Client` / `kimi.Client` 实现 |
 | **并发模型** | `context.Context` 级联取消、`goroutine + channel` 流式响应、`errgroup` worker pool、`sync.RWMutex` 保护共享状态 |
 | **安全默认值** | API Key 只走环境变量；工具调用先校验与授权；写入类操作串行；Shell 受沙箱约束 |
 | **扩展优先** | Skills、MCP、Subagent、Team、Hook、Memory 都通过服务或回调接入，避免污染领域层核心循环 |
