@@ -9,7 +9,7 @@
 # 所有"参数类"配置必须从此文件读取，不再使用环境变量。
 # 唯一例外：API Key（凭证）走环境变量，避免进入版本库：
 #   DEEPSEEK_API_KEY        DeepSeek API 密钥
-#   ANTHROPIC_API_KEY       Anthropic API 密钥
+#   KIMI_API_KEY       Kimi API 密钥
 #
 # 修改本文件后无需重启编辑器；下次 `goclaude` 启动即生效。
 
@@ -17,8 +17,8 @@
 # AI Provider 与模型参数
 # ═══════════════════════════════════════════════════════════════
 api:
-  provider: deepseek                  # anthropic | deepseek
-  model: deepseek-reasoner            # 默认模型；按 provider 自动回退
+  provider: deepseek                  # deepseek | kimi
+  model: ""            # 默认模型；按 provider 自动回退
   max_tokens: 32768                   # 单次最大输出 token
   temperature: 1.0                    # 采样温度 (0.0 ~ 2.0)
   top_p: 1.0                          # 核采样
@@ -36,6 +36,12 @@ providers:
     base_url: https://api.anthropic.com
     api_version: "2023-06-01"
     default_model: claude-sonnet-4-20250514
+    timeout: 300s
+    max_retries: 3
+    retry_base_delay: 1s
+  kimi:
+    base_url: https://api.moonshot.cn/v1  # Kimi (Moonshot) API
+    default_model: kimi-k2.6               # kimi-k2.6 | Kimi K2.7 Code
     timeout: 300s
     max_retries: 3
     retry_base_delay: 1s
