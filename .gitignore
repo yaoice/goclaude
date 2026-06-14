@@ -26,3 +26,6 @@ vendor/
 .claude/
 .goclaude/workspaces
 *.log
+
+# Git worktrees
+.worktrees/
