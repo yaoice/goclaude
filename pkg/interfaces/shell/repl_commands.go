@@ -101,6 +101,8 @@ func (r *REPL) handleLocalCommand(line string) (exit bool, expandedPrompt string
 		r.handleToolsCmd(strings.Fields(args))
 	case "/teams":
 		r.handleTeamsCmd(strings.Fields(args))
+	case "/plugin", "/plugins":
+		r.handlePluginCmd(strings.Fields(args))
 	case "/workflow", "/workflows":
 		r.handleWorkflowCmd(strings.Fields(args))
 	case "/remember":
@@ -112,9 +114,11 @@ func (r *REPL) handleLocalCommand(line string) (exit bool, expandedPrompt string
 	case "/enhance-prompt":
 		r.handleEnhancePromptCmd(args)
 	default:
-		// 尝试自定义 prompt-类命令
+		// 优先级：内建命令（上方 case）> 自定义 Command > Skill
+		name := strings.TrimPrefix(cmd, "/")
+		// 1) 自定义 prompt-类命令
 		if r.CustomCommands != nil {
-			if cc, ok := r.CustomCommands.Get(strings.TrimPrefix(cmd, "/")); ok {
+			if cc, ok := r.CustomCommands.Get(name); ok {
 				expanded := cc.Render(args)
 				if strings.TrimSpace(expanded) == "" {
 					r.writeOut(r.colorize(
@@ -124,9 +128,68 @@ func (r *REPL) handleLocalCommand(line string) (exit bool, expandedPrompt string
 				return false, expanded
 			}
 		}
+		// 2) Skill 直接触发：/<skill名称>
+		if exp, handled := r.tryInvokeSkill(name, args); handled {
+			return false, exp
+		}
 		r.writeOut(r.colorize(fmt.Sprintf("未知命令 %s（输入 /help 查看）\r\n", cmd), colorYellow))
 	}
 	return false, ""
+}
+
+// tryInvokeSkill 处理 /<skill名称> 直接触发。
+//
+// 返回 (expandedPrompt, handled)：
+//   - handled=false 表示 name 不是已注册的 skill（调用方继续走"未知命令"分支）；
+//   - handled=true 且 expandedPrompt 非空：把正文注入主对话（非 fork 语义）；
+//   - handled=true 且 expandedPrompt 为空：已就地处理（fork 子 agent 执行或错误提示）。
+func (r *REPL) tryInvokeSkill(name, args string) (string, bool) {
+	invoker, ok := r.Skills.(SkillInvoker)
+	if !ok || invoker == nil {
+		return "", false
+	}
+	inv, ok := invoker.Invoke(name, args)
+	if !ok {
+		return "", false
+	}
+	if !inv.UserInvocable {
+		r.writeOut(r.colorize(
+			fmt.Sprintf("（skill %s 不可手动触发：user-invocable=false）\r\n", name), colorYellow))
+		return "", true
+	}
+	if strings.TrimSpace(inv.Body) == "" {
+		r.writeOut(r.colorize(fmt.Sprintf("（skill %s 正文为空）\r\n", name), colorYellow))
+		return "", true
+	}
+
+	// 非 fork：把渲染正文注入主对话，由主 Engine 继续推理。
+	if !inv.Fork {
+		r.writeOut(r.colorize(fmt.Sprintf("▌ skill: %s\r\n", name), colorCyan))
+		return inv.Body, true
+	}
+
+	// fork：在独立子 agent 上下文执行；未注入 runner 时回退为注入主对话。
+	if r.RunSkillFork == nil {
+		r.writeOut(r.colorize(
+			fmt.Sprintf("（fork 执行不可用，改为注入主对话）skill: %s\r\n", name), colorDim))
+		return inv.Body, true
+	}
+	agentType := inv.Agent
+	if agentType == "" {
+		agentType = "general-purpose"
+	}
+	r.writeOut(r.colorize(fmt.Sprintf("◇ skill (fork): %s  →  agent %s\r\n", name, agentType), colorCyan))
+	out, err := r.RunSkillFork(context.Background(), agentType, inv.Body)
+	if err != nil {
+		r.writeOut(r.colorize(fmt.Sprintf("  ✗ fork 执行失败: %v\r\n", err), colorError))
+		r.writeOut(r.colorize("  改为注入主对话\r\n", colorDim))
+		return inv.Body, true
+	}
+	out = strings.TrimRight(out, "\n")
+	if out != "" {
+		r.writeOut(strings.ReplaceAll(out, "\n", "\r\n") + "\r\n")
+	}
+	return "", true
 }
 
 // handleWorkspaceCmd 处理 /workspace 命令。

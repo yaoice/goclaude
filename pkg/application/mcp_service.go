@@ -65,6 +65,24 @@ func (s *MCPService) ConnectOne(ctx context.Context, cfg *mcp.ServerConfig) erro
 	return err
 }
 
+// LoadConfigFileAndConnect 从单个 .mcp.json（如插件贡献）加载并连接其 MCP 服务器。
+//
+// 返回成功发现的服务器数（不含连接失败者）；连接错误被记录但不阻断启动。
+func (s *MCPService) LoadConfigFileAndConnect(ctx context.Context, path string) (int, error) {
+	configs, err := mcpinfra.LoadConfigFile(path)
+	if err != nil {
+		return 0, fmt.Errorf("加载 MCP 配置 %s 失败: %w", path, err)
+	}
+	if len(configs) == 0 {
+		return 0, nil
+	}
+	errs := s.manager.ConnectAll(ctx, configs)
+	for name, e := range errs {
+		s.logger.Warn("插件 MCP 连接失败", "server", name, "error", e)
+	}
+	return len(configs), nil
+}
+
 // Reconnect 重连指定服务器（保留缓存配置，先断后连）
 //
 // 与 src `useMcpReconnect()` 行为对齐。dialog `/mcp` 中的 r 键和 Reconnect 菜单项

@@ -106,6 +106,7 @@ func NewRootCmd(version string) *cobra.Command {
 	rootCmd.AddCommand(newAgentsCmd())
 	rootCmd.AddCommand(newMcpCmd())
 	rootCmd.AddCommand(newTeamCmd())
+	rootCmd.AddCommand(newPluginCmd())
 	rootCmd.AddCommand(newRunCmd())
 
 	return rootCmd

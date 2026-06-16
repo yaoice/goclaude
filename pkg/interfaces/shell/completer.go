@@ -18,9 +18,25 @@ import (
 type PrefixCompleter struct {
 	Commands []string
 
+	// Dynamic 可选：返回运行时才确定的候选命令（带 `/` 前缀）。
+	//
+	// 每次补全时调用，结果与静态 Commands 合并去重。用于补全那些在
+	// 构造补全器之后才注入的命令，例如 `/<skill名称>`、`/<skill别名>`
+	// 以及插件事后贡献的自定义命令。
+	Dynamic func() []string
+
 	// OnListCandidates 当存在多个候选且无法进一步补全时调用
 	// 调用方可借此把候选打印到屏幕（一般会写换行→列表→重绘 prompt）
 	OnListCandidates func(candidates []string)
+}
+
+// commandSet 合并静态命令与动态命令源（动态结果可为空）
+func (p *PrefixCompleter) commandSet() []string {
+	if p.Dynamic == nil {
+		return p.Commands
+	}
+	out := append([]string(nil), p.Commands...)
+	return append(out, p.Dynamic()...)
 }
 
 // NewSlashCompleter 构造默认的 slash 命令补全器
@@ -44,21 +60,43 @@ func (p *PrefixCompleter) Complete(line string, pos int) (string, int) {
 		return line, pos
 	}
 
+	newToken, ok := resolveCompletion(token, p.commandSet(), p.OnListCandidates)
+	if !ok {
+		return line, pos
+	}
+	newLine := head[:start] + newToken + tail
+	return newLine, start + len(newToken)
+}
+
+// resolveCompletion 计算 token 在 candidates 中的补全结果。
+//
+// 返回 (newToken, ok)：
+//   - ok=false 表示无可替换的补全（无匹配，或已通过 onList 列出多候选）；
+//   - ok=true 时 newToken 为替换当前 token 的文本：唯一匹配时带尾随空格，
+//     多候选时为可继续的公共前缀。
+//
+// 被 PrefixCompleter（命令名）与 ArgCompleter（命令参数）共用。
+func resolveCompletion(token string, candidates []string, onList func([]string)) (string, bool) {
 	var matches []string
-	for _, c := range p.Commands {
+	seen := map[string]bool{}
+	for _, c := range candidates {
+		if c == "" || seen[c] {
+			continue
+		}
 		if strings.HasPrefix(c, token) {
+			seen[c] = true
 			matches = append(matches, c)
 		}
 	}
 	if len(matches) == 0 {
-		return line, pos
+		return "", false
 	}
+	// 动态候选不保证有序，统一排序以保证公共前缀计算与候选列表显示稳定。
+	sort.Strings(matches)
 
 	// 唯一匹配：直接补完并加 trailing space
 	if len(matches) == 1 {
-		newToken := matches[0] + " "
-		newLine := head[:start] + newToken + tail
-		return newLine, start + len(newToken)
+		return matches[0] + " ", true
 	}
 
 	// 多候选：取公共前缀
@@ -66,18 +104,84 @@ func (p *PrefixCompleter) Complete(line string, pos int) (string, int) {
 	for _, m := range matches[1:] {
 		common = longestCommonPrefix(common, m)
 	}
-
 	if len(common) <= len(token) {
 		// 无法进一步补全，列出候选
-		if p.OnListCandidates != nil {
-			p.OnListCandidates(matches)
+		if onList != nil {
+			onList(matches)
 		}
+		return "", false
+	}
+	return common, true
+}
+
+// ArgCompleter 为指定 slash 命令补全其参数（子命令关键字、名称等）。
+//
+// 仅当输入行形如 `<cmd> <token>`（cmd 命中 Commands，且光标已离开命令本身）
+// 时触发。候选由 Args 回调按"当前 token 之前已输入的参数"动态给出，例如：
+//   - `/plugin ` → 子命令 list/marketplaces/enable/disable；
+//   - `/plugin enable ` → 已安装插件名。
+type ArgCompleter struct {
+	// Commands 触发该补全器的命令名（含 `/`，含别名），如 ["/plugin","/plugins"]。
+	Commands []string
+
+	// Args 返回当前参数位置的候选；prior 为当前 token 之前已确定的参数
+	// （不含命令本身）。返回空切片表示该位置无候选。
+	Args func(prior []string) []string
+
+	// OnListCandidates 多候选无法进一步补全时回调（同 PrefixCompleter）。
+	OnListCandidates func(candidates []string)
+}
+
+// Complete 实现 Completer 接口
+func (a *ArgCompleter) Complete(line string, pos int) (string, int) {
+	if a.Args == nil {
+		return line, pos
+	}
+	head := line[:pos]
+	tail := line[pos:]
+
+	fields := strings.Fields(head)
+	if len(fields) == 0 || !a.matchCmd(fields[0]) {
 		return line, pos
 	}
 
-	// 用公共前缀替换 token
-	newLine := head[:start] + common + tail
-	return newLine, start + len(common)
+	// 当前 token：光标前最后一个空白之后；start==0 说明仍在命令本身，不处理。
+	start := strings.LastIndexAny(head, " \t") + 1
+	if start == 0 {
+		return line, pos
+	}
+	token := head[start:]
+
+	// prior：当前 token 之前已确定的参数。若 head 不以空白结尾，则 fields
+	// 的最后一项正是正在输入的 token，需从 prior 中剔除。
+	prior := fields[1:]
+	if !endsWithSpace(head) && len(prior) > 0 {
+		prior = prior[:len(prior)-1]
+	}
+
+	cands := a.Args(prior)
+	if len(cands) == 0 {
+		return line, pos
+	}
+	newToken, ok := resolveCompletion(token, cands, a.OnListCandidates)
+	if !ok {
+		return line, pos
+	}
+	newLine := head[:start] + newToken + tail
+	return newLine, start + len(newToken)
+}
+
+func (a *ArgCompleter) matchCmd(cmd string) bool {
+	for _, c := range a.Commands {
+		if c == cmd {
+			return true
+		}
+	}
+	return false
+}
+
+func endsWithSpace(s string) bool {
+	return strings.HasSuffix(s, " ") || strings.HasSuffix(s, "\t")
 }
 
 // PathCompleter 文件路径补全（用于 `@<path>` 等场景；当前未默认启用）

@@ -39,20 +39,25 @@ type CustomCommand struct {
 	Description   string
 	ArgumentHint  string
 	ArgumentNames []string
-	Source        string // user / project
+	Aliases       []string // 命令别名（来自 frontmatter aliases）
+	Source        string   // user / project / plugin
 	FilePath      string
 	Body          string // 去掉 frontmatter 后的正文
 }
 
 // CustomCommands 自定义命令注册表
 type CustomCommands struct {
-	byName map[string]*CustomCommand
-	names  []string
+	byName  map[string]*CustomCommand
+	aliases map[string]string // alias -> canonical name
+	names   []string
 }
 
 // NewCustomCommands 构造空注册表
 func NewCustomCommands() *CustomCommands {
-	return &CustomCommands{byName: map[string]*CustomCommand{}}
+	return &CustomCommands{
+		byName:  map[string]*CustomCommand{},
+		aliases: map[string]string{},
+	}
 }
 
 // LoadDefaults 从用户和项目目录加载所有 *.md 命令
@@ -131,6 +136,7 @@ func (c *CustomCommands) loadFromDir(dir, source string) {
 			Name:         name,
 			Description:  frontmatter.GetString(fm, "description"),
 			ArgumentHint: frontmatter.GetString(fm, "argument-hint"),
+			Aliases:      frontmatter.GetStringSlice(fm, "aliases"),
 			Source:       source,
 			FilePath:     path,
 			Body:         strings.TrimSpace(body),
@@ -140,8 +146,25 @@ func (c *CustomCommands) loadFromDir(dir, source string) {
 			cmd.ArgumentNames = names
 		}
 		c.byName[name] = cmd
+		for _, alias := range cmd.Aliases {
+			alias = strings.TrimSpace(strings.TrimPrefix(alias, "/"))
+			if alias != "" && alias != name {
+				c.aliases[alias] = name
+			}
+		}
 		return nil
 	})
+}
+
+// LoadPluginDir 加载插件贡献的 commands 目录（来源标记为 plugin）。
+//
+// 与 LoadDefaults 合并语义一致：后加载者覆盖前者。加载后会重建命令名索引。
+func (c *CustomCommands) LoadPluginDir(dir string) {
+	if dir == "" {
+		return
+	}
+	c.loadFromDir(dir, "plugin")
+	c.rebuildNames()
 }
 
 func (c *CustomCommands) rebuildNames() {
@@ -152,10 +175,17 @@ func (c *CustomCommands) rebuildNames() {
 	sort.Strings(c.names)
 }
 
-// Get 按名字查找
+// Get 按名字查找（支持别名）
 func (c *CustomCommands) Get(name string) (*CustomCommand, bool) {
-	cmd, ok := c.byName[strings.TrimPrefix(name, "/")]
-	return cmd, ok
+	key := strings.TrimPrefix(name, "/")
+	if cmd, ok := c.byName[key]; ok {
+		return cmd, true
+	}
+	if canonical, ok := c.aliases[key]; ok {
+		cmd, ok := c.byName[canonical]
+		return cmd, ok
+	}
+	return nil, false
 }
 
 // Names 返回所有命令名（不含前导 /，已排序）
@@ -165,12 +195,16 @@ func (c *CustomCommands) Names() []string {
 	return out
 }
 
-// SlashNames 返回带 / 前缀的命令名（用于补全）
+// SlashNames 返回带 / 前缀的命令名与别名（用于补全）
 func (c *CustomCommands) SlashNames() []string {
-	out := make([]string, 0, len(c.names))
+	out := make([]string, 0, len(c.names)+len(c.aliases))
 	for _, n := range c.names {
 		out = append(out, "/"+n)
 	}
+	for alias := range c.aliases {
+		out = append(out, "/"+alias)
+	}
+	sort.Strings(out)
 	return out
 }
 

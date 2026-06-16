@@ -204,7 +204,7 @@ session:
 # 对齐 claude-mem 的核心机制：渐进式三层搜索、生命周期钩子、隐私过滤。
 longterm_memory:
   # 总开关：false 时长期记忆完全禁用，不影响现有 MEMORY.md 文件记忆
-  enabled: true
+  enabled: false
 
   # 数据库文件路径（相对路径相对于 ~/.goclaude/）
   db_path: ~/.goclaude/longterm_memory.db
@@ -375,3 +375,14 @@ system_prompt:
       You do NOT need to handle this manually.
 
     Decision rule: When unsure, use MODE 1 (Agent tool). It's always correct.
+
+# ═══════════════════════════════════════════════════════════════
+# 插件子系统（复刻 Claude 插件机制）
+# ═══════════════════════════════════════════════════════════════
+# 插件可贡献 commands / agents / skills / hooks / MCP servers。
+# 通过 CLI 管理：goclaude plugin marketplace add <src> / install <name@mkt> / enable / disable。
+# 已安装并启用的插件，其贡献在启动时自动合并进对应注册表（来源标记为 plugin，
+# 优先级最低，不会覆盖用户/项目配置）。
+plugin:
+  enabled: true                 # 启动时装配已启用插件的贡献（不会自动安装远程内容）
+  allow_internal_hosts: false   # 是否允许从内网地址拉取市场/插件（默认禁止；SSRF 防护）

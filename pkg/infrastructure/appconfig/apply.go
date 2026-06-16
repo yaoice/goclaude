@@ -63,6 +63,18 @@ func applyMap(cfg *Config, m map[string]interface{}) {
 	if pe, ok := getMap(m, "prompt_enhancer"); ok {
 		applyPromptEnhancer(&cfg.PromptEnhancer, pe)
 	}
+	if pl, ok := getMap(m, "plugin"); ok {
+		applyPlugin(&cfg.Plugin, pl)
+	}
+}
+
+func applyPlugin(c *PluginConfig, m map[string]interface{}) {
+	if v, ok := getBool(m, "enabled"); ok {
+		c.Enabled = v
+	}
+	if v, ok := getBool(m, "allow_internal_hosts"); ok {
+		c.AllowInternalHosts = v
+	}
 }
 
 func applyAPI(c *APIConfig, m map[string]interface{}) {

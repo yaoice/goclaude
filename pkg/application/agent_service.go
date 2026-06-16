@@ -181,6 +181,21 @@ func (s *AgentService) LoadAll(ctx context.Context, projectCwd, managedDir strin
 	return nil
 }
 
+// LoadPluginDir 加载插件贡献的 agents 目录（来源标记为 plugin）。
+//
+// agent.Registry 内置优先级合并（built-in < plugin < user < project < flag < policy），
+// 因此加载顺序不影响最终覆盖结果。返回成功注册的 agent 数。
+func (s *AgentService) LoadPluginDir(ctx context.Context, dir string) (int, error) {
+	defs, err := s.loader.LoadFromDir(ctx, dir, agent.SourcePlugin)
+	if err != nil {
+		return 0, err
+	}
+	for _, d := range defs {
+		s.registry.Register(d)
+	}
+	return len(defs), nil
+}
+
 // List 返回所有 agent，按名字排序
 func (s *AgentService) List() []*agent.Definition {
 	defs := s.registry.All()

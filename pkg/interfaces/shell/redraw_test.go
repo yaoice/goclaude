@@ -68,8 +68,8 @@ func TestPhysLayout_Wrapping(t *testing.T) {
 	}{
 		{"短文本不折行", "abc", 80, 1},
 		{"恰好填满一行", strings.Repeat("a", 78), 80, 1}, // 2(prompt)+78=80, 恰好
-		{"超出一行", strings.Repeat("a", 79), 80, 2},     // 2+79=81 > 80 → 折行
-		{"CJK长文本", strings.Repeat("中", 50), 80, 2},  // 2 + 50*2 = 102 > 80
+		{"超出一行", strings.Repeat("a", 79), 80, 2},   // 2+79=81 > 80 → 折行
+		{"CJK长文本", strings.Repeat("中", 50), 80, 2}, // 2 + 50*2 = 102 > 80
 	}
 
 	for _, tt := range tests {

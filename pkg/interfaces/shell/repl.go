@@ -98,6 +98,14 @@ type REPL struct {
 	Teams     TeamManager
 	Workflows WorkflowManager
 	Memory    MemoryManager // 记忆入口管理器（/remember /memory）
+	Plugins   PluginManager // 插件/市场管理器（/plugin 面板）
+
+	// RunSkillFork 在子 agent 上下文执行 fork 型 skill（由 cli 层注入）。
+	//
+	// 当 /<skill> 命中且 frontmatter context: fork 时调用：以 agentType 启动子
+	// agent，prompt 为渲染后的 skill 正文，返回子 agent 的最终输出。nil 或返回
+	// 错误时，REPL 回退为把正文注入主对话。
+	RunSkillFork func(ctx context.Context, agentType, prompt string) (string, error)
 
 	// PromptEnhancer 提示词优化服务（/enhance-prompt 命令使用）
 	// nil 时 /enhance-prompt 不可用
@@ -224,13 +232,73 @@ func NewREPL(engine *query.Engine, model, provider, workDir string) *REPL {
 		r.Editor.PrintAboveLine(r.colorize(sb.String(), colorDim))
 	}
 
-	// 合并内置 + 自定义命令到补全字典
-	allCmds := append([]string(nil), builtinCommandNames()...)
-	allCmds = append(allCmds, r.CustomCommands.SlashNames()...)
+	// 内置命令在构造期即固定，作为静态补全字典。
+	cmdCompleter := NewSlashCompleter(builtinCommandNames(), onList)
+	// 自定义命令（含插件事后注入）与 skill 名在构造后才齐全，走动态源，
+	// 每次按 Tab 时实时读取，保证 `/<skill名称>`、插件命令等可被补全。
+	cmdCompleter.Dynamic = r.dynamicSlashNames
 
-	completer := NewSlashCompleter(allCmds, onList)
+	// 命令参数补全：目前覆盖 `/plugin` 的子命令与插件名。
+	pluginArgs := &ArgCompleter{
+		Commands:         []string{"/plugin", "/plugins"},
+		Args:             r.pluginArgCandidates,
+		OnListCandidates: onList,
+	}
+
+	completer := &CompositeCompleter{Inner: []Completer{cmdCompleter, pluginArgs}}
 	r.Editor = NewEditor(term, os.Stdout, hist, completer)
 	return r
+}
+
+// pluginArgCandidates 提供 `/plugin` 的参数补全候选。
+//
+//   - prior 为空：补全子命令关键字；
+//   - prior=[enable|disable]：补全已安装插件名。
+//
+// 与 handlePluginCmd 的子命令分支保持一致。
+func (r *REPL) pluginArgCandidates(prior []string) []string {
+	switch len(prior) {
+	case 0:
+		return []string{"list", "search", "marketplaces", "enable", "disable"}
+	case 1:
+		if (prior[0] == "enable" || prior[0] == "disable") && r.Plugins != nil {
+			var out []string
+			for _, p := range r.Plugins.ListPlugins() {
+				if p.Name != "" {
+					out = append(out, p.Name)
+				}
+			}
+			return out
+		}
+	}
+	return nil
+}
+
+// dynamicSlashNames 返回运行时才齐全的 slash 候选（带 `/` 前缀）。
+//
+// 包含两类在 NewREPL 返回后才注入/加载的命令：
+//   - 自定义 prompt-类命令及其别名（用户/项目/插件来源）；
+//   - 已注册 skill 的名称与别名（`/<skill名称>` 直接触发）。
+//
+// 每次补全时调用，与内置命令合并去重。
+func (r *REPL) dynamicSlashNames() []string {
+	var out []string
+	if r.CustomCommands != nil {
+		out = append(out, r.CustomCommands.SlashNames()...)
+	}
+	if r.Skills != nil {
+		for _, s := range r.Skills.List() {
+			if s.Name != "" {
+				out = append(out, "/"+s.Name)
+			}
+			for _, a := range s.Aliases {
+				if a = strings.TrimPrefix(a, "/"); a != "" {
+					out = append(out, "/"+a)
+				}
+			}
+		}
+	}
+	return out
 }
 
 // Run 启动主循环；阻塞直至用户退出
