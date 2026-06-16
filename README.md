@@ -54,6 +54,8 @@
 - [实战：Rules — 行为约束规则](#-实战rules--行为约束规则)
 - [实战：Memory — 持久化上下文](#-实战memory--持久化上下文)
 - [实战：Hook — 事件拦截与上下文注入](#-实战hook--事件拦截与上下文注入)
+- [实战：自定义 Command — `/<command名称>` 直接触发](#-实战自定义-command--command名称-直接触发)
+- [实战：Plugin — 插件全生命周期管理](#-实战plugin--插件全生命周期管理)
 - [CLI 命令速查](#-cli-命令速查)
 - [支持的模型](#-支持的模型)
 - [Todo](#-todo)
@@ -106,7 +108,8 @@ GoClaude 是一个运行在终端中的 AI 编程助手。它通过 **Query Engi
 | Skills / Subagent | ✅ | 多来源加载、注册表、条件激活、隔离执行 |
 | Agent Teams | ✅ | Coordinator + Worker 模式、消息传递、任务分配 |
 | Hook / Memory | ✅ | 事件钩子、上下文注入、跨会话记忆 |
-| TUI / Slash 命令 | ✅ | bubbletea REPL、消息渲染、命令面板 |
+| Plugin 系统 | ✅ | 市场发现、安装/启用/禁用/卸载、贡献装配（commands/agents/skills/hooks/MCP） |
+| TUI / Slash 命令 | ✅ | bubbletea REPL、消息渲染、命令面板、`/<skill>` 与 `/<command>` 直达 |
 | 配置 / 权限 / 沙箱 | ✅ | 分层配置、权限模式、路径与网络限制 |
 
 ---
@@ -434,6 +437,30 @@ You are an API design reviewer. When reviewing API code...
 │ You are an API design reviewer...     │
 ╰───────────────────────────────────────╯
 ```
+
+**方式三：`/<skill名称>` 直接执行**
+
+直接在 REPL 输入 `/<skill名称> [参数]` 触发对应 Skill（对齐 Claude 完整语义）：
+
+```
+> /api-reviewer 帮我审查 internal/handler/auth.go
+
+▌ skill: api-reviewer
+You are an API design reviewer. When reviewing API code...
+（正文连同参数注入主对话，模型据此继续推理）
+```
+
+- **非 fork（默认）**：渲染 Skill 正文（含 `${CLAUDE_SKILL_DIR}`、`$ARGS` 等占位符替换）后注入主对话。
+- **`context: fork`**：在独立子 Agent 上下文中执行（可由 frontmatter `agent:` 指定子 Agent，缺省 `general-purpose`），仅回显子 Agent 的最终输出：
+
+```
+> /deep-refactor 重构 payment 模块
+
+◇ skill (fork): deep-refactor  →  agent general-purpose
+（子 Agent 在隔离上下文执行，结束后回显结果）
+```
+
+- 尊重 frontmatter：`user-invocable: false` 的 Skill 不可手动触发；命令分发优先级为 **内建命令 > 自定义 Command > Skill**。
 
 ### Skill 加载目录优先级
 
@@ -951,6 +978,149 @@ hooks:
 
 ---
 
+## 🧷 实战：自定义 Command — `/<command名称>` 直接触发
+
+> **自定义 Command** 是一组由 Markdown 描述的 prompt 模板，可在 REPL 中通过 `/<命令名> [参数]` 直接触发，渲染后作为用户输入发给模型。
+
+### 定义 Command
+
+创建 `.goclaude/commands/deploy.md`（也兼容 `~/.claude/commands/`、`.claude/commands/`）：
+
+```markdown
+---
+description: 执行部署流程并生成发布说明
+argument-hint: "[环境]"
+aliases: ["dp", "ship"]
+arguments: env
+---
+请为 $env 环境执行部署检查清单，并基于改动生成发布说明。原始参数：$ARGUMENTS
+```
+
+- 文件名即命令名；子目录映射为 `命名空间:命令`（如 `commands/git/commit.md` → `/git:commit`）。
+- `aliases` 声明别名，`/dp`、`/ship` 等价于 `/deploy`，别名同样进入 Tab 补全与 `/help`。
+- 参数占位符：`$name`（命名参数）、`$ARGUMENTS[N]`、`$N`、`$ARGUMENTS`（整段）；无占位符且有参数时自动追加 `ARGUMENTS: <args>`。
+
+### 终端中触发
+
+```
+> /deploy staging
+
+执行部署：staging
+（渲染后的正文作为 user prompt 注入对话）
+```
+
+### Command 加载目录
+
+| 优先级 | 路径 | 来源 |
+|:---:|:---|:---|
+| 高 | `<cwd>/.goclaude/commands/`、`.claude/commands/` | project |
+| ↓ | `~/.goclaude/commands/`、`~/.claude/commands/` | user |
+| 最低 | 已启用插件贡献的 `commands/` 目录 | plugin |
+
+---
+
+## 🧱 实战：Plugin — 插件全生命周期管理
+
+> **Plugin** 复刻 Claude 的插件机制：一个插件可同时贡献 **commands / agents / skills / hooks / MCP servers**，通过**插件市场（marketplace）**发现与安装，支持启用/禁用与卸载，状态持久化在 `~/.goclaude/plugins/`。
+
+### 插件结构
+
+```
+my-plugin/
+├── .claude-plugin/
+│   └── plugin.json          # 清单：name / version / description / 贡献路径
+├── commands/                # 贡献的 slash 命令（*.md）
+├── agents/                  # 贡献的 subagent（*.md）
+├── skills/<name>/SKILL.md   # 贡献的 skill
+├── hooks/hooks.json         # 贡献的命令式 hook
+└── .mcp.json                # 贡献的 MCP 服务器
+```
+
+`plugin.json` 示例（贡献路径均可省略，缺省按上述约定目录）：
+
+```json
+{
+  "name": "my-plugin",
+  "version": "0.1.0",
+  "description": "示例插件",
+  "author": "you",
+  "commands": "./commands",
+  "agents": "./agents",
+  "skills": "./skills",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json"
+}
+```
+
+### 插件市场
+
+市场根目录含 `.claude-plugin/marketplace.json`：
+
+```json
+{
+  "name": "my-marketplace",
+  "plugins": [
+    { "name": "my-plugin", "source": "./my-plugin", "description": "示例插件" }
+  ]
+}
+```
+
+市场来源支持三种类型：**本地目录**、**远程 git 仓库**、**HTTP(S) tar/zip 压缩包**。
+
+> [!IMPORTANT]
+> 远程来源（git / http）在拉取前做 **SSRF 防护**：默认拒绝内网地址（环回、私有网段、`9.* / 10.* / 11.* / 21.* / 30.*` 等）；压缩包解压有 **zip-slip / 路径穿越防护**与大小上限。如确需访问内网，显式加 `--allow-internal-hosts`。
+
+### CLI 管理
+
+```bash
+# 市场
+goclaude plugin marketplace add ./path/to/marketplace          # 本地目录
+goclaude plugin marketplace add https://github.com/owner/repo  # 远程 git
+goclaude plugin marketplace add https://example.com/mkt.tar.gz # 压缩包
+goclaude plugin marketplace list
+goclaude plugin marketplace remove my-marketplace
+
+# 插件
+goclaude plugin install my-plugin@my-marketplace   # 从市场安装
+goclaude plugin install ./local/plugin             # 直接来源安装
+goclaude plugin list
+goclaude plugin disable my-plugin                  # 禁用（保留安装）
+goclaude plugin enable my-plugin                   # 启用
+goclaude plugin uninstall my-plugin                # 卸载
+```
+
+### 终端中查看（REPL `/plugin`）
+
+```
+> /plugin
+
+Plugins
+  my-plugin v0.1.0  enabled  @my-marketplace
+    示例插件
+
+Marketplaces
+  my-marketplace [local]  1 plugins
+    ./path/to/marketplace
+
+管理: CLI `goclaude plugin install <name@mkt>` / `uninstall` / `marketplace add <src>`
+```
+
+`/plugin enable <name>` 与 `/plugin disable <name>` 可在 REPL 内切换启用状态（重启 REPL 生效）。
+
+### 贡献装配与优先级
+
+启用的插件在启动装配阶段把贡献合并进各注册表，来源标记为 `plugin`，**优先级最低**（不会覆盖用户/项目配置）：
+
+| 贡献类型 | 合并目标 | 触发方式 |
+|:---|:---|:---|
+| commands | CustomCommands | `/<command>` |
+| agents | Agent Registry | `Agent` 工具 / `/agents` |
+| skills | Skill Registry | `/<skill>` / `Skill` 工具 |
+| hooks | Hook Registry | 生命周期事件（命令式 hook，stdin/stdout JSON） |
+| MCP servers | MCP Manager | `mcp__<server>__<tool>` |
+
+---
+
 ## 📋 CLI 命令速查
 
 ### REPL Slash 命令
@@ -975,6 +1145,9 @@ hooks:
 | `/mcp [tools\|status]` | MCP 面板 / 工具 / 状态 |
 | `/tools [name]` | 工具列表 / Schema |
 | `/teams [name]` | 团队列表 / 详情 |
+| `/plugin [list\|marketplaces\|enable\|disable]` | 插件 / 市场管理 |
+| `/<skill名称> [args]` | 直接触发对应 Skill |
+| `/<command名称> [args]` | 直接触发自定义 Command |
 
 ### 顶级 CLI 命令
 
@@ -989,6 +1162,8 @@ hooks:
 | `goclaude agents [list\|show]` | Subagent 管理 |
 | `goclaude mcp [list\|tools\|status]` | MCP 管理 |
 | `goclaude team [create\|list\|show\|join\|send\|inbox\|delete]` | 团队管理 |
+| `goclaude plugin [list\|install\|uninstall\|enable\|disable]` | 插件管理 |
+| `goclaude plugin marketplace [add\|list\|remove]` | 插件市场管理 |
 
 ### 常用标志
 
@@ -1023,11 +1198,13 @@ hooks:
 
 ## 📋 Todo
 
-| # | 条目 | 说明 |
-|:---:|:---|:---|
-| 1 | `/<skill名称>` 终端触发 | 终端中通过 `/<skill名称>` 直接触发对应的 Skill 执行 |
-| 2 | Plugin 全生命周期管理 | 插件安装、升级、卸载、启用/禁用的完整管理机制 |
-| 3 | `/<command名称>` 终端触发 | 终端中通过 `/<command名称>` 直接触发对应的自定义 Command |
+> 下列能力均已实现并通过测试。
+
+| # | 条目 | 状态 | 说明 |
+|:---:|:---|:---:|:---|
+| 1 | `/<skill名称>` 终端触发 | ✅ | 终端中通过 `/<skill名称>` 直接触发对应的 Skill 执行（`context: fork` 走子 Agent，否则注入主对话） |
+| 2 | Plugin 全生命周期管理 | ✅ | 市场注册/发现、插件安装、升级、卸载、启用/禁用、配置与贡献装配（commands/agents/skills/hooks/MCP） |
+| 3 | `/<command名称>` 终端触发 | ✅ | 终端中通过 `/<command名称>` 直接触发对应的自定义 Command（支持别名、补全与 `/help` 展示） |
 
 ---
 

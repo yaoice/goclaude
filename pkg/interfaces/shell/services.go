@@ -54,6 +54,63 @@ type SkillManager interface {
 	Render(name string) (string, bool)
 }
 
+// SkillInvocation 描述一次 /<skill> 直接触发所需的信息
+type SkillInvocation struct {
+	// Name skill 名（规范名）
+	Name string
+	// Body 已渲染的 skill 正文（含参数替换与 ${CLAUDE_*} 替换）
+	Body string
+	// Fork 为 true 表示 frontmatter context: fork，应在独立子 agent 上下文执行
+	Fork bool
+	// Agent fork 执行时关联的 agent 类型；为空时由调用方回退到通用 agent
+	Agent string
+	// UserInvocable 是否允许用户通过 /<name> 手动触发
+	UserInvocable bool
+}
+
+// SkillInvoker 可选接口：支持 /<skill名称> 直接触发。
+//
+// REPL 在 default 分支匹配到 skill 名时调用 Invoke 获取渲染正文与执行语义。
+type SkillInvoker interface {
+	// Invoke 解析并渲染指定 skill；ok=false 表示该名不是已注册 skill。
+	Invoke(name, args string) (inv SkillInvocation, ok bool)
+}
+
+// PluginInfo shell 显示用的插件摘要
+type PluginInfo struct {
+	Name        string
+	Version     string
+	Description string
+	Marketplace string
+	Enabled     bool
+}
+
+// PluginMarketplaceInfo shell 显示用的市场摘要
+type PluginMarketplaceInfo struct {
+	Name        string
+	Type        string
+	Source      string
+	PluginCount int
+}
+
+// PluginSearchHit shell 显示用的市场检索命中条目
+type PluginSearchHit struct {
+	Name        string
+	Version     string
+	Description string
+	Marketplace string
+	Installed   bool
+}
+
+// PluginManager 提供插件/市场的列表查询与启用/禁用（/plugin 面板使用）
+type PluginManager interface {
+	ListPlugins() []PluginInfo
+	ListMarketplaces() []PluginMarketplaceInfo
+	SearchPlugins(query string) []PluginSearchHit
+	EnablePlugin(name string) error
+	DisablePlugin(name string) error
+}
+
 // AgentManager 提供 agent 列表/详情查询
 type AgentManager interface {
 	List() []AgentInfo

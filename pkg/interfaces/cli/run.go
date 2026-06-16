@@ -15,6 +15,7 @@ import (
 	hooksapp "github.com/yaoice/goclaude/pkg/application/hooks"
 	memoryappsvc "github.com/yaoice/goclaude/pkg/application/memory"
 	"github.com/yaoice/goclaude/pkg/domain/hook"
+	plugindomain "github.com/yaoice/goclaude/pkg/domain/plugin"
 	"github.com/yaoice/goclaude/pkg/domain/query"
 	"github.com/yaoice/goclaude/pkg/domain/tool"
 	"github.com/yaoice/goclaude/pkg/infrastructure/appconfig"
@@ -22,6 +23,7 @@ import (
 	"github.com/yaoice/goclaude/pkg/infrastructure/configdir"
 	minfra "github.com/yaoice/goclaude/pkg/infrastructure/memory"
 	sqlitemem "github.com/yaoice/goclaude/pkg/infrastructure/memory/sqlite"
+	plugininfra "github.com/yaoice/goclaude/pkg/infrastructure/plugin"
 	"github.com/yaoice/goclaude/pkg/infrastructure/sandbox"
 	"github.com/yaoice/goclaude/pkg/infrastructure/todo"
 	workflowinfra "github.com/yaoice/goclaude/pkg/infrastructure/workflow"
@@ -364,6 +366,11 @@ type AppContext struct {
 	AutoMemDir           string                              // auto-memory 目录路径
 	LongTermMemorySvc    *memoryappsvc.LongTermMemoryService // 长期记忆服务
 	MemoryLifecycleHooks *hooksapp.MemoryLifecycleHooks      // 长期记忆生命周期钩子
+
+	// PluginSvc 插件系统服务（市场/安装/启用/卸载/贡献装配）
+	PluginSvc *application.PluginService
+	// PluginCommandDirs 已启用插件贡献的 slash command 目录（交给 REPL 的 CustomCommands 加载）
+	PluginCommandDirs []string
 }
 
 // Close 释放 MCP 连接 + 长期记忆服务
@@ -391,7 +398,29 @@ func (c *AppContext) Close() {
 func buildAppContext(ctx context.Context, cwd, model string, logger *slog.Logger, enableMCP bool) (*AppContext, error) {
 	app := &AppContext{}
 
+	// 插件系统：装配阶段加载"已安装且启用"的插件贡献（不会自动安装远程内容）。
+	var pluginContribs []plugindomain.Contributions
+	pluginCfg := AppConfig().Plugin
+	if pluginCfg.Enabled {
+		plugininfra.SetAllowInternalHosts(pluginCfg.AllowInternalHosts)
+		app.PluginSvc = application.NewPluginService("", logger)
+		if err := app.PluginSvc.Load(ctx); err != nil {
+			logger.Warn("加载插件状态失败", "error", err)
+		}
+		pluginContribs = app.PluginSvc.Contributions()
+	}
+
 	app.SkillSvc = application.NewSkillService(logger)
+	// 插件 skill 优先级最低：先加载插件，再加载用户/项目（后者覆盖前者）。
+	for _, c := range pluginContribs {
+		for _, dir := range c.SkillDirs {
+			if n, err := app.SkillSvc.LoadPluginDir(ctx, dir); err != nil {
+				logger.Warn("加载插件 skills 失败", "plugin", c.PluginName, "dir", dir, "error", err)
+			} else if n > 0 {
+				logger.Debug("已加载插件 skills", "plugin", c.PluginName, "count", n)
+			}
+		}
+	}
 	if err := app.SkillSvc.LoadAll(ctx, cwd, ""); err != nil {
 		logger.Warn("加载 skills 失败", "error", err)
 	}
@@ -405,11 +434,43 @@ func buildAppContext(ctx context.Context, cwd, model string, logger *slog.Logger
 	if err := app.AgentSvc.LoadAll(ctx, cwd, ""); err != nil {
 		logger.Warn("加载 agents 失败", "error", err)
 	}
+	// 插件 agents（agent.Registry 内置优先级合并，顺序无关）。
+	for _, c := range pluginContribs {
+		for _, dir := range c.AgentDirs {
+			if _, err := app.AgentSvc.LoadPluginDir(ctx, dir); err != nil {
+				logger.Warn("加载插件 agents 失败", "plugin", c.PluginName, "dir", dir, "error", err)
+			}
+		}
+	}
+
+	// 插件 hooks（命令式 hook，注册到 HookReg）。
+	for _, c := range pluginContribs {
+		for _, f := range c.HookFiles {
+			if n, err := hooksapp.LoadHooksFile(f, c.Root, app.HookReg, logger); err != nil {
+				logger.Warn("加载插件 hooks 失败", "plugin", c.PluginName, "file", f, "error", err)
+			} else if n > 0 {
+				logger.Debug("已加载插件 hooks", "plugin", c.PluginName, "count", n)
+			}
+		}
+	}
+
+	// 插件 commands：收集目录，交给 REPL 的 CustomCommands 装配。
+	for _, c := range pluginContribs {
+		app.PluginCommandDirs = append(app.PluginCommandDirs, c.CommandDirs...)
+	}
 
 	app.MCPSvc = application.NewMCPService(logger)
 	if enableMCP {
 		if err := app.MCPSvc.LoadAndConnect(ctx, cwd); err != nil {
 			logger.Warn("MCP 连接失败", "error", err)
+		}
+		// 插件贡献的 MCP 服务器。
+		for _, c := range pluginContribs {
+			for _, f := range c.MCPConfigFiles {
+				if _, err := app.MCPSvc.LoadConfigFileAndConnect(ctx, f); err != nil {
+					logger.Warn("连接插件 MCP 失败", "plugin", c.PluginName, "file", f, "error", err)
+				}
+			}
 		}
 	}
 

@@ -71,6 +71,28 @@ func (s *SkillService) LoadAll(ctx context.Context, projectCwd, managedDir strin
 	return nil
 }
 
+// LoadPluginDir 加载插件贡献的 skills 目录（来源标记为 plugin）。
+//
+// 返回成功注册的 skill 数。注意：领域 Registry 为"后注册覆盖"，调用方应在
+// 加载用户/项目 skill 之前调用本方法，以保证 plugin 优先级最低。
+func (s *SkillService) LoadPluginDir(ctx context.Context, dir string) (int, error) {
+	skills, err := s.loader.LoadFromDir(ctx, dir, skill.SourcePlugin)
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, sk := range skills {
+		sk.LoadedFrom = skill.LoadedFromPlugin
+		if len(sk.Paths) > 0 {
+			s.registry.RegisterConditional(sk)
+		} else {
+			s.registry.Register(sk)
+		}
+		n++
+	}
+	return n, nil
+}
+
 // RegisterBundled 注册一个内置 skill（编译进二进制的 prompt 包）
 func (s *SkillService) RegisterBundled(sk *skill.Skill) {
 	if sk == nil {

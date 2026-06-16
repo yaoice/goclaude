@@ -53,7 +53,8 @@ type Config struct {
 	SystemPrompt   SystemPromptConfig        `yaml:"system_prompt"`
 	Workspace      WorkspaceConfig           `yaml:"workspace"`
 	LongTermMemory LongTermMemoryConfig      `yaml:"longterm_memory"`
-	PromptEnhancer PromptEnhancerConfig       `yaml:"prompt_enhancer"`
+	PromptEnhancer PromptEnhancerConfig      `yaml:"prompt_enhancer"`
+	Plugin         PluginConfig              `yaml:"plugin"`
 
 	// LoadedFrom 记录配置实际从哪些文件加载（按加载顺序）
 	// 仅诊断用途（goclaude doctor 展示）。
@@ -282,6 +283,17 @@ type PromptEnhancerConfig struct {
 	Temperature float64 `yaml:"temperature"`
 }
 
+// PluginConfig 插件子系统配置
+//
+// 安全默认：Enabled=true 仅表示装配阶段加载"已安装且启用"的插件，
+// 不会自动安装任何远程内容；AllowInternalHosts=false 禁止访问内网来源。
+type PluginConfig struct {
+	// Enabled 是否在启动时装配已启用插件的贡献
+	Enabled bool `yaml:"enabled"`
+	// AllowInternalHosts 是否允许从内网地址拉取市场/插件（默认 false）
+	AllowInternalHosts bool `yaml:"allow_internal_hosts"`
+}
+
 // DefaultConfig 返回内置兜底默认值
 //
 // 这些值是"YAML 文件全部缺失"时的安全保底，与官方 claude / 历史代码兼容。
@@ -410,6 +422,10 @@ func DefaultConfig() *Config {
 			Timeout:     30 * time.Second,
 			MaxTokens:   4096,
 			Temperature: 0.3,
+		},
+		Plugin: PluginConfig{
+			Enabled:            true,
+			AllowInternalHosts: false,
 		},
 	}
 }

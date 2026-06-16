@@ -16,7 +16,11 @@ import (
 
 // ----- Skill 适配 -----
 
-type skillAdapter struct{ svc *application.SkillService }
+type skillAdapter struct {
+	svc       *application.SkillService
+	cwd       string
+	sessionID string
+}
 
 func (a *skillAdapter) List() []shell.SkillInfo {
 	out := make([]shell.SkillInfo, 0, 16)
@@ -36,6 +40,99 @@ func (a *skillAdapter) List() []shell.SkillInfo {
 func (a *skillAdapter) Render(name string) (string, bool) {
 	return a.svc.Render(name, "")
 }
+
+// Invoke 实现 shell.SkillInvoker：渲染 skill 正文并返回执行语义。
+func (a *skillAdapter) Invoke(name, args string) (shell.SkillInvocation, bool) {
+	sk, ok := a.svc.Get(name)
+	if !ok {
+		return shell.SkillInvocation{}, false
+	}
+	body, _ := a.svc.RenderWith(name, application.RenderContext{
+		SessionID: a.sessionID,
+		Cwd:       a.cwd,
+		Args:      args,
+	})
+	return shell.SkillInvocation{
+		Name:          sk.Name,
+		Body:          body,
+		Fork:          sk.ExecutionContext == "fork",
+		Agent:         sk.Agent,
+		UserInvocable: sk.UserInvocable,
+	}, true
+}
+
+var _ shell.SkillInvoker = (*skillAdapter)(nil)
+
+// ----- Plugin 适配 -----
+
+type pluginAdapter struct{ svc *application.PluginService }
+
+func (a *pluginAdapter) ListPlugins() []shell.PluginInfo {
+	if a.svc == nil {
+		return nil
+	}
+	out := make([]shell.PluginInfo, 0, 8)
+	for _, p := range a.svc.ListPlugins() {
+		out = append(out, shell.PluginInfo{
+			Name:        p.Name,
+			Version:     p.Version,
+			Description: p.Description,
+			Marketplace: p.Marketplace,
+			Enabled:     p.Enabled,
+		})
+	}
+	return out
+}
+
+func (a *pluginAdapter) ListMarketplaces() []shell.PluginMarketplaceInfo {
+	if a.svc == nil {
+		return nil
+	}
+	out := make([]shell.PluginMarketplaceInfo, 0, 8)
+	for _, m := range a.svc.ListMarketplaces() {
+		out = append(out, shell.PluginMarketplaceInfo{
+			Name:        m.Name,
+			Type:        string(m.Type),
+			Source:      m.Source,
+			PluginCount: len(m.Entries),
+		})
+	}
+	return out
+}
+
+func (a *pluginAdapter) SearchPlugins(query string) []shell.PluginSearchHit {
+	if a.svc == nil {
+		return nil
+	}
+	results := a.svc.SearchPlugins(query)
+	out := make([]shell.PluginSearchHit, 0, len(results))
+	for _, r := range results {
+		out = append(out, shell.PluginSearchHit{
+			Name:        r.Name,
+			Version:     r.Version,
+			Description: r.Description,
+			Marketplace: r.Marketplace,
+			Installed:   r.Installed,
+		})
+	}
+	return out
+}
+
+func (a *pluginAdapter) EnablePlugin(name string) error {
+	if a.svc == nil {
+		return nil
+	}
+	return a.svc.Enable(name)
+}
+
+func (a *pluginAdapter) DisablePlugin(name string) error {
+	if a.svc == nil {
+		return nil
+	}
+	return a.svc.Disable(name)
+}
+
+var _ shell.PluginManager = (*pluginAdapter)(nil)
 
 // ----- Agent 适配 -----
 

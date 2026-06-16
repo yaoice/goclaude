@@ -62,6 +62,7 @@ var builtinCommands = []helpCommand{
 	{name: "/mcp", argHint: "[tools|status]", desc: "Open MCP dialog; with arg shows servers/tools"},
 	{name: "/tools", argHint: "[name]", desc: "List registered tools; with name shows schema"},
 	{name: "/teams", argHint: "[name]", desc: "List agent teams; with name shows team detail"},
+	{name: "/plugin", argHint: "[list|marketplaces|enable|disable]", desc: "Manage plugins: list, marketplaces, enable/disable"},
 	{name: "/workflow", argHint: "[list|plan|run|status|cancel] [args]", desc: "Manage workflows: list, plan (AI-generate), run, status, cancel"},
 	{name: "/remember", argHint: "", desc: "Directly persist a memory to MEMORY.md (auto-extracts title)"},
 	{name: "/memory", argHint: "list|add|del|search [args]", desc: "Manage memories: list, add, delete by ID, search"},
@@ -275,6 +276,9 @@ func (r *REPL) renderHelp() string {
 				desc := cc.Description
 				if desc == "" {
 					desc = "(no description)"
+				}
+				if len(cc.Aliases) > 0 {
+					desc = fmt.Sprintf("%s  [aliases: %s]", desc, strings.Join(cc.Aliases, ", "))
 				}
 				if cc.Source != "" {
 					// 与 src formatDescriptionWithSource 对齐：尾部追加 "(source)"

@@ -124,6 +124,6 @@ type ErrorResponse struct {
 
 // 内置模型常量
 const (
-	ModelK2   = "kimi-k2.6"    // Kimi K2 通用多模态模型
+	ModelK2   = "kimi-k2.6"      // Kimi K2 通用多模态模型
 	ModelCode = "Kimi K2.7 Code" // Kimi K2 代码专用模型（待确认正式名）
 )

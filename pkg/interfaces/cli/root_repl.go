@@ -275,13 +275,33 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	repl.HookReg = wired.HookReg // 长期记忆生命周期 hooks
 	repl.SessionID = sessionID   // 当前会话 ID
 	// 注入扩展能力管理服务
-	repl.Skills = &skillAdapter{svc: wired.SkillSvc}
+	repl.Skills = &skillAdapter{svc: wired.SkillSvc, cwd: cwd, sessionID: sessionID}
 	repl.Agents = &agentAdapter{svc: wired.AgentSvc}
 	repl.MCP = &mcpAdapter{svc: wired.MCPSvc}
 	repl.Tools = &toolsAdapter{reg: wired.Registry}
 	repl.Teams = &teamAdapter{svc: wired.TeamSvc}
 	repl.Workflows = workflows
 	repl.Memory = wired.MemorySvc // /remember /memory 命令依赖
+	if wired.PluginSvc != nil {
+		repl.Plugins = &pluginAdapter{svc: wired.PluginSvc}
+	}
+	// 插件贡献的自定义 slash 命令并入 CustomCommands（来源 plugin）
+	for _, dir := range wired.PluginCommandDirs {
+		repl.CustomCommands.LoadPluginDir(dir)
+	}
+	// fork 型 skill 的子 agent 执行通道：以渲染正文为 prompt 启动子 agent。
+	repl.RunSkillFork = func(ctx context.Context, agentType, prompt string) (string, error) {
+		res, err := wired.AgentSvc.Run(ctx, agentType, factory, application.RunOptions{
+			Prompt:          prompt,
+			ParentSessionID: sessionID,
+			WorkingDir:      cwd,
+			ProjectRoot:     cwd,
+		})
+		if err != nil {
+			return "", err
+		}
+		return res.FinalText, nil
+	}
 	if app.PromptEnhancer.Enabled {
 		enhancer := application.NewPromptEnhancer(provider, modelName)
 		enhancer.SetTimeout(app.PromptEnhancer.Timeout)
