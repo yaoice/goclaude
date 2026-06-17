@@ -2,26 +2,28 @@
 
 # GoClaude
 
-**基于 DDD 四层架构的 Golang 终端 AI 编程助手**
+### 基于 DDD 四层架构的 Golang 终端 AI 编程助手
 
-[![Go](https://img.shields.io/badge/Go-%E2%89%A5%201.22-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](LICENSE)
-[![Architecture](https://img.shields.io/badge/Architecture-DDD%204--Layer-blueviolet?style=flat-square)](#架构与运行机制)
+<p>
+  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-%E2%89%A5%201.22-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square" alt="License"></a>
+  <a href="#-架构与运行机制"><img src="https://img.shields.io/badge/Architecture-DDD%204--Layer-blueviolet?style=flat-square" alt="Architecture"></a>
+</p>
 
+<p>
+  多 Provider 流式对话 · 工具调用 · MCP 扩展 · Skills · Subagent<br>
+  Agent Teams · Memory · Hook · 沙箱权限控制
+</p>
+
+<img src="docs/assets/readme-capability-map.svg" alt="GoClaude 能力地图" width="100%">
+
+<sub><b>图 1 · 能力地图</b>　一张图概览 GoClaude 的核心能力域</sub>
 
 </div>
 
 ---
 
 > **GoClaude** 把 **多 Provider 流式对话、工具调用、MCP 扩展、Skills、Subagent、Agent Teams、Memory、Hook 与沙箱权限控制** 收束到同一个终端运行时，适合在本地项目里完成编码、审查、重构与自动化任务。
-
-<br>
-
-<p align="center">
-  <img src="docs/assets/readme-capability-map.svg" alt="GoClaude 能力地图" width="100%">
-</p>
-
-<br>
 
 ## 📖 阅读路线
 
@@ -246,7 +248,9 @@ DEEPSEEK_API_KEY=sk-your-deepseek-api-key
 GoClaude 支持多层配置合并。运行时先完成 `.env`、`settings.json` 与 YAML 配置加载，再注入 `AppConfig`，由 CLI / REPL 装配到 Query Engine、Tool Executor、MCP、Hook 与沙箱模块。
 
 <p align="center">
-  <img src="docs/assets/readme-config-hooks-flow.svg" alt="配置、权限与 Hook 流程" width="100%">
+  <img src="docs/assets/readme-config-hooks-flow.svg" alt="配置、权限与 Hook 流程" width="90%">
+  <br>
+  <sub><b>图 2 · 配置 / 权限 / Hook 流程</b>　从配置加载到运行时装配的完整链路</sub>
 </p>
 
 | 优先级 | 来源 | 路径 | 说明 |
@@ -686,7 +690,9 @@ Do not call any tools. Do not add commentary. Just the line above.
 ### 团队消息流
 
 <p align="center">
-  <img src="docs/assets/readme-team-workflow.svg" alt="Agent Teams 协作流程" width="100%">
+  <img src="docs/assets/readme-team-workflow.svg" alt="Agent Teams 协作流程" width="90%">
+  <br>
+  <sub><b>图 3 · Agent Teams 协作流程</b>　Leader 拆分任务、Worker 并行执行、Mailbox 回流汇总</sub>
 </p>
 
 > **核心闭环**：Leader 创建团队并拆分任务 → Worker 并行执行后通过 Mailbox 回传进展 → Leader 每轮自动读取 inbox → 将关键输出注入上下文 → 生成汇总、复核或二次分配。
@@ -961,7 +967,9 @@ hooks:
 ### 配置合并与执行流程
 
 <p align="center">
-  <img src="docs/assets/readme-config-hooks-flow.svg" alt="配置、权限与 Hook 流程" width="100%">
+  <img src="docs/assets/readme-config-hooks-flow.svg" alt="配置、权限与 Hook 流程" width="90%">
+  <br>
+  <sub><b>图 4 · Hook 配置合并与执行</b>　多来源配置合并后驱动事件钩子触发</sub>
 </p>
 
 > **合并策略**：标量 → 覆盖 | 数组 → concat + dedup | 对象 → 深度合并
@@ -1227,7 +1235,9 @@ Marketplaces
 **模块之间的依赖关系：**
 
 <p align="center">
-  <img src="docs/assets/readme-module-map.svg" alt="GoClaude 模块关系图" width="100%">
+  <img src="docs/assets/readme-module-map.svg" alt="GoClaude 模块关系图" width="90%">
+  <br>
+  <sub><b>图 5 · 模块关系图</b>　各 package 之间的依赖与协作关系</sub>
 </p>
 
 ---
@@ -1246,19 +1256,25 @@ GoClaude 遵循严格的 **DDD 四层架构**：
 ### 完整应用分层架构
 
 <p align="center">
-  <img src="docs/assets/readme-layered-application-architecture.svg" alt="GoClaude 完整应用分层架构" width="100%">
+  <img src="docs/assets/readme-layered-application-architecture.svg" alt="GoClaude 完整应用分层架构" width="90%">
+  <br>
+  <sub><b>图 6 · 完整应用分层架构</b>　interfaces / application / domain / infrastructure 四层全景</sub>
 </p>
 
 ### 系统总览
 
 <p align="center">
-  <img src="docs/assets/readme-system-overview.svg" alt="GoClaude 系统架构总览" width="100%">
+  <img src="docs/assets/readme-system-overview.svg" alt="GoClaude 系统架构总览" width="90%">
+  <br>
+  <sub><b>图 7 · 系统架构总览</b>　运行时各子系统的整体组成与交互</sub>
 </p>
 
 ### 核心数据流
 
 <p align="center">
-  <img src="docs/assets/readme-query-dataflow.svg" alt="Query Engine 数据流" width="100%">
+  <img src="docs/assets/readme-query-dataflow.svg" alt="Query Engine 数据流" width="90%">
+  <br>
+  <sub><b>图 8 · Query Engine 数据流</b>　消息组装 → 流式调用 → 工具执行 → 结果回填的循环</sub>
 </p>
 
 ### 运行机制说明
